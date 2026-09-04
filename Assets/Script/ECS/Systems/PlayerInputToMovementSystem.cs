@@ -2,6 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 
 [BurstCompile]
+[UpdateBefore(typeof(ApplyMovementSystem))]
 public partial struct PlayerInputToMovementSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
