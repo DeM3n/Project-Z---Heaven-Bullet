@@ -130,8 +130,9 @@ GameObject:
   - component: {fileID: 144040419}
   - component: {fileID: 144040418}
   - component: {fileID: 144040420}
+  - component: {fileID: 144040421}
   m_Layer: 0
-  m_Name: Square
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -225,6 +226,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAuthoring
   MoveSpeed: 5
+--- !u!114 &144040421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 144040417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d3b014f5f0ea424cac5a12b5f8be88c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkillCastAuthoring
+  ProjectilePrefab: {fileID: 5422362882192681374, guid: 25a7d892ea1f4dc458ae376c703e8eb7, type: 3}
+  Cooldown: 1.5
+  ProjectileSpeed: 8
+  ProjectileLifetime: 3
 --- !u!1 &858495198
 GameObject:
   m_ObjectHideFlags: 0
@@ -270,7 +287,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnerAuthoring
   EnemyPrefab: {fileID: 100785456706693687, guid: a337d02e98bb6204aa48c6a39de0afbe, type: 3}
-  SpawnInterval: 1
+  SpawnInterval: 2
   SpawnRadius: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
