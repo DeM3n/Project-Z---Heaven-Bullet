@@ -226,6 +226,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAuthoring
   MoveSpeed: 5
+  StartingExpToNextLevel: 10
+  PickupRange: 2
+  MaxHP: 100
 --- !u!114 &144040421
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -242,6 +245,8 @@ MonoBehaviour:
   Cooldown: 1.5
   ProjectileSpeed: 8
   ProjectileLifetime: 3
+  ProjectileDamage: 10
+  ProjectileHitRadius: 0.3
 --- !u!1 &858495198
 GameObject:
   m_ObjectHideFlags: 0
@@ -286,8 +291,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2f37645d5c6be14490324a5011b8985, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnerAuthoring
-  EnemyPrefab: {fileID: 100785456706693687, guid: a337d02e98bb6204aa48c6a39de0afbe, type: 3}
-  SpawnInterval: 2
+  EnemyPrefab: {fileID: 100785456706693687, guid: ff0799e8377945045ab42fcaa332483a, type: 3}
+  SpawnInterval: 5
   SpawnRadius: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

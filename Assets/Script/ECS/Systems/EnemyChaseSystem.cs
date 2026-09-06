@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-
+[WithNone(typeof(ShooterTag))]
 [BurstCompile]
 [UpdateBefore(typeof(ApplyMovementSystem))]
 public partial struct EnemyChaseSystem : ISystem
