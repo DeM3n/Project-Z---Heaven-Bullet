@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6607409066126220953}
   - component: {fileID: 8182937119608662880}
   - component: {fileID: -1423263425256122893}
+  - component: {fileID: 1563134991444761607}
   m_Layer: 0
   m_Name: Shooter
   m_TagString: Untagged
@@ -113,11 +114,21 @@ MonoBehaviour:
   ContactDamage: 5
   ContactRadius: 0.6
   ContactTickInterval: 1
+--- !u!114 &1563134991444761607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100785456706693687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5909643275194a4aa68dabfbe913173, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShooterEnemyAuthoring
   ProjectilePrefab: {fileID: 480459845447746610, guid: 9e4fb6228f25a5c42a02f89171f05330, type: 3}
   AttackCooldown: 1.5
   PreferredRange: 5
   ProjectileDamage: 10
   ProjectileSpeed: 6
   ProjectileHitRadius: 0.2
-  ExplodeRadius: 1.5
-  ExplodeDamage: 25

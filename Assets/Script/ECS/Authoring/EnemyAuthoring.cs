@@ -19,17 +19,7 @@ public class EnemyAuthoring : MonoBehaviour
     public float ContactRadius = 0.6f;
     public float ContactTickInterval = 1f;
 
-    [Header("Shooter - chỉ dùng khi Behavior = Shooter")]
-    public GameObject ProjectilePrefab;
-    public float AttackCooldown = 1.5f;
-    public float PreferredRange = 5f;
-    public float ProjectileDamage = 10f;
-    public float ProjectileSpeed = 6f;
-    public float ProjectileHitRadius = 0.2f;
 
-    [Header("Bomber - chỉ dùng khi Behavior = Bomber")]
-    public float ExplodeRadius = 1.5f;
-    public float ExplodeDamage = 25f;
 
     class Baker : Baker<EnemyAuthoring>
     {
@@ -58,38 +48,15 @@ public class EnemyAuthoring : MonoBehaviour
                 Timer = 0f
             });
 
-            switch (authoring.Behavior)
+            var behaviors = authoring.GetComponents<IEnemyBehaviorAuthoring>();
+            if (behaviors.Length > 1)
             {
-                case EnemyBehaviorType.Shooter:
-                    if (authoring.ProjectilePrefab == null)
-                    {
-                        Debug.LogError($"[EnemyAuthoring] Behavior=Shooter nhưng chưa gán ProjectilePrefab trên {authoring.name}", authoring);
-                        break;
-                    }
-                    AddComponent<ShooterTag>(entity);
-                    AddComponent(entity, new ShooterAttackData
-                    {
-                        Cooldown = authoring.AttackCooldown,
-                        Timer = 0f,
-                        PreferredRange = authoring.PreferredRange,
-                        Damage = authoring.ProjectileDamage,
-                        ProjectileSpeed = authoring.ProjectileSpeed,
-                        ProjectileHitRadius = authoring.ProjectileHitRadius,
-                        ProjectilePrefab = GetEntity(authoring.ProjectilePrefab, TransformUsageFlags.Dynamic)
-                    });
-                    break;
-
-                case EnemyBehaviorType.Bomber:
-                    AddComponent<BomberTag>(entity);
-                    AddComponent(entity, new BomberExplodeData
-                    {
-                        ExplodeRadius = authoring.ExplodeRadius,
-                        ExplodeDamage = authoring.ExplodeDamage
-                    });
-                    break;
-
-                // Chaser & Tank: không thêm component nào — dùng chung EnemyChaseJob,
-                // khác biệt chỉ nằm ở MoveSpeed/MaxHP đặt trong Inspector của từng prefab.
+                Debug.LogWarning($"[EnemyAuthoring] {authoring.name} đang gắn {behaviors.Length} behavior cùng lúc — hiện chưa hỗ trợ kết hợp nhiều behavior trên 1 enemy.", authoring);
+            }
+           foreach (var behavior in behaviors)
+           {
+                DependsOn(behavior as Object); // đảm bảo incremental baking re-chạy khi số liệu trong behavior này đổi
+                behavior.Bake(this, entity);
             }
         }
     }
