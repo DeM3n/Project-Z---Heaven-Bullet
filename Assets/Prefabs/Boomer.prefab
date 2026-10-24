@@ -107,7 +107,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAuthoring
   MoveSpeed: 4
-  MaxHP: 50
+  MaxHP: 46
   ExpOrbPrefab: {fileID: 4710301940314887447, guid: 64c9060452aa49fbb8d13b2dc2682dcc, type: 3}
   ExpReward: 3
   DropChance: 0.35

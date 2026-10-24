@@ -418,9 +418,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FlyingSwordSkillAuthoring
   SwordPrefab: {fileID: 6422362882192681001, guid: 27ac59a03a592114f96a4c5a6843017d, type: 3}
-  BaseDamage: 18
-  RushSpeed: 12
-  ReturnSpeed: 14
+  BaseDamage: 13.5
+  RushSpeed: 9.45
+  ReturnSpeed: 11
   OrbitRadius: 2.2
   OrbitSpeed: 3.5
   AttackInterval: 0.5
@@ -429,7 +429,153 @@ MonoBehaviour:
   MaxLeashRange: 7.5
   UltimateCooldown: 6
   AoeRadius: 3.5
-  AoeDamage: 120
+  AoeDamage: 85
+--- !u!1 &1064216964
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1064216965}
+  - component: {fileID: 1064216966}
+  - component: {fileID: 1064216967}
+  m_Layer: 0
+  m_Name: Skill_slashsword
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1064216965
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1064216964}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1064216966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1064216964}
+  serializedVersion: 0
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d3b014f5f0ea424cac5a12b5f8be88c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkillAuthoring
+  OwnerAuthoring: {fileID: 144040417}
+  SkillId: slash_sword
+  Level: 1
+  Cooldown: 4
+--- !u!114 &1064216967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1064216964}
+  serializedVersion: 0
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c10b23f81e44f8ab45e01928374a504, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlashSwordSkillAuthoring
+  SwordPrefab: {fileID: 6422362882192681001, guid: 7c10b23f81e44f8ab45e01928374a511, type: 3}
+  SwordWavePrefab: {fileID: 5422362882192681375, guid: 7c10b23f81e44f8ab45e01928374a512, type: 3}
+  BaseDamage: 38
+  ApproachSpeed: 13
+  ReturnSpeed: 14
+  SlashRadius: 2
+  SlashAngleDeg: 140
+  DetectRange: 7
+  WaveSpeed: 15
+  WaveDuration: 1.6
+  WaveDamage: 65
+  WaveRadius: 0.8
+--- !u!1 &1164216964
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1164216965}
+  - component: {fileID: 1164216966}
+  - component: {fileID: 1164216967}
+  m_Layer: 0
+  m_Name: Skill_swordfusion
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1164216965
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1164216964}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1164216966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1164216964}
+  serializedVersion: 0
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d3b014f5f0ea424cac5a12b5f8be88c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkillAuthoring
+  OwnerAuthoring: {fileID: 144040417}
+  SkillId: sword_fusion
+  Level: 0
+  Cooldown: 5.5
+--- !u!114 &1164216967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1164216964}
+  serializedVersion: 0
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0510100000000000000000000000004, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SwordFusionSkillAuthoring
+  GiantSwordPrefab: {fileID: 6422362882192681001, guid: f0510100000000000000000000000007, type: 3}
+  SwordWavePrefab: {fileID: 5422362882192681375, guid: 7c10b23f81e44f8ab45e01928374a512, type: 3}
+  ImpactDamage: 220
+  ImpactRadius: 4.5
+  DetectRange: 7.5
+  WaveDamage: 75
+  WaveSpeed: 10
+  WaveLifetime: 1.8
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -438,3 +584,7 @@ SceneRoots:
   - {fileID: 858495199}
   - {fileID: 764216965}
   - {fileID: 964216965}
+  - {fileID: 1064216965}
+  - {fileID: 1164216965}
+
+
