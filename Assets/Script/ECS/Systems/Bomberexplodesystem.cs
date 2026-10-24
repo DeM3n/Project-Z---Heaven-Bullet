@@ -22,7 +22,7 @@ public partial struct BomberExplodeSystem : ISystem
         {
             if (health.ValueRO.CurrentHP <= 0f)
             { 
-                Debug.Log("[BomberExplodeSystem] Bomber đã chết TRƯỚC khi kịp nổ (có thể bị Player bắn chết trước đó).");
+                Debug.Log("[BomberExplodeSystem] Bomber died BEFORE detonating.");
                 continue; // đã chết, để DeathCleanupSystem xử lý
             }
             float distSq = math.distancesq(transform.ValueRO.Position, playerTransform.Position);
@@ -30,7 +30,7 @@ public partial struct BomberExplodeSystem : ISystem
             
 
             if (distSq > radiusSq) continue;
-            Debug.Log($"[BomberExplodeSystem] NỔ! Gây {explode.ValueRO.ExplodeDamage} damage lên Player.");
+            Debug.Log($"[BomberExplodeSystem] BOOM! Dealt {explode.ValueRO.ExplodeDamage} damage to Player.");
             totalDamage += explode.ValueRO.ExplodeDamage;
             health.ValueRW.CurrentHP = 0f; // "tự chết" — DeathCleanupSystem lo phần rớt EXP/loot/destroy
         }

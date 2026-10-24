@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerAuthoring : MonoBehaviour
 {
     public float MoveSpeed = 5f;
-    public int StartingExpToNextLevel = 10;
+    public int StartingExpToNextLevel = 25;
     public float PickupRange = 2f;
     public float MaxHP = 100f;
 

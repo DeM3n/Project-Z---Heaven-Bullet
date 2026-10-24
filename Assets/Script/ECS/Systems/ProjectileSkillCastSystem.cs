@@ -30,7 +30,10 @@ public partial struct ProjectileSkillCastSystem : ISystem
         {
             runtime.ValueRW.Timer -= dt;
             if (runtime.ValueRO.Timer > 0f) continue;
-            runtime.ValueRW.Timer = runtime.ValueRO.Cooldown;
+
+            int level = math.max(1, runtime.ValueRO.Level);
+            float scaledCooldown = runtime.ValueRO.Cooldown * math.pow(0.88f, level - 1);
+            runtime.ValueRW.Timer = scaledCooldown;
 
             if (!state.EntityManager.Exists(owner.ValueRO.Owner)) continue;
             float3 casterPos = state.EntityManager.GetComponentData<LocalTransform>(owner.ValueRO.Owner).Position;
@@ -39,8 +42,9 @@ public partial struct ProjectileSkillCastSystem : ISystem
                 continue; // hết cooldown nhưng chưa có mục tiêu → bỏ lượt bắn này
 
             float2 baseDir = math.normalizesafe((targetPos - casterPos).xy);
-            int count = math.max(1, skill.ValueRO.ProjectileCount);
-            float totalSpread = math.radians(skill.ValueRO.SpreadAngleDegrees);
+            int count = math.max(1, skill.ValueRO.ProjectileCount + (level - 1));
+            float scaledDamage = skill.ValueRO.ProjectileDamage * (1f + (level - 1) * 0.25f);
+            float totalSpread = math.radians(math.min(120f, skill.ValueRO.SpreadAngleDegrees + (level - 1) * 8f));
             float startAngle = -totalSpread * 0.5f;
             float angleStep = count > 1 ? totalSpread / (count - 1) : 0f;
 
@@ -52,7 +56,7 @@ public partial struct ProjectileSkillCastSystem : ISystem
                 ecb.SetComponent(projectile, LocalTransform.FromPosition(casterPos));
                 ecb.SetComponent(projectile, new MovementData { Direction = dir, MoveSpeed = skill.ValueRO.ProjectileSpeed });
                 ecb.SetComponent(projectile, new ProjectileLifetimeData { TimeRemaining = skill.ValueRO.ProjectileLifetime });
-                ecb.SetComponent(projectile, new DamageOnContactData { Damage = skill.ValueRO.ProjectileDamage, HitRadius = skill.ValueRO.ProjectileHitRadius });
+                ecb.SetComponent(projectile, new DamageOnContactData { Damage = scaledDamage, HitRadius = skill.ValueRO.ProjectileHitRadius });
             }
         }
 

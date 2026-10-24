@@ -17,13 +17,14 @@ public partial struct LevelUpSystem : ISystem
         {
             level.CurrentExp -= level.ExpToNextLevel;
             level.Level += 1;
-            level.ExpToNextLevel = Mathf.RoundToInt(level.ExpToNextLevel * 1.2f); // soft-exponential theo GDD 5.1
+            // Scale lượng EXP cần thiết: x1.35 + 10 giúp giãn nhịp độ lên cấp, cân bằng độ khó theo thời gian
+            level.ExpToNextLevel = Mathf.RoundToInt(level.ExpToNextLevel * 1.35f + 10f);
             leveledUp = true;
         }
 
         if (leveledUp)
         {
-            Debug.Log($"[LevelUp] Player lên Level {level.Level}! EXP: {level.CurrentExp}/{level.ExpToNextLevel}");
+            Debug.Log($"[LevelUp] Player reached Level {level.Level}! EXP: {level.CurrentExp}/{level.ExpToNextLevel}");
             SystemAPI.SetComponent(playerEntity, level);
         }
     }

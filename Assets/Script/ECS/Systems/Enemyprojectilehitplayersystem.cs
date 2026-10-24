@@ -34,7 +34,7 @@ public partial struct EnemyProjectileHitPlayerSystem : ISystem
         {
             playerHealth.CurrentHP -= totalDamage;
             SystemAPI.SetComponent(playerEntity, playerHealth);
-            Debug.Log($"[EnemyProjectileHitPlayerSystem] Player bị trừ {totalDamage} HP do trúng đạn Enemy (còn lại {playerHealth.CurrentHP}/{playerHealth.MaxHP})");
+            Debug.Log($"[EnemyProjectileHitPlayerSystem] Player took {totalDamage} damage from Enemy projectile (Remaining HP: {playerHealth.CurrentHP}/{playerHealth.MaxHP})");
         }
 
         ecb.Playback(state.EntityManager);

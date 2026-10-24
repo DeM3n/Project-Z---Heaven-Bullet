@@ -36,7 +36,7 @@ public partial struct PlayerContactDamageSystem : ISystem
         {
             playerHealth.CurrentHP -= totalDamage;
             SystemAPI.SetComponent(playerEntity, playerHealth);
-            Debug.Log($"[PlayerContactDamageSystem] Player bị trừ {totalDamage} HP do va chạm Enemy (còn lại {playerHealth.CurrentHP}/{playerHealth.MaxHP})");
+            Debug.Log($"[PlayerContactDamageSystem] Player took {totalDamage} damage from Enemy contact (Remaining HP: {playerHealth.CurrentHP}/{playerHealth.MaxHP})");
         }
     }
 }

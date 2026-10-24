@@ -21,7 +21,7 @@ public partial struct PlayerDeathCheckSystem : ISystem
             if (health.ValueRO.CurrentHP > 0f) continue;
 
             ecb.AddComponent<PlayerDeadTag>(entity); // đánh dấu đã chết, tránh log lặp lại mỗi frame
-            Debug.Log("[PlayerDeathCheckSystem] GAME OVER - Player đã chết.");
+            Debug.Log("[PlayerDeathCheckSystem] GAME OVER - Player has died.");
         }
 
         ecb.Playback(state.EntityManager);

@@ -207,7 +207,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -225,7 +225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAuthoring
   MoveSpeed: 5
-  StartingExpToNextLevel: 10
+  StartingExpToNextLevel: 25
   PickupRange: 2
   MaxHP: 100
 --- !u!1 &764216964
@@ -340,9 +340,96 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2f37645d5c6be14490324a5011b8985, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnerAuthoring
-  EnemyPrefab: {fileID: 100785456706693687, guid: e75a71f9a72d2a44f9f1f47618a78021, type: 3}
-  SpawnInterval: 5
+  EnemyPool:
+  - Name: 
+    Prefab: {fileID: 100785456706693687, guid: ff0799e8377945045ab42fcaa332483a, type: 3}
+    Weight: 28
+  - Name: 
+    Prefab: {fileID: 100785456706693687, guid: a337d02e98bb6204aa48c6a39de0afbe, type: 3}
+    Weight: 42
+  - Name: 
+    Prefab: {fileID: 100785456706693687, guid: e75a71f9a72d2a44f9f1f47618a78021, type: 3}
+    Weight: 50
+  - Name: 
+    Prefab: {fileID: 100785456706693687, guid: 26f0600c19c5c754aaf214b8185b6878, type: 3}
+    Weight: 20
+  SpawnInterval: 1.5
   SpawnRadius: 10
+  CountPerSpawn: 2
+--- !u!1 &964216964
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 964216965}
+  - component: {fileID: 964216966}
+  - component: {fileID: 964216967}
+  m_Layer: 0
+  m_Name: Skill_flyingsword
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &964216965
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964216964}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &964216966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964216964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d3b014f5f0ea424cac5a12b5f8be88c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkillAuthoring
+  OwnerAuthoring: {fileID: 144040417}
+  SkillId: flying_sword
+  Level: 1
+  Cooldown: 2.2
+--- !u!114 &964216967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964216964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: def38b6cbfa834a4bb1de11ce69d3e16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FlyingSwordSkillAuthoring
+  SwordPrefab: {fileID: 6422362882192681001, guid: 27ac59a03a592114f96a4c5a6843017d, type: 3}
+  BaseDamage: 18
+  RushSpeed: 12
+  ReturnSpeed: 14
+  OrbitRadius: 2.2
+  OrbitSpeed: 3.5
+  AttackInterval: 0.5
+  HitRadius: 0.5
+  DetectRange: 6.5
+  MaxLeashRange: 7.5
+  UltimateCooldown: 6
+  AoeRadius: 3.5
+  AoeDamage: 120
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -350,3 +437,4 @@ SceneRoots:
   - {fileID: 144040419}
   - {fileID: 858495199}
   - {fileID: 764216965}
+  - {fileID: 964216965}
