@@ -126,6 +126,20 @@ public partial struct FlyingSwordSkillSystem : ISystem
                 sword.ValueRW.UltimateTimer -= dt;
             }
 
+            // Đồng bộ kích thước kiếm theo trạng thái Ultimate
+            if (sword.ValueRO.IsUltimate)
+            {
+                transform.ValueRW.Scale = 1.75f; // Cú lướt Ultimate: Kiếm hóa to khổng lồ
+            }
+            else if (level >= 4 && sword.ValueRO.UltimateTimer <= 0f)
+            {
+                transform.ValueRW.Scale = 1.25f; // Ultimate đã sẵn sàng: Kiếm sáng rực và hơi to hơn
+            }
+            else
+            {
+                transform.ValueRW.Scale = 1.0f;  // Trạng thái bình thường
+            }
+
             switch (sword.ValueRO.State)
             {
                 case 0: // ================== PHA 1: IDLE (Orbiting quanh Player) ==================
@@ -489,6 +503,14 @@ public partial struct FlyingSwordSkillSystem : ISystem
                 ecb.DestroyEntity(projEntity);
             }
         }
+
+        // Tạo event để Hybrid Bridge render hiệu ứng Shockwave Hitbox trực quan
+        Entity blastEvent = ecb.CreateEntity();
+        ecb.AddComponent(blastEvent, new FlyingSwordAoeBlastEvent
+        {
+            Position = centerPos,
+            Radius = aoeRadius
+        });
     }
 
     // --- Helper: Quét Spatial Grid tìm cụm quái đông nhất TRONG TẦM CAMERA ---

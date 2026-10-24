@@ -69,6 +69,8 @@ public static class GameLocalization
     public static string SelectButtonText => Get("SELECT", "CHỌN NÂNG CẤP");
     public static string LangButtonText => Get("🌐 EN", "🌐 VI");
     public static string LangHintText => Get("[L] Language", "[L] Ngôn ngữ");
+    public static string UltimateReadyText => Get("✦ ULTIMATE READY ✦", "✦ TUYỆT KỸ SẴN SÀNG ✦");
+    public static string UltimateCooldownText(float timer) => Get($"⚔ ULTIMATE: {timer:0.0}s", $"⚔ TUYỆT KỸ: {timer:0.0}s");
 
     // --- Perk Titles ---
     public static string FlyingSwordTitle => Get("FLYING SWORD", "PHI KIẾM HỘ THỂ");

@@ -42,3 +42,12 @@ public struct SwordHitTargetBuffer : IBufferElementData
 {
     public Entity Target;
 }
+
+/// <summary>
+/// Event thông báo vụ nổ AOE Ultimate Level 4 của Phi Kiếm để Hybrid Bridge render hiệu ứng Hitbox Shockwave
+/// </summary>
+public struct FlyingSwordAoeBlastEvent : IComponentData
+{
+    public float3 Position;
+    public float Radius;
+}

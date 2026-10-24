@@ -10,6 +10,9 @@ public class EnemyAuthoring : MonoBehaviour
     public float MaxHP = 30f;
     public GameObject ExpOrbPrefab;
     public int ExpReward = 5;
+    [Range(0f, 1f)]
+    [Tooltip("Tỉ lệ rớt ngọc EXP khi chết (0 = 0%, 1 = 100%)")]
+    public float DropChance = 0.5f;
 
     [Header("Hành vi")]
     public EnemyBehaviorType Behavior = EnemyBehaviorType.Chaser;
@@ -38,7 +41,8 @@ public class EnemyAuthoring : MonoBehaviour
             AddComponent(entity, new EnemyDeathDropData
             {
                 ExpOrbPrefab = GetEntity(authoring.ExpOrbPrefab, TransformUsageFlags.Dynamic),
-                ExpReward = authoring.ExpReward
+                ExpReward = authoring.ExpReward,
+                DropChance = Mathf.Clamp01(authoring.DropChance)
             });
             AddComponent(entity, new EnemyContactDamageData
             {

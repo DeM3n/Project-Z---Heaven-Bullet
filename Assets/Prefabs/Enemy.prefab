@@ -109,3 +109,4 @@ MonoBehaviour:
   MaxHP: 30
   ExpOrbPrefab: {fileID: 4710301940314887447, guid: 398513bdfe0e50d4cacfe62af66610c3, type: 3}
   ExpReward: 5
+  DropChance: 0.55

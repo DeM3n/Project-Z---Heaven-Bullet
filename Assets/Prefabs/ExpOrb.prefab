@@ -105,3 +105,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a2d39c70192d934d81fe8a2b33437b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExpOrbAuthoring
+  Tier: 1
+  DefaultExpValue: 5
