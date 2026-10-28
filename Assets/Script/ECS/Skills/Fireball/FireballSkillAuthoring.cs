@@ -22,7 +22,7 @@ public class FireballSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
     public float SubExplosionRadius = 1.2f;
 
     [Header("Chỉ số Vùng Lửa Thiêu Đốt Cấp 4 (Scorched Fire Zone DOT)")]
-    public float FireZoneRadius = 2.5f;
+    public float FireZoneRadius = 1.8f;
     public float FireZoneDuration = 3.5f;
     public float FireZoneTickInterval = 0.25f;
     public float FireZoneDamagePerTick = 16f;

@@ -40,6 +40,8 @@ public class FireballVisualBridge : MonoBehaviour
     private int _zoneCounter;
 
     private static Sprite _circleSprite;
+    private static Sprite _ringSprite;
+    private static Sprite _lavaCrackSprite;
 
     private class FireballVisualItem
     {
@@ -506,20 +508,169 @@ public class FireballVisualBridge : MonoBehaviour
         _circleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
         return _circleSprite;
     }
+
+    public static Sprite GetRingSprite()
+    {
+        if (_ringSprite != null) return _ringSprite;
+
+        int size = 128;
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Bilinear;
+        float center = size * 0.5f;
+
+        // Vành đai tròn rỗng (Hollow Ring) với viền mịn màng Anti-Aliased
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(center, center)) / center;
+                if (dist > 1.0f || dist < 0.70f)
+                {
+                    tex.SetPixel(x, y, Color.clear);
+                }
+                else
+                {
+                    // Độ dày từ 0.70 đến 1.0, đỉnh cao nhất ở giữa (0.85)
+                    float normalized = (dist - 0.70f) / (1.0f - 0.70f); // 0 -> 1
+                    float bell = Mathf.Sin(normalized * Mathf.PI);
+                    float alpha = Mathf.Pow(bell, 1.2f);
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+        }
+        tex.Apply();
+        _ringSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+        return _ringSprite;
+    }
+
+    public static Sprite GetLavaCrackSprite()
+    {
+        if (_lavaCrackSprite != null) return _lavaCrackSprite;
+
+        int size = 128;
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Bilinear;
+
+        Color32[] pixels = new Color32[size * size];
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            pixels[i] = new Color32(0, 0, 0, 0);
+        }
+
+        Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
+        float maxR = size * 0.46f;
+
+        // Cố định seed để luôn sinh mạng nứt dung nham hoàn hảo giống nhau
+        UnityEngine.Random.InitState(1337);
+
+        int numBranches = 8;
+        for (int b = 0; b < numBranches; b++)
+        {
+            float baseAngle = (b / (float)numBranches) * Mathf.PI * 2f + UnityEngine.Random.Range(-0.15f, 0.15f);
+            Vector2 p0 = center;
+
+            int steps = 4;
+            Vector2 prev = p0;
+            for (int s = 1; s <= steps; s++)
+            {
+                float t = s / (float)steps;
+                float r = maxR * (t * 0.85f + UnityEngine.Random.Range(0f, 0.15f));
+                float angle = baseAngle + UnityEngine.Random.Range(-0.25f, 0.25f);
+                Vector2 current = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * r;
+
+                float width = Mathf.Lerp(4.0f, 1.2f, t);
+                DrawFissureSegment(pixels, size, prev, current, width);
+
+                // Nhánh phụ rẽ ra ở đốt giữa
+                if (s == 2 && UnityEngine.Random.value > 0.3f)
+                {
+                    float forkSide = (b % 2 == 0) ? 1f : -1f;
+                    float forkAngle = angle + forkSide * UnityEngine.Random.Range(0.6f, 0.9f);
+                    float forkLen = maxR * UnityEngine.Random.Range(0.25f, 0.40f);
+                    Vector2 forkEnd = current + new Vector2(Mathf.Cos(forkAngle), Mathf.Sin(forkAngle)) * forkLen;
+                    DrawFissureSegment(pixels, size, current, forkEnd, width * 0.75f);
+                }
+
+                prev = current;
+            }
+        }
+
+        tex.SetPixels32(pixels);
+        tex.Apply();
+        _lavaCrackSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+        return _lavaCrackSprite;
+    }
+
+    private static void DrawFissureSegment(Color32[] pixels, int size, Vector2 p1, Vector2 p2, float width)
+    {
+        int minX = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(p1.x, p2.x) - width - 1));
+        int maxX = Mathf.Min(size - 1, Mathf.CeilToInt(Mathf.Max(p1.x, p2.x) + width + 1));
+        int minY = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(p1.y, p2.y) - width - 1));
+        int maxY = Mathf.Min(size - 1, Mathf.CeilToInt(Mathf.Max(p1.y, p2.y) + width + 1));
+
+        Vector2 ab = p2 - p1;
+        float ab2 = Vector2.Dot(ab, ab);
+
+        Color32 coreCol = new Color32(255, 245, 150, 255); // Lõi vàng sáng
+        Color32 glowCol = new Color32(255, 80, 10, 200);   // Viền đỏ cam magma
+
+        for (int y = minY; y <= maxY; y++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                Vector2 p = new Vector2(x + 0.5f, y + 0.5f);
+                float t = ab2 > 0.0001f ? Mathf.Clamp01(Vector2.Dot(p - p1, ab) / ab2) : 0f;
+                Vector2 closest = p1 + t * ab;
+                float dist = Vector2.Distance(p, closest);
+
+                if (dist <= width)
+                {
+                    int idx = y * size + x;
+                    float normDist = dist / width; // 0 (tâm dòng) -> 1 (mép ngoài)
+
+                    Color32 c;
+                    if (normDist <= 0.35f)
+                    {
+                        c = coreCol;
+                    }
+                    else
+                    {
+                        float blend = (normDist - 0.35f) / 0.65f;
+                        c = new Color32(
+                            (byte)Mathf.Lerp(coreCol.r, glowCol.r, blend),
+                            (byte)Mathf.Lerp(coreCol.g, glowCol.g, blend),
+                            (byte)Mathf.Lerp(coreCol.b, glowCol.b, blend),
+                            (byte)(glowCol.a * (1f - blend))
+                        );
+                    }
+
+                    Color32 old = pixels[idx];
+                    pixels[idx] = new Color32(
+                        (byte)Mathf.Max(old.r, c.r),
+                        (byte)Mathf.Max(old.g, c.g),
+                        (byte)Mathf.Max(old.b, c.b),
+                        (byte)Mathf.Max(old.a, c.a)
+                    );
+                }
+            }
+        }
+    }
 }
 
 /// <summary>
-/// Hiệu ứng sóng xung kích nổ nhiệt (Explosion Shockwave) của Cầu Lửa
+/// Hiệu ứng sóng xung kích nổ nhiệt (Explosion Shockwave) của Cầu Lửa.
+/// 100% GPU-Accelerated với SpriteRenderer, không tốn bất kỳ CPU Mesh recalculation nào!
 /// </summary>
 public class FireballExplosionEffect : MonoBehaviour
 {
-    private LineRenderer _outerRing;
+    private SpriteRenderer _outerRing;
     private SpriteRenderer _innerBlast;
     private float _maxRadius;
     private float _duration = 0.40f;
     private float _elapsed = 0f;
     private bool _isMain;
-    private const int SEGMENTS = 36;
 
     private void Awake()
     {
@@ -527,19 +678,19 @@ public class FireballExplosionEffect : MonoBehaviour
                     ?? Shader.Find("Sprites/Default");
         Material mat = shader != null ? new Material(shader) : null;
 
-        _outerRing = gameObject.AddComponent<LineRenderer>();
-        _outerRing.useWorldSpace = false;
-        _outerRing.positionCount = SEGMENTS + 1;
-        _outerRing.loop = true;
-        _outerRing.sortingOrder = 9;
-        if (mat != null) _outerRing.material = mat;
-
         var blastObj = new GameObject("InnerBlast");
         blastObj.transform.SetParent(transform, false);
         _innerBlast = blastObj.AddComponent<SpriteRenderer>();
         _innerBlast.sprite = FireballVisualBridge.GetCircleSprite();
         _innerBlast.sortingOrder = 8;
         if (mat != null) _innerBlast.material = mat;
+
+        var ringObj = new GameObject("OuterRing");
+        ringObj.transform.SetParent(transform, false);
+        _outerRing = ringObj.AddComponent<SpriteRenderer>();
+        _outerRing.sprite = FireballVisualBridge.GetRingSprite();
+        _outerRing.sortingOrder = 9;
+        if (mat != null) _outerRing.material = mat;
     }
 
     public void Setup(Vector3 position, float radius, float duration, bool isMain)
@@ -572,29 +723,21 @@ public class FireballExplosionEffect : MonoBehaviour
         float currentRadius = Mathf.Lerp(0.2f, _maxRadius, easeT);
         float alpha = Mathf.Clamp01((1f - t) * 1.5f);
 
-        // Vòng ngoài
+        // Vòng shockwave nổ bung
         if (_outerRing != null)
         {
-            _outerRing.widthMultiplier = Mathf.Lerp(_isMain ? 0.22f : 0.12f, 0.02f, t);
+            _outerRing.transform.localScale = Vector3.one * (currentRadius * 2.1f);
             Color ringColor = Color.Lerp(
                 new Color(1f, 0.95f, 0.4f, alpha),
                 new Color(1f, 0.25f, 0.05f, alpha * 0.8f),
                 t);
-            _outerRing.startColor = ringColor;
-            _outerRing.endColor = ringColor;
-
-            for (int i = 0; i <= SEGMENTS; i++)
-            {
-                float angle = (i / (float)SEGMENTS) * Mathf.PI * 2f;
-                Vector3 pt = new Vector3(Mathf.Cos(angle) * currentRadius, Mathf.Sin(angle) * currentRadius, 0f);
-                _outerRing.SetPosition(i, pt);
-            }
+            _outerRing.color = ringColor;
         }
 
         // Đĩa sáng nổ nhiệt bên trong
         if (_innerBlast != null)
         {
-            _innerBlast.transform.localScale = Vector3.one * (currentRadius * 2f);
+            _innerBlast.transform.localScale = Vector3.one * (currentRadius * 1.8f);
             Color blastColor = Color.Lerp(
                 new Color(1f, 0.9f, 0.5f, alpha * 0.85f),
                 new Color(0.9f, 0.2f, 0.05f, 0f),
@@ -608,24 +751,22 @@ public class FireballExplosionEffect : MonoBehaviour
 /// Hiệu ứng Vùng Lửa Thiêu Đốt (Scorched Fire Zone) trên mặt đất ở Cấp độ 4:
 /// 1. Lớp đất cháy sém đen khói (Charred Earth Decal)
 /// 2. Lòng hồ dung nham rực lửa (Magma Pool)
-/// 3. Vành đai lửa sóng động (Turbulent Wave Flame Border)
-/// 4. Các vết nứt dung nham phân nhánh ngẫu nhiên (Procedural Magma Fissures)
-/// 5. Hệ hạt tàn lửa bay lượn bốc lên trời (Rising Sparks & Embers ParticleSystem)
-/// 100% được sinh bằng code C# thuần túy, hoàn toàn KHÔNG cần bất kỳ asset/texture bên ngoài!
+/// 3. Lưới nứt toác dung nham rực sáng (Procedural Magma Fissures Sprite - GPU Accelerated)
+/// 4. Lớp vân nứt phụ xoay góc tạo độ chi tiết cao (Detail Fissures)
+/// 5. Lõi nhiệt bốc cháy bên trong (Inner Ember)
+/// 6. Vành đai lửa xoay tròn lượn sóng động (Turbulent Border Aura)
+/// 7. Hệ hạt tàn lửa bay lượn bốc lên trời (Rising Sparks & Embers ParticleSystem)
+/// 100% GPU-accelerated với SpriteRenderer, loại bỏ triệt để LineRenderer CPU bottleneck!
 /// </summary>
 public class FireZoneVisualEffect : MonoBehaviour
 {
-    private LineRenderer _borderRing;
     private SpriteRenderer _charredGround;
     private SpriteRenderer _groundFire;
+    private SpriteRenderer _cracksRenderer;
+    private SpriteRenderer _cracksDetail;
     private SpriteRenderer _innerEmber;
+    private SpriteRenderer _borderAura;
     private ParticleSystem _emberParticles;
-    private readonly List<LineRenderer> _crackLines = new List<LineRenderer>();
-    private const int NUM_MAIN_CRACKS = 6;
-    private const int NUM_FORK_CRACKS = 6;
-    private const int NUM_CROSS_CRACKS = 4;
-    private const int TOTAL_CRACKS = NUM_MAIN_CRACKS + NUM_FORK_CRACKS + NUM_CROSS_CRACKS; // 16 nhánh kết nối
-    private const int SEGMENTS = 48;
     private float _radius;
 
     private void Awake()
@@ -650,36 +791,40 @@ public class FireZoneVisualEffect : MonoBehaviour
         _groundFire.sortingOrder = 2;
         if (mat != null) _groundFire.material = mat;
 
-        // 3. Lõi nhiệt bốc cháy bên trong (Inner Ember)
+        // 3. Mạng lưới các vết nứt dung nham nứt toác (Lava Fissures - GPU Sprite)
+        var crackObj = new GameObject("LavaCracks");
+        crackObj.transform.SetParent(transform, false);
+        _cracksRenderer = crackObj.AddComponent<SpriteRenderer>();
+        _cracksRenderer.sprite = FireballVisualBridge.GetLavaCrackSprite();
+        _cracksRenderer.sortingOrder = 3;
+        if (mat != null) _cracksRenderer.material = mat;
+
+        // 4. Lớp vết nứt phụ xoay lệch góc tăng độ dày đặc
+        var crackDetailObj = new GameObject("LavaCracksDetail");
+        crackDetailObj.transform.SetParent(transform, false);
+        crackDetailObj.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        _cracksDetail = crackDetailObj.AddComponent<SpriteRenderer>();
+        _cracksDetail.sprite = FireballVisualBridge.GetLavaCrackSprite();
+        _cracksDetail.sortingOrder = 3;
+        if (mat != null) _cracksDetail.material = mat;
+
+        // 5. Lõi nhiệt bốc cháy bên trong (Inner Ember)
         var emberObj = new GameObject("InnerEmber");
         emberObj.transform.SetParent(transform, false);
         _innerEmber = emberObj.AddComponent<SpriteRenderer>();
         _innerEmber.sprite = FireballVisualBridge.GetCircleSprite();
-        _innerEmber.sortingOrder = 3;
+        _innerEmber.sortingOrder = 4;
         if (mat != null) _innerEmber.material = mat;
 
-        // 4. Mạng lưới các vết nứt dung nham nứt toác trên mặt đất (Nhánh chính + Nhánh rẽ + Cầu nối ngang)
-        for (int i = 0; i < TOTAL_CRACKS; i++)
-        {
-            var crackObj = new GameObject($"LavaCrack_{i}");
-            crackObj.transform.SetParent(transform, false);
-            var line = crackObj.AddComponent<LineRenderer>();
-            line.useWorldSpace = false;
-            line.sortingOrder = 3;
-            if (mat != null) line.material = mat;
-            _crackLines.Add(line);
-        }
+        // 6. Viền hào quang lửa ngoài (Border Aura Ring)
+        var borderObj = new GameObject("BorderAura");
+        borderObj.transform.SetParent(transform, false);
+        _borderAura = borderObj.AddComponent<SpriteRenderer>();
+        _borderAura.sprite = FireballVisualBridge.GetRingSprite();
+        _borderAura.sortingOrder = 5;
+        if (mat != null) _borderAura.material = mat;
 
-        // 5. Viền ngoài lửa bập bùng (Turbulent Flame Border)
-        _borderRing = gameObject.AddComponent<LineRenderer>();
-        _borderRing.useWorldSpace = false;
-        _borderRing.positionCount = SEGMENTS + 1;
-        _borderRing.loop = true;
-        _borderRing.sortingOrder = 4;
-        _borderRing.widthMultiplier = 0.08f;
-        if (mat != null) _borderRing.material = mat;
-
-        // 6. Hệ hạt tàn lửa bay bổng lên trời (Rising Embers Particle System)
+        // 7. Hệ hạt tàn lửa bay bổng lên trời (Rising Embers Particle System)
         InitParticleSystem(shader);
     }
 
@@ -688,6 +833,7 @@ public class FireZoneVisualEffect : MonoBehaviour
         var psObj = new GameObject("EmberParticles");
         psObj.transform.SetParent(transform, false);
         _emberParticles = psObj.AddComponent<ParticleSystem>();
+        _emberParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var psr = psObj.GetComponent<ParticleSystemRenderer>();
 
         if (shader != null)
@@ -696,20 +842,20 @@ public class FireZoneVisualEffect : MonoBehaviour
             pMat.mainTexture = FireballVisualBridge.GetCircleSprite().texture;
             psr.material = pMat;
         }
-        psr.sortingOrder = 5;
+        psr.sortingOrder = 6;
 
         var main = _emberParticles.main;
         main.duration = 1.0f;
         main.loop = true;
         main.playOnAwake = false;
-        main.startLifetime = new ParticleSystem.MinMaxCurve(0.6f, 0.9f);
-        main.startSpeed = new ParticleSystem.MinMaxCurve(0.4f, 1.3f);
-        main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.15f);
+        main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 0.8f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(0.3f, 1.0f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.14f);
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.gravityModifier = -0.3f; // Tự động bốc nổi lên trên
 
         var emission = _emberParticles.emission;
-        emission.rateOverTime = 22f;
+        emission.rateOverTime = 10f; // Nhẹ nhàng, êm ái
 
         var shape = _emberParticles.shape;
         shape.shapeType = ParticleSystemShapeType.Circle;
@@ -749,8 +895,6 @@ public class FireZoneVisualEffect : MonoBehaviour
         _radius = radius;
         gameObject.SetActive(true);
 
-        GenerateCracks(radius);
-
         if (_emberParticles != null)
         {
             var shape = _emberParticles.shape;
@@ -759,7 +903,7 @@ public class FireZoneVisualEffect : MonoBehaviour
             _emberParticles.Play();
         }
 
-        UpdateFlameBorder(radius, 1f, 1f);
+        UpdateVisuals(radius, 1f, 1f);
     }
 
     public void UpdatePositionAndRadius(Vector3 position, float radius, float durationRemaining)
@@ -770,180 +914,62 @@ public class FireZoneVisualEffect : MonoBehaviour
         float flicker = 0.85f + Mathf.Sin(Time.time * 12f) * 0.15f;
         float alpha = Mathf.Clamp01(durationRemaining * 2.2f); // Mờ dần khi sắp hết thời gian
 
-        // 1. Viền lửa nhấp nhô lượn sóng động
-        UpdateFlameBorder(radius, flicker, alpha);
+        UpdateVisuals(radius, flicker, alpha);
 
-        // 2. Lớp đất sém đen
-        if (_charredGround != null)
-        {
-            _charredGround.transform.localScale = Vector3.one * (_radius * 2.3f);
-            _charredGround.color = new Color(0.06f, 0.03f, 0.03f, 0.72f * alpha);
-        }
-
-        // 3. Vùng dung nham mặt đất
-        if (_groundFire != null)
-        {
-            float poolPulse = 1f + Mathf.Sin(Time.time * 6f) * 0.06f;
-            _groundFire.transform.localScale = Vector3.one * (_radius * 2.0f * poolPulse);
-            _groundFire.color = new Color(0.95f, 0.32f, 0.05f, 0.52f * flicker * alpha);
-        }
-
-        // 4. Lõi nhiệt bốc cháy bên trong
-        if (_innerEmber != null)
-        {
-            float emberPulse = 0.75f + Mathf.PingPong(Time.time * 4.5f, 0.25f);
-            _innerEmber.transform.localScale = Vector3.one * (_radius * 1.35f * emberPulse);
-            _innerEmber.color = new Color(1f, 0.88f, 0.25f, 0.7f * flicker * alpha);
-            _innerEmber.transform.Rotate(0f, 0f, 35f * Time.deltaTime);
-        }
-
-        // 5. Cập nhật các vết nứt dung nham
-        UpdateCracks(flicker, alpha);
-
-        // 6. Ngừng phun hạt khi sắp tắt
+        // Ngừng phun hạt khi sắp tắt
         if (_emberParticles != null && durationRemaining <= 0.25f && _emberParticles.isPlaying)
         {
             _emberParticles.Stop(false, ParticleSystemStopBehavior.StopEmitting);
         }
     }
 
-    private void GenerateCracks(float radius)
+    private void UpdateVisuals(float radius, float flicker, float alpha)
     {
-        if (_crackLines.Count < TOTAL_CRACKS) return;
-
-        Vector3[,] mainPoints = new Vector3[NUM_MAIN_CRACKS, 5];
-
-        // 1. Nhánh chính: 6 nhánh bắt đầu từ đúng tâm nổ (0,0) -> Nối liền nhau tại tâm
-        for (int i = 0; i < NUM_MAIN_CRACKS; i++)
+        // 1. Lớp đất sém đen
+        if (_charredGround != null)
         {
-            var line = _crackLines[i];
-            float baseAngle = (i / (float)NUM_MAIN_CRACKS) * Mathf.PI * 2f + UnityEngine.Random.Range(-0.15f, 0.15f);
-            line.positionCount = 5;
-
-            // Điểm 0: Ngay tâm (0,0) -> Tất cả nhánh chính đều chạm nhau tại tâm nổ!
-            mainPoints[i, 0] = Vector3.zero;
-            line.SetPosition(0, Vector3.zero);
-
-            // Điểm 1: Cự ly gần tâm
-            float dist1 = radius * UnityEngine.Random.Range(0.20f, 0.28f);
-            float angle1 = baseAngle + UnityEngine.Random.Range(-0.10f, 0.10f);
-            mainPoints[i, 1] = new Vector3(Mathf.Cos(angle1) * dist1, Mathf.Sin(angle1) * dist1, 0f);
-            line.SetPosition(1, mainPoints[i, 1]);
-
-            // Điểm 2: Cự ly trung bình
-            float dist2 = radius * UnityEngine.Random.Range(0.42f, 0.52f);
-            float angle2 = angle1 + UnityEngine.Random.Range(-0.15f, 0.15f);
-            mainPoints[i, 2] = new Vector3(Mathf.Cos(angle2) * dist2, Mathf.Sin(angle2) * dist2, 0f);
-            line.SetPosition(2, mainPoints[i, 2]);
-
-            // Điểm 3: Cự ly xa
-            float dist3 = radius * UnityEngine.Random.Range(0.65f, 0.74f);
-            float angle3 = angle2 + UnityEngine.Random.Range(-0.18f, 0.18f);
-            mainPoints[i, 3] = new Vector3(Mathf.Cos(angle3) * dist3, Mathf.Sin(angle3) * dist3, 0f);
-            line.SetPosition(3, mainPoints[i, 3]);
-
-            // Điểm 4: Đầu ngọn vết nứt mép ngoài
-            float dist4 = radius * UnityEngine.Random.Range(0.82f, 0.92f);
-            float angle4 = angle3 + UnityEngine.Random.Range(-0.22f, 0.22f);
-            mainPoints[i, 4] = new Vector3(Mathf.Cos(angle4) * dist4, Mathf.Sin(angle4) * dist4, 0f);
-            line.SetPosition(4, mainPoints[i, 4]);
+            _charredGround.transform.localScale = Vector3.one * (radius * 2.3f);
+            _charredGround.color = new Color(0.06f, 0.03f, 0.03f, 0.72f * alpha);
         }
 
-        // 2. Nhánh rẽ phụ: 6 nhánh tách ra từ thân các nhánh chính (Y-shaped Forks)
-        int crackIdx = NUM_MAIN_CRACKS;
-        for (int i = 0; i < NUM_FORK_CRACKS; i++, crackIdx++)
+        // 2. Vùng dung nham mặt đất
+        if (_groundFire != null)
         {
-            var line = _crackLines[crackIdx];
-            line.positionCount = 4;
-
-            // Rẽ từ điểm 1 hoặc điểm 2 của nhánh chính tương ứng
-            int attachIdx = (i % 2 == 0) ? 2 : 1;
-            Vector3 startPt = mainPoints[i, attachIdx];
-            line.SetPosition(0, startPt);
-
-            float baseAngle = Mathf.Atan2(startPt.y, startPt.x);
-            // Góc rẽ 35° đến 55° sang trái hoặc phải
-            float forkSide = (i % 2 == 0) ? 1f : -1f;
-            float forkAngle = baseAngle + forkSide * UnityEngine.Random.Range(0.6f, 0.95f);
-
-            float branchStep = radius * UnityEngine.Random.Range(0.16f, 0.22f);
-            Vector3 p1 = startPt + new Vector3(Mathf.Cos(forkAngle) * branchStep, Mathf.Sin(forkAngle) * branchStep, 0f);
-            line.SetPosition(1, p1);
-
-            float forkAngle2 = forkAngle + UnityEngine.Random.Range(-0.22f, 0.22f);
-            Vector3 p2 = p1 + new Vector3(Mathf.Cos(forkAngle2) * branchStep, Mathf.Sin(forkAngle2) * branchStep, 0f);
-            line.SetPosition(2, p2);
-
-            float forkAngle3 = forkAngle2 + UnityEngine.Random.Range(-0.25f, 0.25f);
-            Vector3 p3 = p2 + new Vector3(Mathf.Cos(forkAngle3) * (branchStep * 0.85f), Mathf.Sin(forkAngle3) * (branchStep * 0.85f), 0f);
-            line.SetPosition(3, p3);
+            float poolPulse = 1f + Mathf.Sin(Time.time * 6f) * 0.05f;
+            _groundFire.transform.localScale = Vector3.one * (radius * 2.0f * poolPulse);
+            _groundFire.color = new Color(0.95f, 0.32f, 0.05f, 0.52f * flicker * alpha);
         }
 
-        // 3. Cầu nứt ngang nối liền giữa 2 nhánh chính lân cận (Cross-connecting Bridges)
-        for (int k = 0; k < NUM_CROSS_CRACKS; k++, crackIdx++)
+        // 3. Mạng vết nứt chính
+        if (_cracksRenderer != null)
         {
-            var line = _crackLines[crackIdx];
-            line.positionCount = 3;
-
-            int branchA = k;
-            int branchB = (k + 1) % NUM_MAIN_CRACKS;
-
-            // Nối đốt 2 của nhánh A sang đốt 1 hoặc 2 của nhánh B
-            Vector3 ptA = mainPoints[branchA, 2];
-            Vector3 ptB = mainPoints[branchB, (k % 2 == 0) ? 2 : 1];
-
-            Vector3 midPt = Vector3.Lerp(ptA, ptB, 0.5f);
-            // Thêm độ lệch zíc zắc tự nhiên
-            float midOffset = radius * UnityEngine.Random.Range(-0.07f, 0.07f);
-            midPt += new Vector3(-Mathf.Sin(k), Mathf.Cos(k), 0f) * midOffset;
-
-            line.SetPosition(0, ptA);
-            line.SetPosition(1, midPt);
-            line.SetPosition(2, ptB);
+            _cracksRenderer.transform.localScale = Vector3.one * (radius * 2.05f);
+            _cracksRenderer.color = new Color(1f, 0.90f, 0.40f, 0.95f * flicker * alpha);
         }
-    }
 
-    private void UpdateCracks(float flicker, float alpha)
-    {
-        Color startCol = new Color(1f, 0.96f, 0.5f, 0.95f * flicker * alpha);
-        Color midCol = new Color(1f, 0.45f, 0.08f, 0.85f * flicker * alpha);
-        Color endCol = new Color(0.75f, 0.15f, 0.05f, 0.45f * flicker * alpha);
-
-        for (int i = 0; i < _crackLines.Count; i++)
+        // 4. Mạng vết nứt phụ
+        if (_cracksDetail != null)
         {
-            var line = _crackLines[i];
-            if (line == null) continue;
-
-            line.startColor = startCol;
-            line.endColor = (i < NUM_MAIN_CRACKS) ? endCol : midCol;
-
-            // Nhánh chính dày hơn, nhánh rẽ và cầu nối mỏng hơn
-            float baseW = (i < NUM_MAIN_CRACKS) ? 0.085f : 0.045f;
-            float breathe = (baseW + Mathf.Sin(Time.time * 8f + i * 0.7f) * 0.015f) * Mathf.Max(0.1f, alpha);
-            line.startWidth = breathe;
-            line.endWidth = (i < NUM_MAIN_CRACKS) ? 0.018f : 0.012f;
+            _cracksDetail.transform.localScale = Vector3.one * (radius * 1.85f);
+            _cracksDetail.color = new Color(1f, 0.45f, 0.08f, 0.70f * flicker * alpha);
         }
-    }
 
-    private void UpdateFlameBorder(float radius, float flicker, float alpha)
-    {
-        if (_borderRing == null) return;
-
-        Color borderColor = new Color(1f, 0.45f, 0.05f, 0.9f * flicker * alpha);
-        _borderRing.startColor = borderColor;
-        _borderRing.endColor = borderColor;
-        _borderRing.widthMultiplier = 0.09f + Mathf.Sin(Time.time * 10f) * 0.02f;
-
-        float time = Time.time;
-        for (int i = 0; i <= SEGMENTS; i++)
+        // 5. Lõi nhiệt bốc cháy bên trong (quay chậm)
+        if (_innerEmber != null)
         {
-            float angle = (i / (float)SEGMENTS) * Mathf.PI * 2f;
-            // Hiệu ứng sóng lửa bập bùng: kết hợp 2 tần số sóng sin/cos
-            float wave = Mathf.Sin(angle * 7f + time * 9f) * 0.08f
-                       + Mathf.Cos(angle * 13f - time * 13f) * 0.04f;
-            float r = radius * (1f + wave);
-            Vector3 pt = new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r, 0f);
-            _borderRing.SetPosition(i, pt);
+            float emberPulse = 0.75f + Mathf.PingPong(Time.time * 4.5f, 0.25f);
+            _innerEmber.transform.localScale = Vector3.one * (radius * 1.35f * emberPulse);
+            _innerEmber.color = new Color(1f, 0.88f, 0.25f, 0.70f * flicker * alpha);
+            _innerEmber.transform.Rotate(0f, 0f, -30f * Time.deltaTime);
+        }
+
+        // 6. Viền hào quang lửa ngoài (xoay nhẹ)
+        if (_borderAura != null)
+        {
+            float auraPulse = 1f + Mathf.Sin(Time.time * 8f) * 0.04f;
+            _borderAura.transform.localScale = Vector3.one * (radius * 2.15f * auraPulse);
+            _borderAura.color = new Color(1f, 0.45f, 0.05f, 0.85f * flicker * alpha);
+            _borderAura.transform.Rotate(0f, 0f, 25f * Time.deltaTime);
         }
     }
 }

@@ -24,8 +24,10 @@ public class GameHUDBridge : MonoBehaviour
     private EntityQuery _projectileSkillQuery;
     private EntityQuery _fireballSkillQuery;
     private EntityQuery _shieldSkillQuery;
+    private EntityQuery _chestEventQuery;
     private bool _initialized;
 
+    private static GameHUDBridge _instance;
     private int _lastPlayerLevel = 1;
     private int _pendingLevelUps = 0;
     private int _rerollsRemaining = 3;
@@ -51,6 +53,22 @@ public class GameHUDBridge : MonoBehaviour
 
     private Text _langButtonText;
     private Text _langHintText;
+
+    // --- Banner Notification UI ---
+    private GameObject _bannerObj;
+    private Text _bannerText;
+    private float _bannerTimer;
+
+    // --- Ancient Chest Popup UI ---
+    private GameObject _chestPanel;
+    private Text _chestTitleText;
+    private Text _chestSubText;
+    private Text _relicIconText;
+    private Text _relicNameText;
+    private Text _relicBadgeText;
+    private Text _relicDescText;
+    private Text _collectButtonText;
+    private RelicType _currentChestRelic;
 
     // Danh sách 3 Perk đang hiển thị trên popup hiện tại (để rebuild khi đổi ngôn ngữ)
     private readonly List<PerkType> _currentActivePerkTypes = new List<PerkType>();
@@ -93,6 +111,7 @@ public class GameHUDBridge : MonoBehaviour
 
     private void Awake()
     {
+        _instance = this;
         EnsureEventSystem();
         LoadSprites();
         BuildUI();
@@ -149,6 +168,9 @@ public class GameHUDBridge : MonoBehaviour
             ComponentType.ReadOnly<ShieldSkillTag>(),
             ComponentType.ReadWrite<SkillRuntimeData>());
 
+        _chestEventQuery = _entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<ChestOpenEvent>());
+
         _initialized = true;
         return true;
     }
@@ -174,6 +196,16 @@ public class GameHUDBridge : MonoBehaviour
     {
         var kb = Keyboard.current;
 
+        // Cập nhật Banner Notification
+        if (_bannerTimer > 0f)
+        {
+            _bannerTimer -= Time.unscaledDeltaTime;
+            if (_bannerTimer <= 0f && _bannerObj != null)
+            {
+                _bannerObj.SetActive(false);
+            }
+        }
+
         // Lắng nghe phím tắt [L] để đổi ngôn ngữ nhanh chóng
         if (kb != null && kb.lKey.wasPressedThisFrame)
         {
@@ -184,6 +216,15 @@ public class GameHUDBridge : MonoBehaviour
         if (kb != null && kb.rKey.wasPressedThisFrame && _levelUpPanel != null && _levelUpPanel.activeSelf)
         {
             OnRerollClicked();
+        }
+
+        // Lắng nghe phím [Space] hoặc [Enter] để nhận thưởng rương báu khi bảng Rương đang mở
+        if (kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame))
+        {
+            if (_chestPanel != null && _chestPanel.activeSelf)
+            {
+                OnCollectChestReward();
+            }
         }
 
         // Cập nhật Đồng hồ sinh tồn (Survival Timer: mm:ss)
@@ -250,6 +291,19 @@ public class GameHUDBridge : MonoBehaviour
                 ShowNextLevelUpReward();
             }
         }
+
+        // 5. Phát hiện sự kiện mở Rương Cổ Vật (ChestOpenEvent)
+        if (_chestEventQuery != null && !_chestEventQuery.IsEmpty && (_chestPanel == null || !_chestPanel.activeSelf))
+        {
+            var events = _chestEventQuery.ToEntityArray(Allocator.Temp);
+            for (int i = 0; i < events.Length; i++)
+            {
+                _entityManager.DestroyEntity(events[i]);
+            }
+            events.Dispose();
+
+            ShowChestReward();
+        }
     }
 
     /// <summary>
@@ -269,12 +323,27 @@ public class GameHUDBridge : MonoBehaviour
         if (_levelUpSubText != null)
             _levelUpSubText.text = GameLocalization.LevelUpSubtitle;
 
+        if (_chestTitleText != null)
+            _chestTitleText.text = GameLocalization.ChestHeader;
+
+        if (_chestSubText != null)
+            _chestSubText.text = GameLocalization.ChestSubtitle;
+
+        if (_collectButtonText != null)
+            _collectButtonText.text = GameLocalization.CollectButtonText;
+
         UpdateRerollButtonUI();
 
         // Nếu bảng chọn Perk đang mở, làm mới các thẻ bài với ngôn ngữ mới
         if (_levelUpPanel != null && _levelUpPanel.activeSelf && _currentActivePerkTypes.Count > 0)
         {
             RenderCurrentCards();
+        }
+
+        // Nếu bảng Rương đang mở, làm mới nội dung Cổ Vật
+        if (_chestPanel != null && _chestPanel.activeSelf)
+        {
+            RenderChestRewardUI();
         }
     }
 
@@ -761,6 +830,12 @@ public class GameHUDBridge : MonoBehaviour
 
         // 5. Tạo Level-Up Popup
         BuildLevelUpPanel(canvasObj.transform);
+
+        // 6. Tạo Banner thông báo (Treasure Goblin Alert)
+        BuildBannerNotification(canvasObj.transform);
+
+        // 7. Tạo Ancient Chest Popup
+        BuildChestPanel(canvasObj.transform);
     }
 
     private void BuildSurvivalTimer(Transform parent)
@@ -1238,5 +1313,470 @@ public class GameHUDBridge : MonoBehaviour
         btnText.alignment = TextAnchor.MiddleCenter;
         btnText.color = Color.white;
         btnText.text = GameLocalization.SelectButtonText;
+    }
+
+    // =========================================================================
+    // BANNER NOTIFICATION & ANCIENT CHEST POPUP MODAL
+    // =========================================================================
+    public static void ShowBannerNotification(string msg)
+    {
+        if (_instance != null)
+        {
+            _instance.TriggerBanner(msg);
+        }
+    }
+
+    public void TriggerBanner(string msg)
+    {
+        if (_bannerObj != null && _bannerText != null)
+        {
+            _bannerText.text = msg;
+            _bannerObj.SetActive(true);
+            _bannerTimer = 3.5f;
+        }
+    }
+
+    private void BuildBannerNotification(Transform parent)
+    {
+        _bannerObj = new GameObject("Banner_Notification");
+        _bannerObj.transform.SetParent(parent, false);
+
+        var rect = _bannerObj.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 1f);
+        rect.anchorMax = new Vector2(0.5f, 1f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = new Vector2(0f, -80f);
+        rect.sizeDelta = new Vector2(560f, 42f);
+
+        var bg = _bannerObj.AddComponent<Image>();
+        bg.color = new Color(0.1f, 0.08f, 0.02f, 0.94f);
+
+        var outline = _bannerObj.AddComponent<Outline>();
+        outline.effectColor = new Color(1f, 0.82f, 0.2f, 0.95f);
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        var textObj = new GameObject("Text");
+        textObj.transform.SetParent(_bannerObj.transform, false);
+        var textRect = textObj.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        _bannerText = textObj.AddComponent<Text>();
+        _bannerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _bannerText.fontSize = 16;
+        _bannerText.fontStyle = FontStyle.Bold;
+        _bannerText.alignment = TextAnchor.MiddleCenter;
+        _bannerText.color = new Color(1f, 0.9f, 0.35f);
+        _bannerText.text = "";
+
+        _bannerObj.SetActive(false);
+    }
+
+    private void BuildChestPanel(Transform parent)
+    {
+        _chestPanel = new GameObject("Chest_Panel");
+        _chestPanel.transform.SetParent(parent, false);
+
+        var rect = _chestPanel.AddComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        // Nền tối mờ toàn màn hình
+        var dimImg = _chestPanel.AddComponent<Image>();
+        dimImg.color = new Color(0.02f, 0.04f, 0.07f, 0.88f);
+
+        // Khung Modal trung tâm
+        var modalObj = new GameObject("ModalBox");
+        modalObj.transform.SetParent(_chestPanel.transform, false);
+        var modalRect = modalObj.AddComponent<RectTransform>();
+        modalRect.anchorMin = new Vector2(0.5f, 0.5f);
+        modalRect.anchorMax = new Vector2(0.5f, 0.5f);
+        modalRect.pivot = new Vector2(0.5f, 0.5f);
+        modalRect.sizeDelta = new Vector2(580f, 440f);
+
+        var modalBg = modalObj.AddComponent<Image>();
+        modalBg.color = new Color(0.06f, 0.08f, 0.14f, 0.98f);
+
+        var modalOutline = modalObj.AddComponent<Outline>();
+        modalOutline.effectColor = new Color(1f, 0.82f, 0.2f, 0.95f);
+        modalOutline.effectDistance = new Vector2(3f, -3f);
+
+        // Header Title
+        var titleObj = new GameObject("HeaderTitle");
+        titleObj.transform.SetParent(modalObj.transform, false);
+        var titleRect = titleObj.AddComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.5f, 1f);
+        titleRect.anchorMax = new Vector2(0.5f, 1f);
+        titleRect.pivot = new Vector2(0.5f, 1f);
+        titleRect.anchoredPosition = new Vector2(0f, -22f);
+        titleRect.sizeDelta = new Vector2(540f, 48f);
+
+        _chestTitleText = titleObj.AddComponent<Text>();
+        _chestTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _chestTitleText.fontSize = 28;
+        _chestTitleText.fontStyle = FontStyle.Bold;
+        _chestTitleText.alignment = TextAnchor.MiddleCenter;
+        _chestTitleText.color = new Color(1f, 0.85f, 0.25f);
+        _chestTitleText.text = GameLocalization.ChestHeader;
+
+        var titleOutline = titleObj.AddComponent<Outline>();
+        titleOutline.effectColor = new Color(0.4f, 0.18f, 0f, 0.9f);
+        titleOutline.effectDistance = new Vector2(2f, -2f);
+
+        // Subtitle
+        var subObj = new GameObject("SubTitle");
+        subObj.transform.SetParent(modalObj.transform, false);
+        var subRect = subObj.AddComponent<RectTransform>();
+        subRect.anchorMin = new Vector2(0.5f, 1f);
+        subRect.anchorMax = new Vector2(0.5f, 1f);
+        subRect.pivot = new Vector2(0.5f, 1f);
+        subRect.anchoredPosition = new Vector2(0f, -68f);
+        subRect.sizeDelta = new Vector2(500f, 30f);
+
+        _chestSubText = subObj.AddComponent<Text>();
+        _chestSubText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _chestSubText.fontSize = 14;
+        _chestSubText.alignment = TextAnchor.MiddleCenter;
+        _chestSubText.color = new Color(0.75f, 0.82f, 0.9f);
+        _chestSubText.text = GameLocalization.ChestSubtitle;
+
+        // Card hiển thị Cổ Vật
+        var cardObj = new GameObject("RelicCard");
+        cardObj.transform.SetParent(modalObj.transform, false);
+        var cardRect = cardObj.AddComponent<RectTransform>();
+        cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cardRect.pivot = new Vector2(0.5f, 0.5f);
+        cardRect.anchoredPosition = new Vector2(0f, 10f);
+        cardRect.sizeDelta = new Vector2(460f, 190f);
+
+        var cardBg = cardObj.AddComponent<Image>();
+        cardBg.color = new Color(0.12f, 0.15f, 0.22f, 0.95f);
+
+        var cardOutline = cardObj.AddComponent<Outline>();
+        cardOutline.effectColor = new Color(0.85f, 0.7f, 0.2f, 0.8f);
+        cardOutline.effectDistance = new Vector2(2f, -2f);
+
+        // Icon Emoji
+        var iconObj = new GameObject("Icon");
+        iconObj.transform.SetParent(cardObj.transform, false);
+        var iconRect = iconObj.AddComponent<RectTransform>();
+        iconRect.anchorMin = new Vector2(0f, 0.5f);
+        iconRect.anchorMax = new Vector2(0f, 0.5f);
+        iconRect.pivot = new Vector2(0.5f, 0.5f);
+        iconRect.anchoredPosition = new Vector2(65f, 0f);
+        iconRect.sizeDelta = new Vector2(90f, 90f);
+
+        _relicIconText = iconObj.AddComponent<Text>();
+        _relicIconText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _relicIconText.fontSize = 54;
+        _relicIconText.alignment = TextAnchor.MiddleCenter;
+        _relicIconText.color = Color.white;
+        _relicIconText.text = "💎";
+
+        // Tên Cổ Vật
+        var nameObj = new GameObject("Name");
+        nameObj.transform.SetParent(cardObj.transform, false);
+        var nameRect = nameObj.AddComponent<RectTransform>();
+        nameRect.anchorMin = new Vector2(0f, 1f);
+        nameRect.anchorMax = new Vector2(1f, 1f);
+        nameRect.pivot = new Vector2(0f, 1f);
+        nameRect.anchoredPosition = new Vector2(130f, -22f);
+        nameRect.sizeDelta = new Vector2(-150f, 34f);
+
+        _relicNameText = nameObj.AddComponent<Text>();
+        _relicNameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _relicNameText.fontSize = 22;
+        _relicNameText.fontStyle = FontStyle.Bold;
+        _relicNameText.alignment = TextAnchor.MiddleLeft;
+        _relicNameText.color = new Color(1f, 0.88f, 0.35f);
+        _relicNameText.text = "RELIC NAME";
+
+        // Level Badge
+        var badgeObj = new GameObject("Badge");
+        badgeObj.transform.SetParent(cardObj.transform, false);
+        var badgeRect = badgeObj.AddComponent<RectTransform>();
+        badgeRect.anchorMin = new Vector2(1f, 1f);
+        badgeRect.anchorMax = new Vector2(1f, 1f);
+        badgeRect.pivot = new Vector2(1f, 1f);
+        badgeRect.anchoredPosition = new Vector2(-20f, -22f);
+        badgeRect.sizeDelta = new Vector2(70f, 30f);
+
+        _relicBadgeText = badgeObj.AddComponent<Text>();
+        _relicBadgeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _relicBadgeText.fontSize = 16;
+        _relicBadgeText.fontStyle = FontStyle.Bold;
+        _relicBadgeText.alignment = TextAnchor.MiddleRight;
+        _relicBadgeText.color = new Color(0.2f, 0.9f, 1f);
+        _relicBadgeText.text = "LV.1";
+
+        // Mô tả Cổ Vật
+        var descObj = new GameObject("Desc");
+        descObj.transform.SetParent(cardObj.transform, false);
+        var descRect = descObj.AddComponent<RectTransform>();
+        descRect.anchorMin = new Vector2(0f, 0f);
+        descRect.anchorMax = new Vector2(1f, 1f);
+        descRect.pivot = new Vector2(0f, 0f);
+        descRect.anchoredPosition = new Vector2(130f, 20f);
+        descRect.sizeDelta = new Vector2(-150f, -80f);
+
+        _relicDescText = descObj.AddComponent<Text>();
+        _relicDescText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _relicDescText.fontSize = 15;
+        _relicDescText.alignment = TextAnchor.UpperLeft;
+        _relicDescText.color = new Color(0.85f, 0.9f, 0.95f);
+        _relicDescText.text = "Relic Description...";
+
+        // Nút Thu Nhận
+        var collectBtnObj = new GameObject("Collect_Button");
+        collectBtnObj.transform.SetParent(modalObj.transform, false);
+        var btnRect = collectBtnObj.AddComponent<RectTransform>();
+        btnRect.anchorMin = new Vector2(0.5f, 0f);
+        btnRect.anchorMax = new Vector2(0.5f, 0f);
+        btnRect.pivot = new Vector2(0.5f, 0f);
+        btnRect.anchoredPosition = new Vector2(0f, 25f);
+        btnRect.sizeDelta = new Vector2(240f, 48f);
+
+        var btnBg = collectBtnObj.AddComponent<Image>();
+        btnBg.color = new Color(0.95f, 0.78f, 0.15f, 1f);
+
+        var btnOutline = collectBtnObj.AddComponent<Outline>();
+        btnOutline.effectColor = new Color(0.35f, 0.2f, 0f, 0.95f);
+        btnOutline.effectDistance = new Vector2(2f, -2f);
+
+        var btn = collectBtnObj.AddComponent<Button>();
+        btn.targetGraphic = btnBg;
+        btn.onClick.AddListener(OnCollectChestReward);
+
+        var btnTextObj = new GameObject("Text");
+        btnTextObj.transform.SetParent(collectBtnObj.transform, false);
+        var bTextRect = btnTextObj.AddComponent<RectTransform>();
+        bTextRect.anchorMin = Vector2.zero;
+        bTextRect.anchorMax = Vector2.one;
+        bTextRect.offsetMin = Vector2.zero;
+        bTextRect.offsetMax = Vector2.zero;
+
+        _collectButtonText = btnTextObj.AddComponent<Text>();
+        _collectButtonText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _collectButtonText.fontSize = 18;
+        _collectButtonText.fontStyle = FontStyle.Bold;
+        _collectButtonText.alignment = TextAnchor.MiddleCenter;
+        _collectButtonText.color = new Color(0.12f, 0.08f, 0.02f);
+        _collectButtonText.text = GameLocalization.CollectButtonText;
+
+        _chestPanel.SetActive(false);
+    }
+
+    private void ShowChestReward()
+    {
+        if (_chestPanel == null) return;
+        Time.timeScale = 0f; // Pause game khi nhận rương
+        _chestPanel.SetActive(true);
+
+        // Chọn ngẫu nhiên 1 trong 5 Cổ Vật
+        _currentChestRelic = (RelicType)UnityEngine.Random.Range(0, 5);
+        RenderChestRewardUI();
+    }
+
+    private void RenderChestRewardUI()
+    {
+        if (_chestPanel == null || !_chestPanel.activeSelf) return;
+
+        int currentLvl = 0;
+        if (!_playerQuery.IsEmpty)
+        {
+            Entity p = _playerQuery.GetSingletonEntity();
+            if (_entityManager.HasComponent<PlayerRelicData>(p))
+            {
+                var r = _entityManager.GetComponentData<PlayerRelicData>(p);
+                currentLvl = _currentChestRelic switch
+                {
+                    RelicType.WindrunnerBoots => r.BootsLevel,
+                    RelicType.SpiritMagnet => r.MagnetLevel,
+                    RelicType.HeartCrystal => r.VitalityLevel,
+                    RelicType.PowerCharm => r.PowerLevel,
+                    RelicType.FortuneDice => r.FortuneDiceLevel,
+                    _ => 0
+                };
+            }
+        }
+        int nextLvl = currentLvl + 1;
+
+        switch (_currentChestRelic)
+        {
+            case RelicType.WindrunnerBoots:
+                _relicIconText.text = "👢";
+                _relicNameText.text = GameLocalization.RelicBootsTitle;
+                _relicBadgeText.text = $"LV.{nextLvl}";
+                _relicDescText.text = GameLocalization.RelicBootsDesc(nextLvl);
+                break;
+
+            case RelicType.SpiritMagnet:
+                _relicIconText.text = "🧲";
+                _relicNameText.text = GameLocalization.RelicMagnetTitle;
+                _relicBadgeText.text = $"LV.{nextLvl}";
+                _relicDescText.text = GameLocalization.RelicMagnetDesc(nextLvl);
+                break;
+
+            case RelicType.HeartCrystal:
+                _relicIconText.text = "💎";
+                _relicNameText.text = GameLocalization.RelicVitalityTitle;
+                _relicBadgeText.text = $"LV.{nextLvl}";
+                _relicDescText.text = GameLocalization.RelicVitalityDesc(nextLvl);
+                break;
+
+            case RelicType.PowerCharm:
+                _relicIconText.text = "⚔️";
+                _relicNameText.text = GameLocalization.RelicPowerTitle;
+                _relicBadgeText.text = $"LV.{nextLvl}";
+                _relicDescText.text = GameLocalization.RelicPowerDesc(nextLvl);
+                break;
+
+            case RelicType.FortuneDice:
+                _relicIconText.text = "🎲";
+                _relicNameText.text = GameLocalization.RelicDiceTitle;
+                _relicBadgeText.text = $"LV.{nextLvl}";
+                _relicDescText.text = GameLocalization.RelicDiceDesc(nextLvl);
+                break;
+        }
+    }
+
+    private void OnCollectChestReward()
+    {
+        if (_playerQuery.IsEmpty) return;
+        Entity playerEntity = _playerQuery.GetSingletonEntity();
+
+        PlayerRelicData relicData = default;
+        if (_entityManager.HasComponent<PlayerRelicData>(playerEntity))
+        {
+            relicData = _entityManager.GetComponentData<PlayerRelicData>(playerEntity);
+        }
+        else
+        {
+            relicData = new PlayerRelicData { DamageMultiplier = 1.0f };
+            _entityManager.AddComponentData(playerEntity, relicData);
+        }
+
+        switch (_currentChestRelic)
+        {
+            case RelicType.WindrunnerBoots:
+                relicData.BootsLevel++;
+                if (_entityManager.HasComponent<MovementData>(playerEntity))
+                {
+                    var mov = _entityManager.GetComponentData<MovementData>(playerEntity);
+                    mov.MoveSpeed *= 1.15f;
+                    _entityManager.SetComponentData(playerEntity, mov);
+                }
+                break;
+
+            case RelicType.SpiritMagnet:
+                relicData.MagnetLevel++;
+                if (_entityManager.HasComponent<PickupRangeData>(playerEntity))
+                {
+                    var pr = _entityManager.GetComponentData<PickupRangeData>(playerEntity);
+                    pr.Range *= 1.50f;
+                    _entityManager.SetComponentData(playerEntity, pr);
+                }
+                break;
+
+            case RelicType.HeartCrystal:
+                relicData.VitalityLevel++;
+                if (_entityManager.HasComponent<HealthData>(playerEntity))
+                {
+                    var hp = _entityManager.GetComponentData<HealthData>(playerEntity);
+                    hp.MaxHP += 30f;
+                    hp.CurrentHP = hp.MaxHP; // Hồi đầy 100% máu
+                    _entityManager.SetComponentData(playerEntity, hp);
+                }
+                break;
+
+            case RelicType.PowerCharm:
+                relicData.PowerLevel++;
+                relicData.DamageMultiplier *= 1.15f;
+                ScaleAllSkillsDamage(1.15f);
+                break;
+
+            case RelicType.FortuneDice:
+                relicData.FortuneDiceLevel++;
+                _rerollsRemaining += 2;
+                UpdateRerollButtonUI();
+                break;
+        }
+
+        _entityManager.SetComponentData(playerEntity, relicData);
+
+        if (_chestPanel != null) _chestPanel.SetActive(false);
+
+        // Nếu có Level-Up đang chờ thì mở bảng Level-Up, ngược lại unpause game
+        if (_pendingLevelUps > 0)
+        {
+            ShowNextLevelUpReward();
+        }
+        else
+        {
+            Time.timeScale = 1f;
+        }
+    }
+
+    private void ScaleAllSkillsDamage(float mult)
+    {
+        if (!_projectileSkillQuery.IsEmpty)
+        {
+            var e = _projectileSkillQuery.GetSingletonEntity();
+            if (_entityManager.HasComponent<ProjectileSkillData>(e))
+            {
+                var data = _entityManager.GetComponentData<ProjectileSkillData>(e);
+                data.ProjectileDamage *= mult;
+                _entityManager.SetComponentData(e, data);
+            }
+        }
+        if (!_flyingSwordSkillQuery.IsEmpty)
+        {
+            var e = _flyingSwordSkillQuery.GetSingletonEntity();
+            if (_entityManager.HasComponent<FlyingSwordSkillData>(e))
+            {
+                var data = _entityManager.GetComponentData<FlyingSwordSkillData>(e);
+                data.BaseDamage *= mult;
+                data.AoeDamage *= mult;
+                _entityManager.SetComponentData(e, data);
+            }
+        }
+        if (!_slashSwordSkillQuery.IsEmpty)
+        {
+            var e = _slashSwordSkillQuery.GetSingletonEntity();
+            if (_entityManager.HasComponent<SlashSwordSkillData>(e))
+            {
+                var data = _entityManager.GetComponentData<SlashSwordSkillData>(e);
+                data.BaseDamage *= mult;
+                data.WaveDamage *= mult;
+                _entityManager.SetComponentData(e, data);
+            }
+        }
+        if (!_fireballSkillQuery.IsEmpty)
+        {
+            var e = _fireballSkillQuery.GetSingletonEntity();
+            if (_entityManager.HasComponent<FireballSkillData>(e))
+            {
+                var data = _entityManager.GetComponentData<FireballSkillData>(e);
+                data.BaseDamage *= mult;
+                data.FireZoneDamagePerTick *= mult;
+                _entityManager.SetComponentData(e, data);
+            }
+        }
+        if (!_swordFusionSkillQuery.IsEmpty)
+        {
+            var e = _swordFusionSkillQuery.GetSingletonEntity();
+            if (_entityManager.HasComponent<SwordFusionSkillData>(e))
+            {
+                var data = _entityManager.GetComponentData<SwordFusionSkillData>(e);
+                data.ImpactDamage *= mult;
+                data.WaveDamage *= mult;
+                _entityManager.SetComponentData(e, data);
+            }
+        }
     }
 }

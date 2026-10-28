@@ -183,16 +183,16 @@ public static class GameLocalization
         return level switch
         {
             2 => Get(
-                "+45% Blast DMG. Bursts into 2 cluster sub-fireballs (50% DMG each). Cooldown reduced to 2.3s.",
-                "+45% Sát thương nổ. Nổ chùm văng 2 cầu lửa con (50% sát thương mỗi quả). Hồi chiêu giảm còn 2.3s."
+                "+45% Blast DMG. Bursts into 2 cluster sub-fireballs (50% DMG each). Cooldown reduced to 2.5s.",
+                "+45% Sát thương nổ. Nổ chùm văng 2 cầu lửa con (50% sát thương mỗi quả). Hồi chiêu giảm còn 2.5s."
             ),
             3 => Get(
-                "+40% Blast DMG & +15% Radius. Bursts into 3 cluster sub-fireballs. Cooldown reduced to 2.0s.",
-                "+40% Sát thương & +15% Bán kính nổ. Nổ chùm văng 3 cầu lửa con. Hồi chiêu giảm còn 2.0s."
+                "★ TWIN HELLFIRE ★ Fires +1 Main Fireball (2 Main Fireballs)! +40% Blast DMG & +15% Radius. Bursts into 3 cluster sub-fireballs. Cooldown 2.2s.",
+                "★ SONG HỎA LIÊN HOÀN ★ Bắn thêm +1 Cầu Lửa Mẹ (Tổng 2 Cầu Lửa Mẹ)! +40% Sát thương nổ, nổ chùm 3 cầu lửa con. Hồi chiêu giảm còn 2.2s."
             ),
             4 => Get(
-                "★ INFERNO CATACLYSM ★ 120 Blast DMG! Bursts into 4 cluster fireballs and ignites a Scorched Fire Zone dealing continuous DOT for 3.5s!",
-                "★ ĐỊA NGỤC HỎA DIỆM ★ 120 Sát thương nổ! Nổ chùm văng 4 cầu lửa con và thắp sáng Vùng Lửa thiêu đốt gây sát thương DOT liên tục trong 3.5s!"
+                "★ INFERNO CATACLYSM ★ 2 Main Fireballs with 120 Blast DMG! Bursts into 4 cluster fireballs each and ignites Scorched Fire Zones dealing continuous DOT for 3.5s!",
+                "★ ĐỊA NGỤC HỎA DIỆM ★ 2 Cầu Lửa Mẹ với 120 Sát thương nổ! Mỗi quả nổ chùm 4 cầu con và thắp sáng Vùng Lửa thiêu đốt DOT trong 3.5s!"
             ),
             _ => Get(
                 "Fires an explosive hellfire orb that detonates for 45 AOE DMG and bursts into 1 mini cluster fireball (50% DMG).",
@@ -242,5 +242,41 @@ public static class GameLocalization
     public static string PickupRangeDesc => Get(
         "+1.5m EXP attraction radius to harvest dropped orbs from afar.",
         "Tăng +1.5m Bán kính nhặt ngọc kinh nghiệm rơi từ quái vật."
+    );
+
+    // --- Ancient Treasure Chest & Relics Localization ---
+    public static string ChestHeader => Get("✦ ANCIENT TREASURE CHEST ✦", "✦ BẢO RƯƠNG CỔ VẬT ✦");
+    public static string ChestSubtitle => Get("You uncovered an ancient artifact of immense power!", "Bạn đã khai mở một cổ vật mang sức mạnh cổ xưa!");
+    public static string CollectButtonText => Get("COLLECT [SPACE]", "THU NHẬN [SPACE]");
+    public static string GoblinBannerAlert => Get("⚡ A Treasure Goblin appeared! Catch it before it escapes!", "⚡ Yêu Tinh Trộm Bảo xuất hiện! Hãy tiêu diệt nó trước khi trốn thoát!");
+
+    public static string RelicBootsTitle => Get("WINDRUNNER BOOTS", "THẦN HÀNH HÀI");
+    public static string RelicBootsDesc(int lvl) => Get(
+        $"+15% Movement Speed permanently (Level {lvl}).",
+        $"Tăng vĩnh viễn +15% Tốc độ di chuyển cho nhân vật (Cấp {lvl})."
+    );
+
+    public static string RelicMagnetTitle => Get("SPIRIT MAGNET ORB", "TỤ LINH CHÂU");
+    public static string RelicMagnetDesc(int lvl) => Get(
+        $"+50% EXP Pickup Range permanently (Level {lvl}).",
+        $"Tăng vĩnh viễn +50% Bán kính nhặt ngọc kinh nghiệm (Cấp {lvl})."
+    );
+
+    public static string RelicVitalityTitle => Get("HEART CRYSTAL", "TRÁI TIM PHA LÊ");
+    public static string RelicVitalityDesc(int lvl) => Get(
+        $"+30 Max HP permanently and fully restores 100% Health (Level {lvl})!",
+        $"Tăng vĩnh viễn +30 Máu tối đa và hồi phục 100% Máu ngay lập tức (Cấp {lvl})!"
+    );
+
+    public static string RelicPowerTitle => Get("POWER CHARM", "CỔ KIẾM BÙA CHÚ");
+    public static string RelicPowerDesc(int lvl) => Get(
+        $"+15% Damage to all skills permanently (Level {lvl}).",
+        $"Tăng vĩnh viễn +15% Sát thương cho tất cả kỹ năng (Cấp {lvl})."
+    );
+
+    public static string RelicDiceTitle => Get("FORTUNE DICE", "XÚC XẮC VẬN MỆNH");
+    public static string RelicDiceDesc(int lvl) => Get(
+        $"+2 Level-Up Rerolls added immediately (Level {lvl})!",
+        $"Nhận thêm +2 Lượt đổi thẻ kỹ năng khi lên cấp (Cấp {lvl})!"
     );
 }

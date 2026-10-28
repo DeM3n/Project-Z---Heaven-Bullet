@@ -36,6 +36,15 @@ public class PlayerAuthoring : MonoBehaviour
                 RechargeCooldown = 30f,
                 HasJustBlocked = false
             });
+            AddComponent(entity, new PlayerRelicData
+            {
+                BootsLevel = 0,
+                MagnetLevel = 0,
+                VitalityLevel = 0,
+                PowerLevel = 0,
+                FortuneDiceLevel = 0,
+                DamageMultiplier = 1.0f
+            });
             AddBuffer<IncomingDamage>(entity);
         }
     }

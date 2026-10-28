@@ -38,7 +38,7 @@ public class ShieldVisualBridge : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
     {
-        if (FindFirstObjectByType<ShieldVisualBridge>() == null)
+        if (FindAnyObjectByType<ShieldVisualBridge>() == null)
         {
             var go = new GameObject("[ShieldVisualBridge]");
             go.AddComponent<ShieldVisualBridge>();

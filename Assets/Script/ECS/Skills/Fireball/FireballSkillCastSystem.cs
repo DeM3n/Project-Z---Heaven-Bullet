@@ -61,7 +61,7 @@ public partial struct FireballSkillCastSystem : ISystem
                     SubFireballSpeed = 11.0f,
                     SubFireballLifetime = 0.45f,
                     SubExplosionRadius = 1.2f,
-                    FireZoneRadius = 2.5f,
+                    FireZoneRadius = 1.8f,
                     FireZoneDuration = 3.5f,
                     FireZoneTickInterval = 0.25f,
                     FireZoneDamagePerTick = 16f,
@@ -87,14 +87,14 @@ public partial struct FireballSkillCastSystem : ISystem
             runtime.ValueRW.Timer -= dt;
             if (runtime.ValueRO.Timer > 0f) continue;
 
-            // Tính toán Cooldown và Sát thương scale theo cấp độ
-            // Lv1: 2.6s, Lv2: 2.3s, Lv3: 2.0s, Lv4: 1.8s
+            // Tính toán Cooldown và Sát thương scale theo cấp độ (+10% ở mọi cấp độ):
+            // Lv1: 2.86s, Lv2: 2.53s, Lv3: 2.20s, Lv4: 1.98s
             float scaledCooldown = level switch
             {
-                2 => 2.3f,
-                3 => 2.0f,
-                4 => 1.8f,
-                _ => 2.6f
+                2 => 2.53f,
+                3 => 2.20f,
+                4 => 1.98f,
+                _ => 2.86f
             };
             runtime.ValueRW.Timer = scaledCooldown;
 
@@ -105,22 +105,25 @@ public partial struct FireballSkillCastSystem : ISystem
 
             float3 playerPos = state.EntityManager.GetComponentData<LocalTransform>(playerEntity).Position;
 
-            // Tìm mục tiêu quái gần nhất qua Spatial Grid
+            // Tìm tối đa 2 mục tiêu quái độc lập gần nhất qua Spatial Grid
             float detectRange = skill.ValueRO.DetectRange;
-            float2 targetDir = new float2(1f, 0f); // Hướng mặc định nếu không có quái
-            bool foundEnemy = TryFindTargetDirection(ref state, grid, cellSize, playerPos, detectRange, out targetDir);
+            float2 targetDir1, targetDir2;
+            int foundTargetCount = TryFindTwoTargets(ref state, grid, cellSize, playerPos, detectRange, out targetDir1, out targetDir2);
 
-            if (!foundEnemy)
+            if (foundTargetCount == 0)
             {
-                // Nếu không có quái trong tầm, lấy hướng di chuyển của Player làm hướng bắn
+                // Nếu không có quái trong tầm, lấy hướng di chuyển của Player làm hướng ngắm mặc định
+                float2 defaultDir = new float2(1f, 0f);
                 if (state.EntityManager.HasComponent<MovementData>(playerEntity))
                 {
                     float2 moveDir = state.EntityManager.GetComponentData<MovementData>(playerEntity).Direction;
                     if (math.lengthsq(moveDir) > 0.01f)
                     {
-                        targetDir = math.normalizesafe(moveDir);
+                        defaultDir = math.normalizesafe(moveDir);
                     }
                 }
+                targetDir1 = defaultDir;
+                targetDir2 = defaultDir;
             }
 
             // Sát thương và Bán kính nổ cầu lửa mẹ theo cấp:
@@ -144,51 +147,99 @@ public partial struct FireballSkillCastSystem : ISystem
                 _ => skill.ValueRO.ExplosionRadius
             };
 
-            // Spawn Fireball Projectile
-            Entity fireball;
-            if (skill.ValueRO.FireballPrefab != Entity.Null)
-            {
-                fireball = ecb.Instantiate(skill.ValueRO.FireballPrefab);
-                ecb.SetComponent(fireball, LocalTransform.FromPosition(playerPos));
-            }
-            else
-            {
-                fireball = ecb.CreateEntity();
-                ecb.AddComponent(fireball, LocalTransform.FromPosition(playerPos));
-            }
+            // Số lượng Cầu Lửa Mẹ (Main Fireball):
+            // Cấp 1 & 2: 1 Cầu Lửa Mẹ ngắm vào mục tiêu chính
+            // Cấp 3 & 4: 2 Cầu Lửa Mẹ - Tự động ngắm vào 2 kẻ địch khác nhau!
+            int mainFireballCount = (level >= 3) ? 2 : 1;
 
-            ecb.AddComponent<FireballTag>(fireball);
-            ecb.AddComponent(fireball, new MovementData
+            for (int i = 0; i < mainFireballCount; i++)
             {
-                Direction = targetDir,
-                MoveSpeed = skill.ValueRO.FireballSpeed
-            });
+                float2 shootDir;
+                float3 spawnPos;
 
-            ecb.AddComponent(fireball, new FireballProjectileData
-            {
-                Direction = targetDir,
-                Speed = skill.ValueRO.FireballSpeed,
-                Damage = damage,
-                ExplosionRadius = explosionRadius,
-                Lifetime = 2.8f,
-                HitRadius = 0.45f,
-                SubFireballCount = level, // Số cầu lửa con = cấp độ kỹ năng (1 ở Lv1, 2 ở Lv2, 3 ở Lv3, 4 ở Lv4)
-                SkillLevel = level,
-                IsSubFireball = false
-            });
+                if (i == 0)
+                {
+                    shootDir = targetDir1;
+                    // Nếu chỉ có 1 mục tiêu duy nhất và bắn 2 quả, quả 1 lệch nhẹ song song sang trái (-0.2m)
+                    float2 perp = new float2(-shootDir.y, shootDir.x);
+                    float lateral = (mainFireballCount > 1 && foundTargetCount < 2) ? -0.2f : 0f;
+                    spawnPos = playerPos + new float3(perp.x * lateral, perp.y * lateral, 0f);
+                }
+                else
+                {
+                    if (foundTargetCount >= 2)
+                    {
+                        // ĐÃ TÌM THẤY KẺ ĐỊCH THỨ 2: Quả thứ 2 ngắm thẳng 100% vào kẻ địch thứ 2!
+                        shootDir = targetDir2;
+                        spawnPos = playerPos;
+                    }
+                    else
+                    {
+                        // Chỉ có 1 mục tiêu duy nhất: Bắn thẳng vào cùng mục tiêu (lệch nhẹ song song sang phải +0.2m)
+                        shootDir = targetDir1;
+                        float2 perp = new float2(-shootDir.y, shootDir.x);
+                        spawnPos = playerPos + new float3(perp.x * 0.2f, perp.y * 0.2f, 0f);
+                    }
+                }
+
+                Entity fireball;
+                if (skill.ValueRO.FireballPrefab != Entity.Null)
+                {
+                    fireball = ecb.Instantiate(skill.ValueRO.FireballPrefab);
+                    ecb.SetComponent(fireball, LocalTransform.FromPosition(spawnPos));
+                }
+                else
+                {
+                    fireball = ecb.CreateEntity();
+                    ecb.AddComponent(fireball, LocalTransform.FromPosition(spawnPos));
+                }
+
+                ecb.AddComponent<FireballTag>(fireball);
+                ecb.AddComponent(fireball, new MovementData
+                {
+                    Direction = shootDir,
+                    MoveSpeed = skill.ValueRO.FireballSpeed
+                });
+
+                ecb.AddComponent(fireball, new FireballProjectileData
+                {
+                    Direction = shootDir,
+                    Speed = skill.ValueRO.FireballSpeed,
+                    Damage = damage,
+                    ExplosionRadius = explosionRadius,
+                    Lifetime = 2.8f,
+                    HitRadius = 0.45f,
+                    SubFireballCount = level, // Số cầu lửa con = cấp độ kỹ năng (1 ở Lv1, 2 ở Lv2, 3 ở Lv3, 4 ở Lv4)
+                    SkillLevel = level,
+                    IsSubFireball = false
+                });
+            }
         }
 
         ecb.Playback(state.EntityManager);
         ecb.Dispose();
     }
 
-    private bool TryFindTargetDirection(ref SystemState state, NativeParallelMultiHashMap<int, Entity> grid, float cellSize, float3 playerPos, float detectRange, out float2 targetDir)
+    private int TryFindTwoTargets(
+        ref SystemState state,
+        NativeParallelMultiHashMap<int, Entity> grid,
+        float cellSize,
+        float3 playerPos,
+        float detectRange,
+        out float2 targetDir1,
+        out float2 targetDir2)
     {
         int2 playerCell = SpatialGridUtility.ToCell(playerPos.xy, cellSize);
         int cellRadius = (int)math.ceil(detectRange / cellSize);
-        float closestDistSq = detectRange * detectRange;
-        float3 closestPos = playerPos;
-        bool found = false;
+        float maxRangeSq = detectRange * detectRange;
+
+        Entity enemy1 = Entity.Null;
+        float distSq1 = maxRangeSq;
+        float3 pos1 = playerPos;
+
+        Entity enemy2 = Entity.Null;
+        float distSq2 = maxRangeSq;
+        float3 pos2 = playerPos;
 
         for (int dx = -cellRadius; dx <= cellRadius; dx++)
         for (int dy = -cellRadius; dy <= cellRadius; dy++)
@@ -203,45 +254,90 @@ public partial struct FireballSkillCastSystem : ISystem
 
                 float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                 float distSq = math.distancesq(playerPos, enemyPos);
-                if (distSq < closestDistSq)
+                if (distSq > maxRangeSq) continue;
+
+                if (distSq < distSq1)
                 {
-                    closestDistSq = distSq;
-                    closestPos = enemyPos;
-                    found = true;
+                    if (enemy1 != enemy)
+                    {
+                        enemy2 = enemy1;
+                        distSq2 = distSq1;
+                        pos2 = pos1;
+                    }
+                    enemy1 = enemy;
+                    distSq1 = distSq;
+                    pos1 = enemyPos;
+                }
+                else if (enemy != enemy1 && distSq < distSq2)
+                {
+                    enemy2 = enemy;
+                    distSq2 = distSq;
+                    pos2 = enemyPos;
                 }
             } while (grid.TryGetNextValue(out enemy, ref it));
         }
 
-        if (found)
+        // Fallback: Nếu Spatial Grid ô lân cận chưa tìm đủ 2 mục tiêu, kiểm tra query quái tổng
+        if (enemy1 == Entity.Null || enemy2 == Entity.Null)
         {
-            targetDir = math.normalizesafe((closestPos - playerPos).xy);
-            return true;
-        }
-
-        // Fallback kiểm tra query tổng nếu quái nằm ngoài bán kính ô lân cận
-        if (!_enemyQuery.IsEmpty)
-        {
-            var transforms = _enemyQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
-            for (int i = 0; i < transforms.Length; i++)
+            if (!_enemyQuery.IsEmpty)
             {
-                float distSq = math.distancesq(playerPos, transforms[i].Position);
-                if (distSq < closestDistSq)
+                var entities = _enemyQuery.ToEntityArray(Allocator.Temp);
+                var transforms = _enemyQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
+
+                for (int i = 0; i < entities.Length; i++)
                 {
-                    closestDistSq = distSq;
-                    closestPos = transforms[i].Position;
-                    found = true;
-                }
-            }
-            transforms.Dispose();
+                    Entity e = entities[i];
+                    float3 ePos = transforms[i].Position;
+                    float distSq = math.distancesq(playerPos, ePos);
+                    if (distSq > maxRangeSq) continue;
 
-            if (found)
-            {
-                targetDir = math.normalizesafe((closestPos - playerPos).xy);
-                return true;
+                    if (distSq < distSq1)
+                    {
+                        if (enemy1 != e)
+                        {
+                            enemy2 = enemy1;
+                            distSq2 = distSq1;
+                            pos2 = pos1;
+                        }
+                        enemy1 = e;
+                        distSq1 = distSq;
+                        pos1 = ePos;
+                    }
+                    else if (e != enemy1 && distSq < distSq2)
+                    {
+                        enemy2 = e;
+                        distSq2 = distSq;
+                        pos2 = ePos;
+                    }
+                }
+
+                entities.Dispose();
+                transforms.Dispose();
             }
         }
 
-        targetDir = new float2(1f, 0f);
-        return false;
+        int targetCount = 0;
+        if (enemy1 != Entity.Null)
+        {
+            targetDir1 = math.normalizesafe((pos1 - playerPos).xy);
+            targetCount++;
+        }
+        else
+        {
+            targetDir1 = new float2(1f, 0f);
+        }
+
+        if (enemy2 != Entity.Null)
+        {
+            targetDir2 = math.normalizesafe((pos2 - playerPos).xy);
+            targetCount++;
+        }
+        else
+        {
+            targetDir2 = targetDir1;
+        }
+
+        return targetCount;
     }
 }

@@ -35,7 +35,7 @@ public struct FireballSkillData : IComponentData
     public float SubFireballSpeed;         // Tốc độ văng của cầu lửa con (~11.0m/s)
     public float SubFireballLifetime;      // Thời gian bay tỏa ra của cầu lửa con (~0.45s)
     public float SubExplosionRadius;       // Bán kính nổ AOE của cầu lửa con (~1.2m)
-    public float FireZoneRadius;           // Bán kính vùng lửa thiêu đốt Lv4 (~2.5m)
+    public float FireZoneRadius;           // Bán kính vùng lửa thiêu đốt Lv4 (~1.8m)
     public float FireZoneDuration;         // Thời gian duy trì vùng lửa Lv4 (~3.5s)
     public float FireZoneTickInterval;     // Nhịp gây sát thương DOT (~0.25s)
     public float FireZoneDamagePerTick;    // Sát thương mỗi tick DOT (~16 DMG)

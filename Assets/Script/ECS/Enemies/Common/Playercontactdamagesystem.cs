@@ -22,7 +22,8 @@ public partial struct PlayerContactDamageSystem : ISystem
 
         foreach (var (transform, contact) in
                  SystemAPI.Query<RefRO<LocalTransform>, RefRW<EnemyContactDamageData>>()
-                     .WithAll<EnemyTag>())
+                     .WithAll<EnemyTag>()
+                     .WithNone<TreasureGoblinTag>())
         {
             contact.ValueRW.Timer -= dt;
 

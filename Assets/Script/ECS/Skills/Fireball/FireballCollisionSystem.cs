@@ -251,7 +251,7 @@ public partial struct FireballCollisionSystem : ISystem
                         ecb.AddComponent(fireZone, new FireZoneData
                         {
                             Center = currentPos.xy,
-                            Radius = 2.5f,
+                            Radius = 1.8f,
                             DurationRemaining = 3.5f,
                             TickInterval = 0.25f,
                             TickTimer = 0.25f,
