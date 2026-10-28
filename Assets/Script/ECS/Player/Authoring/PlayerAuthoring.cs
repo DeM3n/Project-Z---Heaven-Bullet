@@ -25,6 +25,18 @@ public class PlayerAuthoring : MonoBehaviour
                 Duration = authoring.InvulnerabilityDuration,
                 CurrentTimer = 0f
             });
+            AddComponent(entity, new PlayerShieldData
+            {
+                SkillLevel = 0,
+                CurrentCharges = 0,
+                MaxCharges = 1,
+                HitsRemainingInCurrentShield = 0,
+                HitsPerShield = 1,
+                RechargeTimer = 0f,
+                RechargeCooldown = 30f,
+                HasJustBlocked = false
+            });
+            AddBuffer<IncomingDamage>(entity);
         }
     }
 }

@@ -99,6 +99,7 @@ public static class GameLocalization
     public static string SwordFusionTitle => Get("CELESTIAL BLADE FUSION", "THIÊN KIẾM HỢP THỂ");
     public static string ProjectileSkillTitle => Get("ARCANE VOLLEY", "ĐẠN TỎA QUẠT");
     public static string FireballTitle => Get("HELLFIRE ORB", "CẦU LỬA VIÊM MA");
+    public static string ShieldTitle => Get("AEGIS SHIELD", "KHIÊN HỘ THỂ");
     public static string HealTitle => Get("VITALITY ELIXIR", "TIÊN DƯỢC PHỤC HỒI");
     public static string MaxHpTitle => Get("IRON WILL", "CƯƠNG THỂ QUYẾT");
     public static string MoveSpeedTitle => Get("WIND STRIDE", "THẦN HÀNH BỘ");
@@ -196,6 +197,29 @@ public static class GameLocalization
             _ => Get(
                 "Fires an explosive hellfire orb that detonates for 45 AOE DMG and bursts into 1 mini cluster fireball (50% DMG).",
                 "Bắn cầu lửa Viêm Ma nổ diện rộng 45 sát thương và nổ chùm văng 1 cầu lửa con (50% sát thương)."
+            )
+        };
+    }
+
+    public static string ShieldDesc(int level)
+    {
+        return level switch
+        {
+            2 => Get(
+                "Reduces recharge cooldown from 30s down to 18s (Recharges 40% faster!).",
+                "Giảm thời gian hồi khiên từ 30s xuống 18s (Hồi nhanh hơn 40%!)."
+            ),
+            3 => Get(
+                "Dual Aegis! Can stack up to 2 Shields simultaneously. Each shield recharges independently (16s).",
+                "Song Khiên Hộ Vệ! Có thể tích lũy tối đa 2 lớp khiên. Tự động hồi tuần tự từng lớp khiên (16s mỗi lớp)."
+            ),
+            4 => Get(
+                "★ SHIELD SHATTER NOVA ★ Each shield now blocks 2 hits (Total 4 hits)! When destroyed, triggers a massive 100 DMG Shockwave that KNOCKS BACK enemies and DESTROYS all enemy bullets!",
+                "★ KHIÊN PHẢN MA TRẬN ★ Mỗi lớp khiên chịu được 2 lần sát thương (Tổng 4 hits)! Khi khiên bị phá vỡ, phát nổ sóng xung kích 100 DMG ĐẨY LÙI quái vật và TIÊU HỦY 100% đạn địch!"
+            ),
+            _ => Get(
+                "Deploys an energetic barrier that absorbs 1 instance of damage completely. Recharges after 30s.",
+                "Kích hoạt tấm khiên năng lượng chặn hoàn toàn 1 lần sát thương vào người chơi. Hồi lại sau 30s."
             )
         };
     }

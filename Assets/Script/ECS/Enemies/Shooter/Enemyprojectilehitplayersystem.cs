@@ -3,30 +3,23 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 
+/// <summary>
+/// Hệ thống kiểm tra va chạm giữa đạn của quái vật (EnemyProjectileTag) và người chơi.
+/// Khi đạn chạm Player, viên đạn bị tiêu hủy ngay lập tức và đẩy gói sát thương vào IncomingDamage buffer.
+/// Không xử lý logic trừ máu/khiên/i-frames (thuộc trách nhiệm của PlayerDamageResolutionSystem).
+/// </summary>
 [BurstCompile]
 public partial struct EnemyProjectileHitPlayerSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
     {
         if (!SystemAPI.TryGetSingletonEntity<PlayerTag>(out Entity playerEntity)) return;
+        if (!state.EntityManager.HasBuffer<IncomingDamage>(playerEntity)) return;
 
         LocalTransform playerTransform = SystemAPI.GetComponent<LocalTransform>(playerEntity);
-        HealthData playerHealth = SystemAPI.GetComponent<HealthData>(playerEntity);
+        var damageBuffer = SystemAPI.GetBuffer<IncomingDamage>(playerEntity);
         var ecb = new EntityCommandBuffer(Allocator.Temp);
-        float totalDamage = 0f;
-
-        // Kiểm tra xem người chơi có đang trong trạng thái i-frames không
-        bool isInvulnerable = false;
-        if (SystemAPI.HasComponent<PlayerInvulnerabilityData>(playerEntity))
-        {
-            var invuln = SystemAPI.GetComponent<PlayerInvulnerabilityData>(playerEntity);
-            if (invuln.CurrentTimer > 0f)
-            {
-                isInvulnerable = true;
-            }
-        }
 
         foreach (var (transform, dmg, entity) in
                  SystemAPI.Query<RefRO<LocalTransform>, RefRO<DamageOnContactData>>()
@@ -37,30 +30,16 @@ public partial struct EnemyProjectileHitPlayerSystem : ISystem
             float hitDistSq = dmg.ValueRO.HitRadius * dmg.ValueRO.HitRadius;
             if (distSq > hitDistSq) continue;
 
-            // Đạn chạm người chơi luôn bị tiêu hủy (hấp thụ bởi lớp bảo vệ)
+            // Đạn chạm người chơi luôn bị tiêu hủy (hấp thụ bởi cơ thể / khiên)
             ecb.DestroyEntity(entity);
 
-            // Chỉ nhận sát thương nếu không trong trạng thái i-frames
-            if (!isInvulnerable)
+            // Gửi gói sát thương vào IncomingDamage buffer của Player
+            damageBuffer.Add(new IncomingDamage
             {
-                totalDamage += dmg.ValueRO.Damage;
-            }
-        }
-
-        if (totalDamage > 0f)
-        {
-            playerHealth.CurrentHP -= totalDamage;
-            SystemAPI.SetComponent(playerEntity, playerHealth);
-
-            // Kích hoạt thời gian miễn sát thương (i-frames)
-            if (SystemAPI.HasComponent<PlayerInvulnerabilityData>(playerEntity))
-            {
-                var invuln = SystemAPI.GetComponent<PlayerInvulnerabilityData>(playerEntity);
-                invuln.CurrentTimer = invuln.Duration;
-                SystemAPI.SetComponent(playerEntity, invuln);
-            }
-
-            Debug.Log($"[EnemyProjectileHitPlayerSystem] Player took {totalDamage} damage from Enemy projectile (Remaining HP: {playerHealth.CurrentHP}/{playerHealth.MaxHP}) - i-frames activated!");
+                Amount = dmg.ValueRO.Damage,
+                SourceType = DamageSourceType.Projectile,
+                SourcePosition = transform.ValueRO.Position
+            });
         }
 
         ecb.Playback(state.EntityManager);

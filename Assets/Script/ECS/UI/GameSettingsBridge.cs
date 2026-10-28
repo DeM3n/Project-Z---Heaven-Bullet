@@ -23,6 +23,7 @@ public class GameSettingsBridge : MonoBehaviour
     private EntityQuery _slashSwordQuery;
     private EntityQuery _projectileQuery;
     private EntityQuery _fireballQuery;
+    private EntityQuery _shieldQuery;
     private EntityQuery _fusionQuery;
     private EntityQuery _enemyQuery;
     private bool _ecsInitialized;
@@ -51,6 +52,7 @@ public class GameSettingsBridge : MonoBehaviour
     private Text _slashSwordLvlText;
     private Text _projectileLvlText;
     private Text _fireballLvlText;
+    private Text _shieldLvlText;
     private Text _fusionStateText;
     private Text _godModeBtnText;
     private Text _speedBtnText;
@@ -114,6 +116,10 @@ public class GameSettingsBridge : MonoBehaviour
 
         _fireballQuery = _entityManager.CreateEntityQuery(
             ComponentType.ReadOnly<FireballSkillTag>(),
+            ComponentType.ReadWrite<SkillRuntimeData>());
+
+        _shieldQuery = _entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<ShieldSkillTag>(),
             ComponentType.ReadWrite<SkillRuntimeData>());
 
         _fusionQuery = _entityManager.CreateEntityQuery(
@@ -306,6 +312,20 @@ public class GameSettingsBridge : MonoBehaviour
         RefreshDevSkillTexts();
     }
 
+    public void SetShieldLevel(int delta, int directLevel = -1)
+    {
+        if (!_ecsInitialized && !InitECS()) return;
+        if (_shieldQuery.IsEmpty) return;
+
+        Entity skill = _shieldQuery.GetSingletonEntity();
+        var runtime = _entityManager.GetComponentData<SkillRuntimeData>(skill);
+        int targetLvl = (directLevel >= 0) ? directLevel : math.clamp(runtime.Level + delta, 0, 4);
+        runtime.Level = targetLvl;
+        _entityManager.SetComponentData(skill, runtime);
+
+        RefreshDevSkillTexts();
+    }
+
     public void ToggleFusion()
     {
         if (!_ecsInitialized && !InitECS()) return;
@@ -326,6 +346,7 @@ public class GameSettingsBridge : MonoBehaviour
         SetSlashSwordLevel(0, 4);
         SetProjectileLevel(0, 5);
         SetFireballLevel(0, 4);
+        SetShieldLevel(0, 4);
 
         if (!_ecsInitialized && !InitECS()) return;
         if (!_fusionQuery.IsEmpty)
@@ -465,6 +486,18 @@ public class GameSettingsBridge : MonoBehaviour
                 0 => new Color(0.6f, 0.6f, 0.6f),
                 4 => new Color(1f, 0.85f, 0.2f),
                 _ => new Color(1f, 0.45f, 0.12f)
+            };
+        }
+
+        if (_shieldLvlText != null && !_shieldQuery.IsEmpty)
+        {
+            int lvl = _shieldQuery.GetSingleton<SkillRuntimeData>().Level;
+            _shieldLvlText.text = $"[ LV.{lvl} ]";
+            _shieldLvlText.color = lvl switch
+            {
+                0 => new Color(0.6f, 0.6f, 0.6f),
+                4 => new Color(1f, 0.85f, 0.2f),
+                _ => new Color(0f, 0.9f, 1f)
             };
         }
 
@@ -679,7 +712,7 @@ public class GameSettingsBridge : MonoBehaviour
         var bRect = box.AddComponent<RectTransform>();
         bRect.anchorMin = new Vector2(0.5f, 0.5f);
         bRect.anchorMax = new Vector2(0.5f, 0.5f);
-        bRect.sizeDelta = new Vector2(760f, 620f);
+        bRect.sizeDelta = new Vector2(760f, 660f);
 
         var bImg = box.AddComponent<Image>();
         bImg.color = new Color(0.06f, 0.08f, 0.12f, 0.98f);
@@ -739,8 +772,16 @@ public class GameSettingsBridge : MonoBehaviour
             (lvl) => SetFireballLevel(0, lvl),
             out _fireballLvlText);
 
-        curY -= 52f;
-        // 5. Fusion Toggle Controller
+        curY -= 50f;
+        // 5. Aegis Shield Controller (Lv 0 -> 4)
+        BuildSkillRow(box.transform, "Aegis Shield", curY, new Color(0f, 0.9f, 1f), 4,
+            () => SetShieldLevel(-1),
+            () => SetShieldLevel(1),
+            (lvl) => SetShieldLevel(0, lvl),
+            out _shieldLvlText);
+
+        curY -= 50f;
+        // 6. Fusion Toggle Controller
         BuildFusionRow(box.transform, curY, out _fusionStateText);
 
         curY -= 50f;

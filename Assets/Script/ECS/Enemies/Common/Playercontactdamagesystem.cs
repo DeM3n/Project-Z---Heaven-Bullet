@@ -2,32 +2,24 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
+
+/// <summary>
+/// Hệ thống kiểm tra va chạm cận chiến giữa quái vật và người chơi.
+/// Khi quái chạm Player và đủ nhịp cắn (TickInterval), đẩy gói sát thương vào IncomingDamage buffer trên Player.
+/// Không xử lý logic trừ máu/khiên/i-frames (thuộc trách nhiệm của PlayerDamageResolutionSystem).
+/// </summary>
 [BurstCompile]
 public partial struct PlayerContactDamageSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
     {
         if (!SystemAPI.TryGetSingletonEntity<PlayerTag>(out Entity playerEntity)) return;
+        if (!state.EntityManager.HasBuffer<IncomingDamage>(playerEntity)) return;
 
         LocalTransform playerTransform = SystemAPI.GetComponent<LocalTransform>(playerEntity);
-        HealthData playerHealth = SystemAPI.GetComponent<HealthData>(playerEntity);
+        var damageBuffer = SystemAPI.GetBuffer<IncomingDamage>(playerEntity);
         float dt = SystemAPI.Time.DeltaTime;
-        float totalDamage = 0f;
 
-        // Kiểm tra xem người chơi có đang trong thời gian miễn sát thương (i-frames) không
-        bool isInvulnerable = false;
-        if (SystemAPI.HasComponent<PlayerInvulnerabilityData>(playerEntity))
-        {
-            var invuln = SystemAPI.GetComponent<PlayerInvulnerabilityData>(playerEntity);
-            if (invuln.CurrentTimer > 0f)
-            {
-                isInvulnerable = true;
-            }
-        }
-
-        // Cộng dồn damage từ mọi enemy đang chạm rồi apply 1 lần cuối,
-        // tránh nhiều enemy cùng ghi đè HealthData của Player trong 1 frame.
         foreach (var (transform, contact) in
                  SystemAPI.Query<RefRO<LocalTransform>, RefRW<EnemyContactDamageData>>()
                      .WithAll<EnemyTag>())
@@ -39,29 +31,16 @@ public partial struct PlayerContactDamageSystem : ISystem
             if (distSq > radiusSq) continue;
             if (contact.ValueRO.Timer > 0f) continue;
 
+            // Reset nhịp gây sát thương của quái
             contact.ValueRW.Timer = contact.ValueRO.TickInterval;
 
-            // Nếu đang trong trạng thái i-frames, bỏ qua không nhận sát thương
-            if (!isInvulnerable)
+            // Đẩy cú đánh vào IncomingDamage buffer của Player
+            damageBuffer.Add(new IncomingDamage
             {
-                totalDamage += contact.ValueRO.Damage;
-            }
-        }
-
-        if (totalDamage > 0f)
-        {
-            playerHealth.CurrentHP -= totalDamage;
-            SystemAPI.SetComponent(playerEntity, playerHealth);
-
-            // Ngay lập tức kích hoạt thời gian miễn sát thương (i-frames) cho người chơi
-            if (SystemAPI.HasComponent<PlayerInvulnerabilityData>(playerEntity))
-            {
-                var invuln = SystemAPI.GetComponent<PlayerInvulnerabilityData>(playerEntity);
-                invuln.CurrentTimer = invuln.Duration;
-                SystemAPI.SetComponent(playerEntity, invuln);
-            }
-
-            Debug.Log($"[PlayerContactDamageSystem] Player took {totalDamage} damage from Enemy contact (Remaining HP: {playerHealth.CurrentHP}/{playerHealth.MaxHP}) - i-frames activated!");
+                Amount = contact.ValueRO.Damage,
+                SourceType = DamageSourceType.Contact,
+                SourcePosition = transform.ValueRO.Position
+            });
         }
     }
 }

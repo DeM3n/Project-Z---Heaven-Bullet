@@ -23,6 +23,7 @@ public class GameHUDBridge : MonoBehaviour
     private EntityQuery _swordFusionSkillQuery;
     private EntityQuery _projectileSkillQuery;
     private EntityQuery _fireballSkillQuery;
+    private EntityQuery _shieldSkillQuery;
     private bool _initialized;
 
     private int _lastPlayerLevel = 1;
@@ -62,6 +63,7 @@ public class GameHUDBridge : MonoBehaviour
         SwordFusion,
         ProjectileSkill,
         Fireball,
+        Shield,
         Heal,
         MaxHp,
         MoveSpeed,
@@ -143,6 +145,10 @@ public class GameHUDBridge : MonoBehaviour
             ComponentType.ReadOnly<FireballSkillTag>(),
             ComponentType.ReadWrite<SkillRuntimeData>());
 
+        _shieldSkillQuery = _entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<ShieldSkillTag>(),
+            ComponentType.ReadWrite<SkillRuntimeData>());
+
         _initialized = true;
         return true;
     }
@@ -199,10 +205,31 @@ public class GameHUDBridge : MonoBehaviour
         HealthData hp = _entityManager.GetComponentData<HealthData>(playerEntity);
         PlayerLevelData levelData = _entityManager.GetComponentData<PlayerLevelData>(playerEntity);
 
-        // 1. Cập nhật thanh Máu (HP)
+        // 1. Cập nhật thanh Máu (HP) và Khiên (Shield)
         float hpPercent = Mathf.Clamp01(hp.CurrentHP / Mathf.Max(1f, hp.MaxHP));
         if (_hpFillImage != null) _hpFillImage.fillAmount = hpPercent;
-        if (_hpText != null) _hpText.text = $"{Mathf.Max(0, (int)hp.CurrentHP)} / {(int)hp.MaxHP}";
+        if (_hpText != null)
+        {
+            string hpString = $"{Mathf.Max(0, (int)hp.CurrentHP)} / {(int)hp.MaxHP}";
+            if (_entityManager.HasComponent<PlayerShieldData>(playerEntity))
+            {
+                var shield = _entityManager.GetComponentData<PlayerShieldData>(playerEntity);
+                if (shield.SkillLevel > 0)
+                {
+                    if (shield.CurrentCharges > 0)
+                    {
+                        string hitBadge = (shield.SkillLevel >= 4) ? $"({shield.HitsRemainingInCurrentShield}h)" : "";
+                        hpString += $"  <color=#00e5ff>[🛡️ x{shield.CurrentCharges}{hitBadge}]</color>";
+                    }
+                    else
+                    {
+                        int remainSec = Mathf.Max(1, Mathf.CeilToInt(shield.RechargeCooldown - shield.RechargeTimer));
+                        hpString += $"  <color=#80deea>[🛡️ {remainSec}s]</color>";
+                    }
+                }
+            }
+            _hpText.text = hpString;
+        }
 
         // 2. Cập nhật thanh Kinh Nghiệm (EXP)
         float expPercent = Mathf.Clamp01((float)levelData.CurrentExp / Mathf.Max(1, levelData.ExpToNextLevel));
@@ -366,6 +393,21 @@ public class GameHUDBridge : MonoBehaviour
                 };
             }
 
+            case PerkType.Shield:
+            {
+                int currentShieldLevel = GetShieldSkillLevel();
+                int nextLvl = Mathf.Min(4, currentShieldLevel + 1);
+                return new PerkOption
+                {
+                    Type = PerkType.Shield,
+                    Level = nextLvl,
+                    Title = GameLocalization.ShieldTitle,
+                    LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
+                    Description = GameLocalization.ShieldDesc(nextLvl),
+                    HighlightColor = new Color(0f, 0.9f, 1f) // Diamond Cyan
+                };
+            }
+
             case PerkType.Heal:
                 return new PerkOption
                 {
@@ -452,6 +494,13 @@ public class GameHUDBridge : MonoBehaviour
         if (currentFbLevel < 4)
         {
             available.Add(PerkType.Fireball);
+        }
+
+        // 5. Khiên Hộ Thể (Aegis Shield)
+        int currentShieldLevel = GetShieldSkillLevel();
+        if (currentShieldLevel < 4)
+        {
+            available.Add(PerkType.Shield);
         }
 
         // 5. Tiên Dược Hồi Máu (Heal)
@@ -561,6 +610,16 @@ public class GameHUDBridge : MonoBehaviour
                 }
                 break;
 
+            case PerkType.Shield:
+                if (!_shieldSkillQuery.IsEmpty)
+                {
+                    Entity skillEntity = _shieldSkillQuery.GetSingletonEntity();
+                    var runtime = _entityManager.GetComponentData<SkillRuntimeData>(skillEntity);
+                    runtime.Level = Mathf.Min(4, runtime.Level + 1);
+                    _entityManager.SetComponentData(skillEntity, runtime);
+                }
+                break;
+
             case PerkType.Heal:
                 var hpHeal = _entityManager.GetComponentData<HealthData>(playerEntity);
                 hpHeal.CurrentHP = Mathf.Min(hpHeal.MaxHP, hpHeal.CurrentHP + hpHeal.MaxHP * 0.4f);
@@ -657,6 +716,15 @@ public class GameHUDBridge : MonoBehaviour
             return _fireballSkillQuery.GetSingleton<SkillRuntimeData>().Level;
         }
         return 1;
+    }
+
+    private int GetShieldSkillLevel()
+    {
+        if (!_shieldSkillQuery.IsEmpty)
+        {
+            return _shieldSkillQuery.GetSingleton<SkillRuntimeData>().Level;
+        }
+        return 0;
     }
 
     // =========================================================================
