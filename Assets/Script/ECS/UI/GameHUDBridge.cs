@@ -22,6 +22,7 @@ public class GameHUDBridge : MonoBehaviour
     private EntityQuery _slashSwordSkillQuery;
     private EntityQuery _swordFusionSkillQuery;
     private EntityQuery _projectileSkillQuery;
+    private EntityQuery _fireballSkillQuery;
     private bool _initialized;
 
     private int _lastPlayerLevel = 1;
@@ -60,6 +61,7 @@ public class GameHUDBridge : MonoBehaviour
         SlashSword,
         SwordFusion,
         ProjectileSkill,
+        Fireball,
         Heal,
         MaxHp,
         MoveSpeed,
@@ -135,6 +137,10 @@ public class GameHUDBridge : MonoBehaviour
 
         _projectileSkillQuery = _entityManager.CreateEntityQuery(
             ComponentType.ReadOnly<ProjectileSkillTag>(),
+            ComponentType.ReadWrite<SkillRuntimeData>());
+
+        _fireballSkillQuery = _entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<FireballSkillTag>(),
             ComponentType.ReadWrite<SkillRuntimeData>());
 
         _initialized = true;
@@ -345,6 +351,21 @@ public class GameHUDBridge : MonoBehaviour
                 };
             }
 
+            case PerkType.Fireball:
+            {
+                int currentFbLevel = GetFireballSkillLevel();
+                int nextLvl = Mathf.Min(4, currentFbLevel + 1);
+                return new PerkOption
+                {
+                    Type = PerkType.Fireball,
+                    Level = nextLvl,
+                    Title = GameLocalization.FireballTitle,
+                    LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
+                    Description = GameLocalization.FireballDesc(nextLvl),
+                    HighlightColor = new Color(1f, 0.42f, 0.12f) // Flaming Orange-Red
+                };
+            }
+
             case PerkType.Heal:
                 return new PerkOption
                 {
@@ -426,7 +447,14 @@ public class GameHUDBridge : MonoBehaviour
             available.Add(PerkType.ProjectileSkill);
         }
 
-        // 4. Tiên Dược Hồi Máu (Heal)
+        // 4. Cầu Lửa Viêm Ma (Fireball)
+        int currentFbLevel = GetFireballSkillLevel();
+        if (currentFbLevel < 4)
+        {
+            available.Add(PerkType.Fireball);
+        }
+
+        // 5. Tiên Dược Hồi Máu (Heal)
         available.Add(PerkType.Heal);
 
         // 5. Thể Lực Cương Thể (Max HP)
@@ -523,6 +551,16 @@ public class GameHUDBridge : MonoBehaviour
                 }
                 break;
 
+            case PerkType.Fireball:
+                if (!_fireballSkillQuery.IsEmpty)
+                {
+                    Entity skillEntity = _fireballSkillQuery.GetSingletonEntity();
+                    var runtime = _entityManager.GetComponentData<SkillRuntimeData>(skillEntity);
+                    runtime.Level = Mathf.Min(4, runtime.Level + 1);
+                    _entityManager.SetComponentData(skillEntity, runtime);
+                }
+                break;
+
             case PerkType.Heal:
                 var hpHeal = _entityManager.GetComponentData<HealthData>(playerEntity);
                 hpHeal.CurrentHP = Mathf.Min(hpHeal.MaxHP, hpHeal.CurrentHP + hpHeal.MaxHP * 0.4f);
@@ -608,6 +646,15 @@ public class GameHUDBridge : MonoBehaviour
         if (!_projectileSkillQuery.IsEmpty)
         {
             return _projectileSkillQuery.GetSingleton<SkillRuntimeData>().Level;
+        }
+        return 1;
+    }
+
+    private int GetFireballSkillLevel()
+    {
+        if (!_fireballSkillQuery.IsEmpty)
+        {
+            return _fireballSkillQuery.GetSingleton<SkillRuntimeData>().Level;
         }
         return 1;
     }

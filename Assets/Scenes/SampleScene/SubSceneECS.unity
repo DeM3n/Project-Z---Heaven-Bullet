@@ -228,6 +228,7 @@ MonoBehaviour:
   StartingExpToNextLevel: 25
   PickupRange: 2
   MaxHP: 100
+  InvulnerabilityDuration: 0.2
 --- !u!1 &764216964
 GameObject:
   m_ObjectHideFlags: 0
@@ -470,7 +471,6 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1064216964}
-  serializedVersion: 0
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d3b014f5f0ea424cac5a12b5f8be88c, type: 3}
@@ -487,7 +487,6 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1064216964}
-  serializedVersion: 0
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c10b23f81e44f8ab45e01928374a504, type: 3}
@@ -498,13 +497,13 @@ MonoBehaviour:
   BaseDamage: 38
   ApproachSpeed: 13
   ReturnSpeed: 14
-  SlashRadius: 2
-  SlashAngleDeg: 140
-  DetectRange: 7
+  SlashRadius: 2.8
+  SlashAngleDeg: 155
+  DetectRange: 8.5
   WaveSpeed: 15
   WaveDuration: 1.6
   WaveDamage: 65
-  WaveRadius: 0.8
+  WaveRadius: 1.2
 --- !u!1 &1164216964
 GameObject:
   m_ObjectHideFlags: 0
@@ -545,7 +544,6 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1164216964}
-  serializedVersion: 0
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d3b014f5f0ea424cac5a12b5f8be88c, type: 3}
@@ -562,7 +560,6 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1164216964}
-  serializedVersion: 0
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f0510100000000000000000000000004, type: 3}
@@ -586,5 +583,3 @@ SceneRoots:
   - {fileID: 964216965}
   - {fileID: 1064216965}
   - {fileID: 1164216965}
-
-

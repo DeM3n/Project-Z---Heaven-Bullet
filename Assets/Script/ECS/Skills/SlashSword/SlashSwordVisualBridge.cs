@@ -151,7 +151,7 @@ public class SlashSwordVisualBridge : MonoBehaviour
         var transforms = _swordQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
         var swords = _swordQuery.ToComponentDataArray<SlashSwordData>(Allocator.Temp);
 
-        while (_swordVisuals.Count < 4)
+        while (_swordVisuals.Count < Mathf.Max(6, swords.Length))
         {
             _swordVisuals.Add(CreateSwordVisual());
         }
@@ -456,8 +456,8 @@ public class SlashArcEffect : MonoBehaviour
         float currentRadius = Mathf.Lerp(0.5f, _maxRadius, easeT);
         float alpha = Mathf.Clamp01((1f - t) * 1.5f);
 
-        _line.startWidth = Mathf.Lerp(0.28f, 0.04f, t);
-        _line.endWidth = Mathf.Lerp(0.12f, 0.01f, t);
+        _line.startWidth = Mathf.Lerp(0.36f, 0.05f, t);
+        _line.endWidth = Mathf.Lerp(0.16f, 0.02f, t);
 
         Color mainColor = Color.Lerp(
             new Color(1f, 0.95f, 0.7f, alpha),         // Ánh vàng kiếm quang
@@ -468,7 +468,7 @@ public class SlashArcEffect : MonoBehaviour
         _line.endColor = mainColor;
 
         float baseAngle = Mathf.Atan2(_direction.y, _direction.x);
-        float arcSpan = 140f * Mathf.Deg2Rad; // Quét 140 độ
+        float arcSpan = 155f * Mathf.Deg2Rad; // Mở rộng góc chém lên 155 độ tương ứng AOE mới
         float startAngle = baseAngle - arcSpan * 0.5f;
 
         for (int i = 0; i <= SEGMENTS; i++)

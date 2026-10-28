@@ -15,6 +15,17 @@ public partial struct PlayerContactDamageSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
         float totalDamage = 0f;
 
+        // Kiểm tra xem người chơi có đang trong thời gian miễn sát thương (i-frames) không
+        bool isInvulnerable = false;
+        if (SystemAPI.HasComponent<PlayerInvulnerabilityData>(playerEntity))
+        {
+            var invuln = SystemAPI.GetComponent<PlayerInvulnerabilityData>(playerEntity);
+            if (invuln.CurrentTimer > 0f)
+            {
+                isInvulnerable = true;
+            }
+        }
+
         // Cộng dồn damage từ mọi enemy đang chạm rồi apply 1 lần cuối,
         // tránh nhiều enemy cùng ghi đè HealthData của Player trong 1 frame.
         foreach (var (transform, contact) in
@@ -29,14 +40,28 @@ public partial struct PlayerContactDamageSystem : ISystem
             if (contact.ValueRO.Timer > 0f) continue;
 
             contact.ValueRW.Timer = contact.ValueRO.TickInterval;
-            totalDamage += contact.ValueRO.Damage;
+
+            // Nếu đang trong trạng thái i-frames, bỏ qua không nhận sát thương
+            if (!isInvulnerable)
+            {
+                totalDamage += contact.ValueRO.Damage;
+            }
         }
 
         if (totalDamage > 0f)
         {
             playerHealth.CurrentHP -= totalDamage;
             SystemAPI.SetComponent(playerEntity, playerHealth);
-            Debug.Log($"[PlayerContactDamageSystem] Player took {totalDamage} damage from Enemy contact (Remaining HP: {playerHealth.CurrentHP}/{playerHealth.MaxHP})");
+
+            // Ngay lập tức kích hoạt thời gian miễn sát thương (i-frames) cho người chơi
+            if (SystemAPI.HasComponent<PlayerInvulnerabilityData>(playerEntity))
+            {
+                var invuln = SystemAPI.GetComponent<PlayerInvulnerabilityData>(playerEntity);
+                invuln.CurrentTimer = invuln.Duration;
+                SystemAPI.SetComponent(playerEntity, invuln);
+            }
+
+            Debug.Log($"[PlayerContactDamageSystem] Player took {totalDamage} damage from Enemy contact (Remaining HP: {playerHealth.CurrentHP}/{playerHealth.MaxHP}) - i-frames activated!");
         }
     }
 }

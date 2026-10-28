@@ -98,6 +98,7 @@ public static class GameLocalization
     public static string SlashSwordTitle => Get("CRESCENT BLADE", "TRẢM YÊU KIẾM");
     public static string SwordFusionTitle => Get("CELESTIAL BLADE FUSION", "THIÊN KIẾM HỢP THỂ");
     public static string ProjectileSkillTitle => Get("ARCANE VOLLEY", "ĐẠN TỎA QUẠT");
+    public static string FireballTitle => Get("HELLFIRE ORB", "CẦU LỬA VIÊM MA");
     public static string HealTitle => Get("VITALITY ELIXIR", "TIÊN DƯỢC PHỤC HỒI");
     public static string MaxHpTitle => Get("IRON WILL", "CƯƠNG THỂ QUYẾT");
     public static string MoveSpeedTitle => Get("WIND STRIDE", "THẦN HÀNH BỘ");
@@ -150,20 +151,20 @@ public static class GameLocalization
         return level switch
         {
             2 => Get(
-                "+1 Sentinel Blade (2 total). Reduces cooldown to 3.3s and increases damage to 90 DMG.",
-                "+1 Linh kiếm (tổng 2 kiếm). Giảm hồi chiêu xuống 3.3s và tăng sát thương lên 90 DMG."
+                "+1 Sentinel Blade (3 total). Reduces cooldown to 3.3s and expands slash AOE to 3.55m.",
+                "+1 Linh kiếm (tổng 3 kiếm). Giảm hồi chiêu xuống 3.3s và mở rộng tầm chém AOE lên 3.55m."
             ),
             3 => Get(
-                "+1 Sentinel Blade (3 total). Reduces cooldown to 2.6s, increases damage to 125 DMG and expands slash arc.",
-                "+1 Linh kiếm (tổng 3 kiếm). Giảm hồi chiêu xuống 2.6s, tăng sát thương lên 125 DMG và mở rộng góc chém."
+                "+1 Sentinel Blade (4 total). Reduces cooldown to 2.6s and expands slash AOE to 3.9m.",
+                "+1 Linh kiếm (tổng 4 kiếm). Giảm hồi chiêu xuống 2.6s và mở rộng tầm chém AOE lên 3.9m."
             ),
             4 => Get(
-                "★ SWORD AURA EVOLUTION ★ Reduces cooldown to 2.0s! Every slash unleashes a Piercing Sword Wave that cuts through all foes!",
-                "★ TIẾN HÓA KIẾM KHÍ ★ Giảm hồi chiêu xuống 2.0s! Mỗi nhát chém phóng ra luồng Kiếm Khí xuyên thấu toàn bộ mục tiêu!"
+                "★ SWORD AURA EVOLUTION ★ +1 Sentinel Blade (5 total)! Cooldown 2.0s. All 5 blades slash with massive 4.25m AOE and unleash Piercing Sword Waves!",
+                "★ TIẾN HÓA KIẾM KHÍ ★ +1 Linh kiếm (tổng 5 kiếm)! Hồi chiêu 2.0s. Cả 5 kiếm chém AOE cực đại 4.25m và phóng Kiếm Khí xuyên thấu mọi mục tiêu!"
             ),
             _ => Get(
-                "Summons a sentinel blade that rushes in to unleash lethal melee arc slashes (4s cooldown, 65 DMG).",
-                "Triệu hồi linh kiếm lao vào áp sát chém quét vòng cung cực mạnh (hồi chiêu 4s, 65 DMG)."
+                "Summons 2 sentinel blades that rush in to unleash lethal 3.2m arc slashes (4s cooldown, 65 DMG).",
+                "Triệu hồi 2 linh kiếm lao vào chém quét vòng cung diện rộng 3.2m (hồi chiêu 4s, 65 DMG)."
             )
         };
     }
@@ -174,6 +175,29 @@ public static class GameLocalization
             "+1 Projectile per volley, -12% cooldown reduction, and increased bullet damage.",
             "+1 Tia đạn bắn ra mỗi đợt, giảm 12% thời gian hồi chiêu và tăng sát thương đạn."
         );
+    }
+
+    public static string FireballDesc(int level)
+    {
+        return level switch
+        {
+            2 => Get(
+                "+45% Blast DMG. Bursts into 2 cluster sub-fireballs (50% DMG each). Cooldown reduced to 2.3s.",
+                "+45% Sát thương nổ. Nổ chùm văng 2 cầu lửa con (50% sát thương mỗi quả). Hồi chiêu giảm còn 2.3s."
+            ),
+            3 => Get(
+                "+40% Blast DMG & +15% Radius. Bursts into 3 cluster sub-fireballs. Cooldown reduced to 2.0s.",
+                "+40% Sát thương & +15% Bán kính nổ. Nổ chùm văng 3 cầu lửa con. Hồi chiêu giảm còn 2.0s."
+            ),
+            4 => Get(
+                "★ INFERNO CATACLYSM ★ 120 Blast DMG! Bursts into 4 cluster fireballs and ignites a Scorched Fire Zone dealing continuous DOT for 3.5s!",
+                "★ ĐỊA NGỤC HỎA DIỆM ★ 120 Sát thương nổ! Nổ chùm văng 4 cầu lửa con và thắp sáng Vùng Lửa thiêu đốt gây sát thương DOT liên tục trong 3.5s!"
+            ),
+            _ => Get(
+                "Fires an explosive hellfire orb that detonates for 45 AOE DMG and bursts into 1 mini cluster fireball (50% DMG).",
+                "Bắn cầu lửa Viêm Ma nổ diện rộng 45 sát thương và nổ chùm văng 1 cầu lửa con (50% sát thương)."
+            )
+        };
     }
 
     public static string HealDesc => Get(

@@ -97,13 +97,28 @@ public partial struct FlyingSwordSkillSystem : ISystem
                 }
             }
 
+            int assignedIndex = 0;
             for (int i = 0; i < swordEntities.Length; i++)
             {
-                if (swordDataArray[i].SkillEntity == skillEntity && swordDataArray[i].TotalSwords != targetSwordCount)
+                if (swordDataArray[i].SkillEntity == skillEntity)
                 {
                     var data = swordDataArray[i];
-                    data.TotalSwords = targetSwordCount;
-                    ecb.SetComponent(swordEntities[i], data);
+                    bool changed = false;
+                    if (data.TotalSwords != targetSwordCount)
+                    {
+                        data.TotalSwords = targetSwordCount;
+                        changed = true;
+                    }
+                    if (data.SwordIndex != assignedIndex)
+                    {
+                        data.SwordIndex = assignedIndex;
+                        changed = true;
+                    }
+                    if (changed)
+                    {
+                        ecb.SetComponent(swordEntities[i], data);
+                    }
+                    assignedIndex++;
                 }
             }
 
@@ -156,13 +171,12 @@ public partial struct FlyingSwordSkillSystem : ISystem
             {
                 case 0: // ================== PHA 1: IDLE (Orbiting quanh Player) ==================
                 {
-                    // Kiếm chỉ xoay quanh Player khi không có quái hoặc đang chờ mục tiêu
-                    sword.ValueRW.CurrentAngle += skillData.OrbitSpeed * dt;
-                    if (sword.ValueRW.CurrentAngle > math.PI * 2f)
-                        sword.ValueRW.CurrentAngle -= math.PI * 2f;
-
+                    // Đồng bộ góc toàn cục theo thời gian trận đấu để mọi thanh kiếm luôn cách đều nhau tuyệt đối:
+                    // finalAngle = globalAngle + (2 * PI / TotalSwords) * SwordIndex
+                    float globalAngle = (float)(SystemAPI.Time.ElapsedTime * skillData.OrbitSpeed);
                     float angleOffset = (math.PI * 2f / math.max(1, sword.ValueRO.TotalSwords)) * sword.ValueRO.SwordIndex;
-                    float finalAngle = sword.ValueRO.CurrentAngle + angleOffset;
+                    float finalAngle = globalAngle + angleOffset;
+                    sword.ValueRW.CurrentAngle = finalAngle;
 
                     float3 desiredPos = playerPos + new float3(
                         math.cos(finalAngle) * skillData.OrbitRadius,

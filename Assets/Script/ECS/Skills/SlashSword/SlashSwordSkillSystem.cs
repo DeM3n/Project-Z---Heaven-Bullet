@@ -39,7 +39,7 @@ public partial struct SlashSwordSkillSystem : ISystem
         {
             if (!state.EntityManager.Exists(owner.ValueRO.Owner)) continue;
 
-            int targetSwordCount = runtime.ValueRO.Level <= 0 ? 0 : math.clamp(runtime.ValueRO.Level, 1, 3);
+            int targetSwordCount = runtime.ValueRO.Level <= 0 ? 0 : math.clamp(runtime.ValueRO.Level + 1, 2, 5);
 
             int currentSwordCount = 0;
             var swordEntities = _swordQuery.ToEntityArray(Allocator.Temp);
@@ -88,13 +88,28 @@ public partial struct SlashSwordSkillSystem : ISystem
                 }
             }
 
+            int assignedIndex = 0;
             for (int i = 0; i < swordEntities.Length; i++)
             {
-                if (swordDataArray[i].SkillEntity == skillEntity && swordDataArray[i].TotalSwords != targetSwordCount)
+                if (swordDataArray[i].SkillEntity == skillEntity)
                 {
                     var data = swordDataArray[i];
-                    data.TotalSwords = targetSwordCount;
-                    ecb.SetComponent(swordEntities[i], data);
+                    bool changed = false;
+                    if (data.TotalSwords != targetSwordCount)
+                    {
+                        data.TotalSwords = targetSwordCount;
+                        changed = true;
+                    }
+                    if (data.SwordIndex != assignedIndex)
+                    {
+                        data.SwordIndex = assignedIndex;
+                        changed = true;
+                    }
+                    if (changed)
+                    {
+                        ecb.SetComponent(swordEntities[i], data);
+                    }
+                    assignedIndex++;
                 }
             }
 
@@ -127,13 +142,12 @@ public partial struct SlashSwordSkillSystem : ISystem
             {
                 case 0: // ================== PHA 1: IDLE ORBIT ==================
                 {
-                    // Kiếm bay lơ lửng bảo vệ quanh Player
-                    sword.ValueRW.OrbitAngle += 2.0f * dt;
-                    if (sword.ValueRW.OrbitAngle > math.PI * 2f)
-                        sword.ValueRW.OrbitAngle -= math.PI * 2f;
-
+                    // Đồng bộ góc toàn cục theo thời gian trận đấu để mọi linh kiếm luôn cách đều nhau tuyệt đối:
+                    // finalAngle = globalAngle + (2 * PI / TotalSwords) * SwordIndex
+                    float globalAngle = (float)(SystemAPI.Time.ElapsedTime * 2.0f);
                     float angleOffset = (math.PI * 2f / math.max(1, sword.ValueRO.TotalSwords)) * sword.ValueRO.SwordIndex;
-                    float finalAngle = sword.ValueRO.OrbitAngle + angleOffset;
+                    float finalAngle = globalAngle + angleOffset;
+                    sword.ValueRW.OrbitAngle = finalAngle;
 
                     float3 desiredPos = playerPos + new float3(
                         math.cos(finalAngle) * 1.6f,
@@ -196,10 +210,10 @@ public partial struct SlashSwordSkillSystem : ISystem
                         sword.ValueRW.StateTimer = 0.22f; // Thời gian vung kiếm
                         sword.ValueRW.SlashProgress = 0f;
 
-                        // Thực hiện đòn chém quét diện rộng
-                        float3 slashCenter = transform.ValueRO.Position + sword.ValueRO.SlashDirection * 0.7f;
-                        float slashRadius = skillData.SlashRadius;
+                        // Thực hiện đòn chém quét diện rộng (AOE tăng cường và mở rộng theo cấp độ)
+                        float slashRadius = skillData.SlashRadius + (level - 1) * 0.35f;
                         float slashRadiusSq = slashRadius * slashRadius;
+                        float3 slashCenter = transform.ValueRO.Position + sword.ValueRO.SlashDirection * (slashRadius * 0.32f);
 
                         int2 cell = SpatialGridUtility.ToCell(slashCenter.xy, cellSize);
 

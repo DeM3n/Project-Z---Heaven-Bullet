@@ -13,15 +13,15 @@ public class SlashSwordSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
     public float BaseDamage = 38f;
     public float ApproachSpeed = 13f;
     public float ReturnSpeed = 14f;
-    public float SlashRadius = 2.0f;
-    public float SlashAngleDeg = 140f;
-    public float DetectRange = 7.0f;
+    public float SlashRadius = 3.2f;
+    public float SlashAngleDeg = 155f;
+    public float DetectRange = 8.5f;
 
     [Header("Chỉ số Kiếm Khí (Level 4 Piercing Wave)")]
     public float WaveSpeed = 15f;
     public float WaveDuration = 1.6f;
     public float WaveDamage = 65f;
-    public float WaveRadius = 0.8f;
+    public float WaveRadius = 1.2f;
 
     public void Bake(IBaker baker, Entity entity)
     {
