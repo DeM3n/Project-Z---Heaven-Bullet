@@ -451,7 +451,7 @@ public class FireballVisualBridge : MonoBehaviour
         var shadowRend = shadowObj.AddComponent<SpriteRenderer>();
         shadowRend.sprite = GetCircleSprite();
         shadowRend.color = new Color(0f, 0f, 0f, 0.45f);
-        shadowRend.sortingOrder = 3;
+        shadowRend.sortingOrder = -4; // Nằm sát mặt đất dưới player và quái (order 0)
         if (mat != null) shadowRend.material = mat;
         shadowObj.SetActive(false);
 
@@ -775,12 +775,12 @@ public class FireZoneVisualEffect : MonoBehaviour
                     ?? Shader.Find("Sprites/Default");
         Material mat = shader != null ? new Material(shader) : null;
 
-        // 1. Lớp đất sém đen khói (Charred Earth Decal)
+        // 1. Lớp đất sém đen khói (Charred Earth Decal) - Nằm sát mặt đất dưới Player và Quái (sortingOrder 0)
         var charObj = new GameObject("CharredGround");
         charObj.transform.SetParent(transform, false);
         _charredGround = charObj.AddComponent<SpriteRenderer>();
         _charredGround.sprite = FireballVisualBridge.GetCircleSprite();
-        _charredGround.sortingOrder = 1;
+        _charredGround.sortingOrder = -10;
         if (mat != null) _charredGround.material = mat;
 
         // 2. Vùng dung nham mặt đất (Magma Pool)
@@ -788,7 +788,7 @@ public class FireZoneVisualEffect : MonoBehaviour
         groundObj.transform.SetParent(transform, false);
         _groundFire = groundObj.AddComponent<SpriteRenderer>();
         _groundFire.sprite = FireballVisualBridge.GetCircleSprite();
-        _groundFire.sortingOrder = 2;
+        _groundFire.sortingOrder = -9;
         if (mat != null) _groundFire.material = mat;
 
         // 3. Mạng lưới các vết nứt dung nham nứt toác (Lava Fissures - GPU Sprite)
@@ -796,7 +796,7 @@ public class FireZoneVisualEffect : MonoBehaviour
         crackObj.transform.SetParent(transform, false);
         _cracksRenderer = crackObj.AddComponent<SpriteRenderer>();
         _cracksRenderer.sprite = FireballVisualBridge.GetLavaCrackSprite();
-        _cracksRenderer.sortingOrder = 3;
+        _cracksRenderer.sortingOrder = -8;
         if (mat != null) _cracksRenderer.material = mat;
 
         // 4. Lớp vết nứt phụ xoay lệch góc tăng độ dày đặc
@@ -805,7 +805,7 @@ public class FireZoneVisualEffect : MonoBehaviour
         crackDetailObj.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
         _cracksDetail = crackDetailObj.AddComponent<SpriteRenderer>();
         _cracksDetail.sprite = FireballVisualBridge.GetLavaCrackSprite();
-        _cracksDetail.sortingOrder = 3;
+        _cracksDetail.sortingOrder = -8;
         if (mat != null) _cracksDetail.material = mat;
 
         // 5. Lõi nhiệt bốc cháy bên trong (Inner Ember)
@@ -813,7 +813,7 @@ public class FireZoneVisualEffect : MonoBehaviour
         emberObj.transform.SetParent(transform, false);
         _innerEmber = emberObj.AddComponent<SpriteRenderer>();
         _innerEmber.sprite = FireballVisualBridge.GetCircleSprite();
-        _innerEmber.sortingOrder = 4;
+        _innerEmber.sortingOrder = -7;
         if (mat != null) _innerEmber.material = mat;
 
         // 6. Viền hào quang lửa ngoài (Border Aura Ring)
@@ -821,7 +821,7 @@ public class FireZoneVisualEffect : MonoBehaviour
         borderObj.transform.SetParent(transform, false);
         _borderAura = borderObj.AddComponent<SpriteRenderer>();
         _borderAura.sprite = FireballVisualBridge.GetRingSprite();
-        _borderAura.sortingOrder = 5;
+        _borderAura.sortingOrder = -6;
         if (mat != null) _borderAura.material = mat;
 
         // 7. Hệ hạt tàn lửa bay bổng lên trời (Rising Embers Particle System)
@@ -842,7 +842,7 @@ public class FireZoneVisualEffect : MonoBehaviour
             pMat.mainTexture = FireballVisualBridge.GetCircleSprite().texture;
             psr.material = pMat;
         }
-        psr.sortingOrder = 6;
+        psr.sortingOrder = -5;
 
         var main = _emberParticles.main;
         main.duration = 1.0f;

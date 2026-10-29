@@ -13,12 +13,20 @@ using UnityEngine;
 public class FlyingSwordTrailBridge : MonoBehaviour
 {
     [Header("Trail Settings")]
-    [Tooltip("Thời gian tồn tại của vệt đuôi (giữ ngắn ~0.15s - 0.2s để không bị kéo quá dài)")]
-    [SerializeField] private float trailTime = 0.18f;
-    [SerializeField] private float startWidth = 0.22f;
-    [SerializeField] private float endWidth = 0.02f;
-    [SerializeField] private Color normalColor = new Color(0.2f, 0.88f, 1f, 0.85f);
-    [SerializeField] private Color ultimateColor = new Color(1f, 0.85f, 0.25f, 0.95f);
+    [Tooltip("Thời gian tồn tại của vệt đuôi (s)")]
+    [SerializeField] private float trailTime = 0.15f;
+    [Tooltip("Độ rộng của vệt trail ở chuôi kiếm (giữ thon gọn vừa khít với thân kiếm ~0.11m)")]
+    [SerializeField] private float startWidth = 0.11f;
+    [Tooltip("Độ rộng vệt trail ở đuôi nhọn")]
+    [SerializeField] private float endWidth = 0.01f;
+    [Tooltip("Khoảng cách dời điểm phát trail từ tâm kiếm về phía chuôi kiếm (m)")]
+    [SerializeField] private float hiltOffset = 0.35f;
+    [Tooltip("Đảo chiều offset chuôi kiếm nếu mũi kiếm quay theo chiều ngược lại")]
+    [SerializeField] private bool invertHiltDirection = false;
+    [Tooltip("Màu vệt trail bình thường (tông đỏ huyết kiếm rực rỡ)")]
+    [SerializeField] private Color normalColor = new Color(1f, 0.15f, 0.2f, 0.95f);
+    [Tooltip("Màu vệt trail khi Ultimate (đỏ cam rực lửa)")]
+    [SerializeField] private Color ultimateColor = new Color(1f, 0.42f, 0.12f, 1f);
     [SerializeField] private Material trailMaterial;
 
     private EntityManager _entityManager;
@@ -134,13 +142,17 @@ public class FlyingSwordTrailBridge : MonoBehaviour
                     transforms[i].Position.y,
                     transforms[i].Position.z);
 
+                // Dời điểm phát Trail về đúng vị trí Chuôi Kiếm (Hilt) phía sau
+                Vector3 hiltDirection = ((Quaternion)transforms[i].Rotation) * (invertHiltDirection ? Vector3.down : Vector3.up);
+                Vector3 trailEmitPos = targetPos + hiltDirection * hiltOffset;
+
                 // Dịch chuyển tức thời quá xa (> 4m) -> Clear trail để tránh vạch cắt màn hình
-                if (Vector3.Distance(item.Root.transform.position, targetPos) > 4f)
+                if (Vector3.Distance(item.Root.transform.position, trailEmitPos) > 4f)
                 {
                     item.Trail.Clear();
                 }
 
-                item.Root.transform.position = targetPos;
+                item.Root.transform.position = trailEmitPos;
                 item.Root.transform.rotation = transforms[i].Rotation;
                 item.Trail.emitting = true;
 
@@ -150,38 +162,38 @@ public class FlyingSwordTrailBridge : MonoBehaviour
 
                 if (isUltimateStrike)
                 {
-                    // Đang trong cú lướt Ultimate: Vệt đuôi vàng cam rực lửa cực đại (width 0.5f)
+                    // Đang trong cú lướt Ultimate: Vệt đuôi đỏ cam rực lửa cực đại (width 0.28f)
                     if (!item.IsUltimateMode)
                     {
                         item.IsUltimateMode = true;
-                        ApplyTrailGradient(item.Trail, ultimateColor, new Color(1f, 0.4f, 0.1f, 0.9f), 0.5f, 0.05f);
+                        ApplyTrailGradient(item.Trail, ultimateColor, new Color(0.85f, 0.05f, 0.05f, 0f), 0.28f, 0.02f);
                     }
                     item.AuraObj.SetActive(true);
                     item.AuraObj.transform.Rotate(0f, 0f, 720f * Time.deltaTime);
-                    item.AuraRenderer.color = new Color(1f, 0.85f, 0.2f, 0.9f);
+                    item.AuraRenderer.color = new Color(1f, 0.35f, 0.15f, 0.95f);
                     item.AuraObj.transform.localScale = Vector3.one * (1.6f + Mathf.PingPong(Time.time * 6f, 0.4f));
                 }
                 else if (isUltimateReady)
                 {
-                    // Ultimate đã tích tụ xong: Aura vàng kim xoay quanh kiếm, báo hiệu sẵn sàng
+                    // Ultimate đã tích tụ xong: Aura đỏ cam xoay quanh chuôi kiếm, báo hiệu sẵn sàng
                     if (!item.IsUltimateMode)
                     {
                         item.IsUltimateMode = true;
-                        ApplyTrailGradient(item.Trail, new Color(1f, 0.9f, 0.35f, 0.9f), normalColor, 0.3f, 0.02f);
+                        ApplyTrailGradient(item.Trail, new Color(1f, 0.45f, 0.15f, 0.95f), normalColor, 0.16f, 0.01f);
                     }
                     item.AuraObj.SetActive(true);
                     item.AuraObj.transform.Rotate(0f, 0f, 360f * Time.deltaTime);
                     float pulse = 1f + Mathf.Sin(Time.time * 8f) * 0.2f;
-                    item.AuraRenderer.color = new Color(1f, 0.9f, 0.3f, 0.75f + Mathf.Sin(Time.time * 8f) * 0.2f);
+                    item.AuraRenderer.color = new Color(1f, 0.25f, 0.15f, 0.85f + Mathf.Sin(Time.time * 8f) * 0.15f);
                     item.AuraObj.transform.localScale = Vector3.one * pulse;
                 }
                 else
                 {
-                    // Trạng thái bình thường: Vệt Cyan thon gọn, tắt Aura
+                    // Trạng thái bình thường: Vệt đỏ thon gọn xuất phát từ chuôi kiếm, tắt Aura
                     if (item.IsUltimateMode)
                     {
                         item.IsUltimateMode = false;
-                        ApplyTrailGradient(item.Trail, normalColor, normalColor, startWidth, endWidth);
+                        ApplyTrailGradient(item.Trail, normalColor, new Color(0.7f, 0.02f, 0.05f, 0f), startWidth, endWidth);
                     }
                     item.AuraObj.SetActive(false);
                 }
@@ -412,8 +424,8 @@ public class SwordShockwaveEffect : MonoBehaviour
         {
             _outerRing.widthMultiplier = Mathf.Lerp(0.18f, 0.02f, t);
             Color ringColor = Color.Lerp(
-                new Color(1f, 0.9f, 0.35f, alpha),
-                new Color(0.2f, 0.95f, 1f, alpha * 0.8f),
+                new Color(1f, 0.45f, 0.2f, alpha),
+                new Color(0.95f, 0.1f, 0.15f, alpha * 0.8f),
                 t);
             _outerRing.startColor = ringColor;
             _outerRing.endColor = ringColor;
@@ -430,7 +442,7 @@ public class SwordShockwaveEffect : MonoBehaviour
         if (_innerFlash != null)
         {
             _innerFlash.transform.localScale = Vector3.one * (currentRadius * 2f);
-            _innerFlash.color = new Color(0.3f, 0.95f, 1f, alpha * 0.35f);
+            _innerFlash.color = new Color(1f, 0.18f, 0.12f, alpha * 0.35f);
         }
     }
 }

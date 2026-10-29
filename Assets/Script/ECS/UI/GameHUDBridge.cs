@@ -61,6 +61,8 @@ public class GameHUDBridge : MonoBehaviour
 
     // --- Ancient Chest Popup UI ---
     private GameObject _chestPanel;
+    private Image _chestModalImage;
+    private Coroutine _chestModalAnimCoroutine;
     private Text _chestTitleText;
     private Text _chestSubText;
     private Text _relicIconText;
@@ -1396,7 +1398,7 @@ public class GameHUDBridge : MonoBehaviour
         modalRect.anchorMin = new Vector2(0.5f, 0.5f);
         modalRect.anchorMax = new Vector2(0.5f, 0.5f);
         modalRect.pivot = new Vector2(0.5f, 0.5f);
-        modalRect.sizeDelta = new Vector2(580f, 440f);
+        modalRect.sizeDelta = new Vector2(580f, 490f);
 
         var modalBg = modalObj.AddComponent<Image>();
         modalBg.color = new Color(0.06f, 0.08f, 0.14f, 0.98f);
@@ -1405,6 +1407,24 @@ public class GameHUDBridge : MonoBehaviour
         modalOutline.effectColor = new Color(1f, 0.82f, 0.2f, 0.95f);
         modalOutline.effectDistance = new Vector2(3f, -3f);
 
+        // Icon Rương động trên Header Modal (Hiển thị RPG Chests animation)
+        var chestImgObj = new GameObject("ChestHeaderIcon");
+        chestImgObj.transform.SetParent(modalObj.transform, false);
+        var chestImgRect = chestImgObj.AddComponent<RectTransform>();
+        chestImgRect.anchorMin = new Vector2(0.5f, 1f);
+        chestImgRect.anchorMax = new Vector2(0.5f, 1f);
+        chestImgRect.pivot = new Vector2(0.5f, 1f);
+        chestImgRect.anchoredPosition = new Vector2(0f, -14f);
+        chestImgRect.sizeDelta = new Vector2(64f, 58f);
+
+        _chestModalImage = chestImgObj.AddComponent<Image>();
+        _chestModalImage.preserveAspect = true;
+        PickupVisualBridge.EnsureSpritesLoaded();
+        if (PickupVisualBridge.ChestClosedSprite != null)
+        {
+            _chestModalImage.sprite = PickupVisualBridge.ChestClosedSprite;
+        }
+
         // Header Title
         var titleObj = new GameObject("HeaderTitle");
         titleObj.transform.SetParent(modalObj.transform, false);
@@ -1412,8 +1432,8 @@ public class GameHUDBridge : MonoBehaviour
         titleRect.anchorMin = new Vector2(0.5f, 1f);
         titleRect.anchorMax = new Vector2(0.5f, 1f);
         titleRect.pivot = new Vector2(0.5f, 1f);
-        titleRect.anchoredPosition = new Vector2(0f, -22f);
-        titleRect.sizeDelta = new Vector2(540f, 48f);
+        titleRect.anchoredPosition = new Vector2(0f, -76f);
+        titleRect.sizeDelta = new Vector2(540f, 44f);
 
         _chestTitleText = titleObj.AddComponent<Text>();
         _chestTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -1434,8 +1454,8 @@ public class GameHUDBridge : MonoBehaviour
         subRect.anchorMin = new Vector2(0.5f, 1f);
         subRect.anchorMax = new Vector2(0.5f, 1f);
         subRect.pivot = new Vector2(0.5f, 1f);
-        subRect.anchoredPosition = new Vector2(0f, -68f);
-        subRect.sizeDelta = new Vector2(500f, 30f);
+        subRect.anchoredPosition = new Vector2(0f, -118f);
+        subRect.sizeDelta = new Vector2(500f, 26f);
 
         _chestSubText = subObj.AddComponent<Text>();
         _chestSubText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -1451,8 +1471,8 @@ public class GameHUDBridge : MonoBehaviour
         cardRect.anchorMin = new Vector2(0.5f, 0.5f);
         cardRect.anchorMax = new Vector2(0.5f, 0.5f);
         cardRect.pivot = new Vector2(0.5f, 0.5f);
-        cardRect.anchoredPosition = new Vector2(0f, 10f);
-        cardRect.sizeDelta = new Vector2(460f, 190f);
+        cardRect.anchoredPosition = new Vector2(0f, -5f);
+        cardRect.sizeDelta = new Vector2(460f, 180f);
 
         var cardBg = cardObj.AddComponent<Image>();
         cardBg.color = new Color(0.12f, 0.15f, 0.22f, 0.95f);
@@ -1577,9 +1597,50 @@ public class GameHUDBridge : MonoBehaviour
         Time.timeScale = 0f; // Pause game khi nhận rương
         _chestPanel.SetActive(true);
 
+        // Kích hoạt hoạt ảnh mở rương RPG Chests trên Header Modal (RPG Chests_2 -> 11 -> 20 -> 29)
+        if (_chestModalAnimCoroutine != null) StopCoroutine(_chestModalAnimCoroutine);
+        _chestModalAnimCoroutine = StartCoroutine(AnimateChestModalRoutine());
+
         // Chọn ngẫu nhiên 1 trong 5 Cổ Vật
         _currentChestRelic = (RelicType)UnityEngine.Random.Range(0, 5);
         RenderChestRewardUI();
+    }
+
+    private IEnumerator AnimateChestModalRoutine()
+    {
+        if (_chestModalImage == null) yield break;
+
+        PickupVisualBridge.EnsureSpritesLoaded();
+        var s0 = PickupVisualBridge.ChestClosedSprite;
+        var s1 = PickupVisualBridge.ChestOpenFrame1;
+        var s2 = PickupVisualBridge.ChestOpenFrame2;
+        var s3 = PickupVisualBridge.ChestOpenFrame3;
+
+        if (s0 != null) _chestModalImage.sprite = s0;
+        _chestModalImage.transform.localScale = Vector3.one;
+
+        yield return new WaitForSecondsRealtime(0.10f);
+        if (s1 != null) _chestModalImage.sprite = s1;
+
+        yield return new WaitForSecondsRealtime(0.10f);
+        if (s2 != null) _chestModalImage.sprite = s2;
+
+        yield return new WaitForSecondsRealtime(0.10f);
+        if (s3 != null)
+        {
+            _chestModalImage.sprite = s3;
+            // Hiệu ứng nảy scale khi nắp mở toang
+            _chestModalImage.transform.localScale = new Vector3(1.22f, 1.22f, 1f);
+            float elapsed = 0f;
+            while (elapsed < 0.2f)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float sc = Mathf.Lerp(1.22f, 1.0f, elapsed / 0.2f);
+                _chestModalImage.transform.localScale = new Vector3(sc, sc, 1f);
+                yield return null;
+            }
+            _chestModalImage.transform.localScale = Vector3.one;
+        }
     }
 
     private void RenderChestRewardUI()
@@ -1708,6 +1769,12 @@ public class GameHUDBridge : MonoBehaviour
         }
 
         _entityManager.SetComponentData(playerEntity, relicData);
+
+        if (_chestModalAnimCoroutine != null)
+        {
+            StopCoroutine(_chestModalAnimCoroutine);
+            _chestModalAnimCoroutine = null;
+        }
 
         if (_chestPanel != null) _chestPanel.SetActive(false);
 

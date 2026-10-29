@@ -5,6 +5,11 @@ public struct FlyingSwordSkillTag : IComponentData {}
 
 public struct FlyingSwordTag : IComponentData {}
 
+public struct FlyingSwordVisualOffset : IComponentData
+{
+    public float RadianOffset; // Góc bù thị giác (radian) để xoay sprite cho đúng hướng mũi kiếm
+}
+
 public struct FlyingSwordSkillData : IComponentData
 {
     public Entity SwordPrefab;

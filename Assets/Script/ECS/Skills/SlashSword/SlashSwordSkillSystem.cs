@@ -29,6 +29,7 @@ public partial struct SlashSwordSkillSystem : ISystem
         var grid = SystemAPI.GetSingleton<SpatialGridSingleton>().Grid;
         float cellSize = SystemAPI.GetSingleton<SpatialGridSingleton>().CellSize;
 
+        var visualOffsetLookup = SystemAPI.GetComponentLookup<SlashSwordVisualOffset>(true);
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
         // --- 1. Đồng bộ số lượng kiếm theo Skill Level ---
@@ -138,6 +139,11 @@ public partial struct SlashSwordSkillSystem : ISystem
             float currentDamage = skillData.BaseDamage + (level - 1) * 32f;
             float currentSpeed = skillData.ApproachSpeed + (level - 1) * 3f;
 
+            // Góc bù thị giác để sprite luôn chỉ đúng mũi kiếm
+            float rotOffset = visualOffsetLookup.HasComponent(swordEntity)
+                ? visualOffsetLookup[swordEntity].RadianOffset
+                : 0f;
+
             switch (sword.ValueRO.State)
             {
                 case 0: // ================== PHA 1: IDLE ORBIT ==================
@@ -158,7 +164,7 @@ public partial struct SlashSwordSkillSystem : ISystem
 
                     // Hướng mũi kiếm xoay theo tiếp tuyến quỹ đạo
                     float tangentAngle = finalAngle + math.PI * 0.5f;
-                    transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, tangentAngle - math.PI * 0.5f);
+                    transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, tangentAngle - math.PI * 0.5f + rotOffset);
 
                     // Đếm lùi thời gian hồi chiêu
                     if (sword.ValueRO.CooldownTimer > 0f)
@@ -199,7 +205,7 @@ public partial struct SlashSwordSkillSystem : ISystem
 
                     if (dist > 0.01f)
                     {
-                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f);
+                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f + rotOffset);
                     }
 
                     // Khi đã áp sát cự ly chém (<= 1.3m) hoặc timeout
@@ -282,7 +288,7 @@ public partial struct SlashSwordSkillSystem : ISystem
                     // Kiếm vung quét một vòng cung từ -65° đến +65° tạo cảm giác chém uy lực
                     float sweepAngle = math.lerp(-1.15f, 1.15f, math.clamp(sword.ValueRO.SlashProgress, 0f, 1f));
                     float baseAngle = math.atan2(sword.ValueRO.SlashDirection.y, sword.ValueRO.SlashDirection.x) - math.PI * 0.5f;
-                    transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, baseAngle + sweepAngle);
+                    transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, baseAngle + sweepAngle + rotOffset);
 
                     if (sword.ValueRO.StateTimer <= 0f || sword.ValueRO.SlashProgress >= 1f)
                     {
@@ -304,7 +310,7 @@ public partial struct SlashSwordSkillSystem : ISystem
 
                     if (distToPlayer > 0.01f)
                     {
-                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f);
+                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f + rotOffset);
                     }
 
                     // Khi đã quay về gần Player hoặc timeout

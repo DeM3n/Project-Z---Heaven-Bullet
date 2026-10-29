@@ -6,6 +6,11 @@ public struct SlashSwordSkillTag : IComponentData {}
 
 public struct SlashSwordTag : IComponentData {}
 
+public struct SlashSwordVisualOffset : IComponentData
+{
+    public float RadianOffset; // Góc bù thị giác (radian) để xoay sprite cho đúng hướng mũi kiếm
+}
+
 public struct SwordWaveTag : IComponentData {}
 
 public struct SlashSwordSkillData : IComponentData

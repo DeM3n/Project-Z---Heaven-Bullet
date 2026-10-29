@@ -13,6 +13,24 @@ using UnityEngine;
 /// </summary>
 public class SlashSwordVisualBridge : MonoBehaviour
 {
+    [Header("Sword Trail Settings")]
+    [Tooltip("Thời gian tồn tại vệt đuôi khi bay hộ vệ bình thường (s)")]
+    [SerializeField] private float idleTrailTime = 0.12f;
+    [Tooltip("Thời gian tồn tại vệt đuôi khi áp sát và chém (s)")]
+    [SerializeField] private float combatTrailTime = 0.20f;
+    [Tooltip("Độ rộng vệt trail ở chuôi kiếm (m)")]
+    [SerializeField] private float startWidth = 0.13f;
+    [Tooltip("Độ rộng vệt trail ở đuôi nhọn (m)")]
+    [SerializeField] private float endWidth = 0.01f;
+    [Tooltip("Khoảng cách dời điểm phát trail từ tâm kiếm về phía chuôi kiếm (m)")]
+    [SerializeField] private float hiltOffset = 0.35f;
+    [Tooltip("Đảo chiều offset chuôi kiếm")]
+    [SerializeField] private bool invertHiltDirection = false;
+    [Tooltip("Màu đầu vệt trail (Trắng tuyết sáng rực)")]
+    [SerializeField] private Color trailHeadColor = new Color(1f, 1f, 1f, 0.95f);
+    [Tooltip("Màu đuôi vệt trail (Trắng bạc phai dần trong suốt)")]
+    [SerializeField] private Color trailTailColor = new Color(0.92f, 0.96f, 1f, 0f);
+
     private EntityManager _entityManager;
     private EntityQuery _swordQuery;
     private EntityQuery _slashEventQuery;
@@ -165,25 +183,30 @@ public class SlashSwordVisualBridge : MonoBehaviour
             var vis = _swordVisuals[idx];
 
             Vector3 targetPos = new Vector3(transforms[i].Position.x, transforms[i].Position.y, 0f);
+            Vector3 hiltDirection = ((Quaternion)transforms[i].Rotation) * (invertHiltDirection ? Vector3.down : Vector3.up);
+            Vector3 trailEmitPos = targetPos + hiltDirection * hiltOffset;
 
             if (!vis.Root.activeSelf)
             {
-                vis.Root.transform.position = targetPos;
+                vis.Root.transform.position = trailEmitPos;
+                vis.Root.transform.rotation = transforms[i].Rotation;
                 vis.Trail.Clear();
                 vis.Root.SetActive(true);
             }
-            else if (Vector3.Distance(vis.Root.transform.position, targetPos) > 3.0f)
+            else if (Vector3.Distance(vis.Root.transform.position, trailEmitPos) > 3.0f)
             {
                 // Nhảy cự ly lớn -> Clear trail ngay lập tức để không tạo vạch cắt ngang màn hình
                 vis.Trail.Clear();
             }
 
-            vis.Root.transform.position = targetPos;
+            vis.Root.transform.position = trailEmitPos;
+            vis.Root.transform.rotation = transforms[i].Rotation;
 
             // Khi đang lướt áp sát hoặc chém, vệt trail sáng rực và kéo dài hơn
             bool inCombat = (swords[i].State == 1 || swords[i].State == 2);
-            vis.Trail.time = inCombat ? 0.18f : 0.08f;
-            vis.Trail.widthMultiplier = inCombat ? 0.22f : 0.12f;
+            vis.Trail.time = inCombat ? combatTrailTime : idleTrailTime;
+            float currentStartWidth = inCombat ? startWidth * 1.6f : startWidth;
+            ApplyTrailGradient(vis.Trail, trailHeadColor, trailTailColor, currentStartWidth, endWidth);
         }
 
         for (int i = 0; i < _swordVisuals.Count; i++)
@@ -312,30 +335,40 @@ public class SlashSwordVisualBridge : MonoBehaviour
         root.transform.SetParent(transform);
 
         var trail = root.AddComponent<TrailRenderer>();
-        trail.time = 0.15f;
-        trail.startWidth = 0.2f;
-        trail.endWidth = 0.01f;
+        trail.time = idleTrailTime;
+        trail.minVertexDistance = 0.03f;
+        trail.sortingOrder = 1; // Ngay dưới kiếm (kiếm sortingOrder = 2)
         trail.numCornerVertices = 4;
         trail.numCapVertices = 4;
         trail.material = GetDefaultTrailMaterial();
 
-        var gradient = new Gradient();
+        ApplyTrailGradient(trail, trailHeadColor, trailTailColor, startWidth, endWidth);
+
+        root.SetActive(false);
+        return new SwordVisual { Root = root, Trail = trail };
+    }
+
+    private void ApplyTrailGradient(TrailRenderer trail, Color head, Color tail, float sWidth, float eWidth)
+    {
+        AnimationCurve widthCurve = new AnimationCurve();
+        widthCurve.AddKey(0f, sWidth);
+        widthCurve.AddKey(1f, eWidth);
+        trail.widthCurve = widthCurve;
+
+        Gradient gradient = new Gradient();
         gradient.SetKeys(
             new GradientColorKey[]
             {
-                new GradientColorKey(new Color(0.85f, 0.45f, 1f), 0f),    // Tím ánh bạc
-                new GradientColorKey(new Color(0.35f, 0.85f, 1f), 1f)     // Lam ngọc
+                new GradientColorKey(head, 0f),
+                new GradientColorKey(tail, 1f)
             },
             new GradientAlphaKey[]
             {
-                new GradientAlphaKey(0.85f, 0f),
+                new GradientAlphaKey(head.a, 0f),
                 new GradientAlphaKey(0f, 1f)
             }
         );
         trail.colorGradient = gradient;
-
-        root.SetActive(false);
-        return new SwordVisual { Root = root, Trail = trail };
     }
 
     private WaveVisual CreateWaveVisual()

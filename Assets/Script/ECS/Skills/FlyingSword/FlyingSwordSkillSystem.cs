@@ -39,6 +39,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
         var grid = SystemAPI.GetSingleton<SpatialGridSingleton>().Grid;
         float cellSize = SystemAPI.GetSingleton<SpatialGridSingleton>().CellSize;
 
+        var visualOffsetLookup = SystemAPI.GetComponentLookup<FlyingSwordVisualOffset>(true);
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
         // --- 1. Đồng bộ số lượng kiếm theo Skill Level ---
@@ -167,6 +168,11 @@ public partial struct FlyingSwordSkillSystem : ISystem
                 transform.ValueRW.Scale = 1.0f;  // Trạng thái bình thường
             }
 
+            // Góc bù thị giác để sprite luôn chỉ đúng mũi kiếm
+            float rotOffset = visualOffsetLookup.HasComponent(swordEntity)
+                ? visualOffsetLookup[swordEntity].RadianOffset
+                : 0f;
+
             switch (sword.ValueRO.State)
             {
                 case 0: // ================== PHA 1: IDLE (Orbiting quanh Player) ==================
@@ -186,7 +192,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                     transform.ValueRW.Position = math.lerp(transform.ValueRO.Position, desiredPos, math.clamp(dt * 20f, 0f, 1f));
 
                     float tangentAngle = finalAngle + math.PI * 0.5f;
-                    transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, tangentAngle - math.PI * 0.5f);
+                    transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, tangentAngle - math.PI * 0.5f + rotOffset);
 
                     // Quét tìm quái trong tầm camera (DetectRange) quanh Player
                     sword.ValueRW.Timer -= dt;
@@ -240,7 +246,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
 
                     if (dist > 0.01f)
                     {
-                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f);
+                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f + rotOffset);
                     }
 
                     // Sát thương xuyên thấu (Piercing) quét qua Spatial Grid 3x3
@@ -387,7 +393,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                     {
                         float3 dir = toPlayer / distToPlayer;
                         transform.ValueRW.Position += dir * skillData.ReturnSpeed * dt;
-                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f);
+                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f + rotOffset);
                     }
 
                     // Nếu trên đường bay về có quái xuất hiện trong camera -> có thể quay lại tấn công ngay
@@ -432,7 +438,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
 
                     if (dist > 0.01f)
                     {
-                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f);
+                        transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f + rotOffset);
                     }
 
                     // Kiểm tra nếu trong lúc lượn vòng có quái MỚI xuất hiện trong tầm camera -> ưu tiên chém quái mới
