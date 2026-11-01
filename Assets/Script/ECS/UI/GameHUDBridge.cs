@@ -25,6 +25,7 @@ public class GameHUDBridge : MonoBehaviour
     private EntityQuery _projectileSkillQuery;
     private EntityQuery _fireballSkillQuery;
     private EntityQuery _shieldSkillQuery;
+    private EntityQuery _boomerangSkillQuery;
     private EntityQuery _chestEventQuery;
     private bool _initialized;
 
@@ -99,6 +100,7 @@ public class GameHUDBridge : MonoBehaviour
         ProjectileSkill,
         Fireball,
         Shield,
+        Boomerang,
         Heal,
         MaxHp,
         MoveSpeed,
@@ -164,6 +166,7 @@ public class GameHUDBridge : MonoBehaviour
             if (_chestPanel != null) _chestPanel.SetActive(false);
             if (_levelUpPanel != null) _levelUpPanel.SetActive(false);
             Time.timeScale = 1f;
+            CleanupOldRunEntities();
             InitECS();
         }
         else
@@ -221,6 +224,10 @@ public class GameHUDBridge : MonoBehaviour
             ComponentType.ReadOnly<ShieldSkillTag>(),
             ComponentType.ReadWrite<SkillRuntimeData>());
 
+        _boomerangSkillQuery = _entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<BoomerangSkillTag>(),
+            ComponentType.ReadWrite<SkillRuntimeData>());
+
         _chestEventQuery = _entityManager.CreateEntityQuery(
             ComponentType.ReadOnly<ChestOpenEvent>());
 
@@ -230,6 +237,52 @@ public class GameHUDBridge : MonoBehaviour
 
         _initialized = true;
         return true;
+    }
+
+    /// <summary>
+    /// Dọn sạch quái vật, đạn, ngọc EXP, vật phẩm rơi, kiếm và trạng thái chết còn sót lại từ ván trước khi Retry/Restart trận đấu
+    /// </summary>
+    private void CleanupOldRunEntities()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated) return;
+        var em = world.EntityManager;
+
+        // 1. Dọn các thực thể dynamic spawn tại runtime
+        using (var query = em.CreateEntityQuery(new EntityQueryDesc
+        {
+            Any = new ComponentType[]
+            {
+                ComponentType.ReadOnly<EnemyTag>(),
+                ComponentType.ReadOnly<ProjectileTag>(),
+                ComponentType.ReadOnly<EnemyProjectileTag>(),
+                ComponentType.ReadOnly<ExpOrbTag>(),
+                ComponentType.ReadOnly<PickupItemTag>(),
+                ComponentType.ReadOnly<FlyingSwordTag>(),
+                ComponentType.ReadOnly<SlashSwordTag>(),
+                ComponentType.ReadOnly<SwordWaveTag>(),
+                ComponentType.ReadOnly<GiantSwordTag>(),
+                ComponentType.ReadOnly<FireballTag>(),
+                ComponentType.ReadOnly<SubFireballTag>(),
+                ComponentType.ReadOnly<BoomerangTag>(),
+                ComponentType.ReadOnly<BoomerangCatchEvent>(),
+                ComponentType.ReadOnly<ChestOpenEvent>()
+            }
+        }))
+        {
+            em.DestroyEntity(query);
+        }
+
+        // 2. Dọn PlayerDeadTag nếu còn dính trên player entity
+        using (var deadQuery = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerTag>(), ComponentType.ReadOnly<PlayerDeadTag>()))
+        {
+            var deadPlayers = deadQuery.ToEntityArray(Allocator.Temp);
+            for (int i = 0; i < deadPlayers.Length; i++)
+            {
+                em.RemoveComponent<PlayerDeadTag>(deadPlayers[i]);
+            }
+            deadPlayers.Dispose();
+        }
     }
 
     private void EnsureEventSystem()
@@ -273,6 +326,23 @@ public class GameHUDBridge : MonoBehaviour
         if (kb != null && kb.rKey.wasPressedThisFrame && _levelUpPanel != null && _levelUpPanel.activeSelf)
         {
             OnRerollClicked();
+        }
+
+        // Lắng nghe phím số [1], [2], [3] để chọn nhanh Perk khi bảng Level-Up đang mở
+        if (_levelUpPanel != null && _levelUpPanel.activeSelf && kb != null)
+        {
+            if ((kb.digit1Key.wasPressedThisFrame || kb.numpad1Key.wasPressedThisFrame) && _currentActivePerkTypes.Count > 0)
+            {
+                ApplyPerk(BuildPerkOption(_currentActivePerkTypes[0]));
+            }
+            else if ((kb.digit2Key.wasPressedThisFrame || kb.numpad2Key.wasPressedThisFrame) && _currentActivePerkTypes.Count > 1)
+            {
+                ApplyPerk(BuildPerkOption(_currentActivePerkTypes[1]));
+            }
+            else if ((kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame) && _currentActivePerkTypes.Count > 2)
+            {
+                ApplyPerk(BuildPerkOption(_currentActivePerkTypes[2]));
+            }
         }
 
         // Lắng nghe phím [Space] hoặc [Enter] để nhận thưởng rương báu khi bảng Rương đang mở
@@ -449,16 +519,28 @@ public class GameHUDBridge : MonoBehaviour
     {
         if (_cardsContainer == null) return;
 
-        // Xóa các card cũ
+        // Xóa các card cũ và gỡ parent ngay lập tức để HorizontalLayoutGroup không tính nhầm
+        var oldCards = new List<GameObject>();
         foreach (Transform child in _cardsContainer)
         {
-            Destroy(child.gameObject);
+            oldCards.Add(child.gameObject);
+        }
+        foreach (var old in oldCards)
+        {
+            old.transform.SetParent(null);
+            Destroy(old);
         }
 
-        foreach (var type in _currentActivePerkTypes)
+        for (int i = 0; i < _currentActivePerkTypes.Count; i++)
         {
-            PerkOption option = BuildPerkOption(type);
-            CreateCardUI(option);
+            PerkOption option = BuildPerkOption(_currentActivePerkTypes[i]);
+            CreateCardUI(option, i + 1);
+        }
+
+        // Bắt buộc layout cập nhật ngay lập tức dù Time.timeScale = 0
+        if (_cardsContainer is RectTransform rt)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
         }
     }
 
@@ -549,6 +631,21 @@ public class GameHUDBridge : MonoBehaviour
                     LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                     Description = GameLocalization.ShieldDesc(nextLvl),
                     HighlightColor = new Color(0f, 0.9f, 1f) // Diamond Cyan
+                };
+            }
+
+            case PerkType.Boomerang:
+            {
+                int currentBmLvl = GetBoomerangSkillLevel();
+                int nextLvl = Mathf.Min(4, currentBmLvl + 1);
+                return new PerkOption
+                {
+                    Type = PerkType.Boomerang,
+                    Level = nextLvl,
+                    Title = GameLocalization.BoomerangTitle,
+                    LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
+                    Description = GameLocalization.BoomerangDesc(nextLvl),
+                    HighlightColor = new Color(0.15f, 0.95f, 0.65f) // Jade-Cyan Emerald
                 };
             }
 
@@ -647,6 +744,13 @@ public class GameHUDBridge : MonoBehaviour
             available.Add(PerkType.Shield);
         }
 
+        // 6. Phi Tiêu Hồi Toàn (Boomerang)
+        int currentBmLvl = GetBoomerangSkillLevel();
+        if (currentBmLvl < 4)
+        {
+            available.Add(PerkType.Boomerang);
+        }
+
         // 5. Tiên Dược Hồi Máu (Heal)
         available.Add(PerkType.Heal);
 
@@ -698,6 +802,7 @@ public class GameHUDBridge : MonoBehaviour
 
     private void ApplyPerk(PerkOption perk)
     {
+        if (_pendingLevelUps <= 0) return;
         if (_playerQuery.IsEmpty) return;
         Entity playerEntity = _playerQuery.GetSingletonEntity();
 
@@ -764,6 +869,16 @@ public class GameHUDBridge : MonoBehaviour
                 }
                 break;
 
+            case PerkType.Boomerang:
+                if (!_boomerangSkillQuery.IsEmpty)
+                {
+                    Entity skillEntity = _boomerangSkillQuery.GetSingletonEntity();
+                    var runtime = _entityManager.GetComponentData<SkillRuntimeData>(skillEntity);
+                    runtime.Level = Mathf.Min(4, runtime.Level + 1);
+                    _entityManager.SetComponentData(skillEntity, runtime);
+                }
+                break;
+
             case PerkType.Heal:
                 var hpHeal = _entityManager.GetComponentData<HealthData>(playerEntity);
                 hpHeal.CurrentHP = Mathf.Min(hpHeal.MaxHP, hpHeal.CurrentHP + hpHeal.MaxHP * 0.4f);
@@ -790,7 +905,7 @@ public class GameHUDBridge : MonoBehaviour
                 break;
         }
 
-        _pendingLevelUps--;
+        _pendingLevelUps = Mathf.Max(0, _pendingLevelUps - 1);
         ShowNextLevelUpReward();
     }
 
@@ -867,6 +982,15 @@ public class GameHUDBridge : MonoBehaviour
         if (!_shieldSkillQuery.IsEmpty)
         {
             return _shieldSkillQuery.GetSingleton<SkillRuntimeData>().Level;
+        }
+        return 0;
+    }
+
+    private int GetBoomerangSkillLevel()
+    {
+        if (!_boomerangSkillQuery.IsEmpty)
+        {
+            return _boomerangSkillQuery.GetSingleton<SkillRuntimeData>().Level;
         }
         return 0;
     }
@@ -1278,7 +1402,7 @@ public class GameHUDBridge : MonoBehaviour
         _levelUpPanel.SetActive(false);
     }
 
-    private void CreateCardUI(PerkOption perk)
+    private void CreateCardUI(PerkOption perk, int cardIndex = 1)
     {
         var cardObj = new GameObject($"Card_{perk.Title}");
         cardObj.transform.SetParent(_cardsContainer, false);
@@ -1293,6 +1417,7 @@ public class GameHUDBridge : MonoBehaviour
         cardImg.color = isFusion
             ? new Color(0.18f, 0.13f, 0.04f, 0.98f)
             : new Color(0.1f, 0.13f, 0.18f, 0.98f);
+        cardImg.raycastTarget = true;
 
         // Viền thẻ phát sáng theo màu kỹ năng (Dày hơn cho Fusion)
         var outline = cardObj.AddComponent<Outline>();
@@ -1301,10 +1426,11 @@ public class GameHUDBridge : MonoBehaviour
 
         // Nút Button tương tác khi bấm vào cả thẻ
         var btn = cardObj.AddComponent<Button>();
+        btn.targetGraphic = cardImg;
         var colors = btn.colors;
         colors.normalColor = Color.white;
-        colors.highlightedColor = new Color(1.2f, 1.2f, 1.2f);
-        colors.pressedColor = new Color(0.8f, 0.8f, 0.8f);
+        colors.highlightedColor = new Color(1.25f, 1.25f, 1.25f, 1f);
+        colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
         btn.colors = colors;
         btn.onClick.AddListener(() => ApplyPerk(perk));
 
@@ -1323,6 +1449,7 @@ public class GameHUDBridge : MonoBehaviour
         badgeText.alignment = TextAnchor.MiddleCenter;
         badgeText.color = perk.HighlightColor;
         badgeText.text = $"[ {perk.LevelBadge} ]";
+        badgeText.raycastTarget = false; // Tránh cản raycast thẻ bài
 
         // --- Tiêu đề Kỹ năng ---
         var titleObj = new GameObject("Title");
@@ -1339,6 +1466,7 @@ public class GameHUDBridge : MonoBehaviour
         titleText.alignment = TextAnchor.MiddleCenter;
         titleText.color = Color.white;
         titleText.text = perk.Title;
+        titleText.raycastTarget = false; // Tránh cản raycast thẻ bài
 
         // Vạch kẻ ngăn cách
         var lineObj = new GameObject("Divider");
@@ -1349,6 +1477,7 @@ public class GameHUDBridge : MonoBehaviour
         lineRect.sizeDelta = new Vector2(180f, 2f);
         var lineImg = lineObj.AddComponent<Image>();
         lineImg.color = new Color(perk.HighlightColor.r, perk.HighlightColor.g, perk.HighlightColor.b, 0.5f);
+        lineImg.raycastTarget = false; // Tránh cản raycast thẻ bài
 
         // --- Mô tả chi tiết ---
         var descObj = new GameObject("Desc");
@@ -1364,8 +1493,9 @@ public class GameHUDBridge : MonoBehaviour
         descText.alignment = TextAnchor.UpperCenter;
         descText.color = new Color(0.85f, 0.9f, 0.95f);
         descText.text = perk.Description;
+        descText.raycastTarget = false; // Tránh cản raycast thẻ bài
 
-        // --- Nút Chọn (Button Label ở đáy) ---
+        // --- Nút Chọn (Button trực tiếp ở đáy thẻ) ---
         var selectBtnObj = new GameObject("SelectButton");
         selectBtnObj.transform.SetParent(cardObj.transform, false);
         var selectBtnRect = selectBtnObj.AddComponent<RectTransform>();
@@ -1374,10 +1504,22 @@ public class GameHUDBridge : MonoBehaviour
         selectBtnRect.sizeDelta = new Vector2(190f, 38f);
 
         var selectBtnImg = selectBtnObj.AddComponent<Image>();
-        selectBtnImg.color = new Color(perk.HighlightColor.r * 0.3f, perk.HighlightColor.g * 0.3f, perk.HighlightColor.b * 0.3f, 1f);
+        selectBtnImg.color = new Color(perk.HighlightColor.r * 0.35f, perk.HighlightColor.g * 0.35f, perk.HighlightColor.b * 0.35f, 1f);
+        selectBtnImg.raycastTarget = true;
+
         var sOutline = selectBtnObj.AddComponent<Outline>();
         sOutline.effectColor = perk.HighlightColor;
         sOutline.effectDistance = new Vector2(1.5f, 1.5f);
+
+        // Gắn Button riêng biệt trực tiếp lên SelectButton để bắt trọn vẹn cú click và có hiệu ứng hover
+        var sBtn = selectBtnObj.AddComponent<Button>();
+        sBtn.targetGraphic = selectBtnImg;
+        var sColors = sBtn.colors;
+        sColors.normalColor = Color.white;
+        sColors.highlightedColor = new Color(1.35f, 1.35f, 1.35f, 1f);
+        sColors.pressedColor = new Color(0.7f, 0.7f, 0.7f, 1f);
+        sBtn.colors = sColors;
+        sBtn.onClick.AddListener(() => ApplyPerk(perk));
 
         var btnTextObj = new GameObject("Text");
         btnTextObj.transform.SetParent(selectBtnObj.transform, false);
@@ -1390,7 +1532,8 @@ public class GameHUDBridge : MonoBehaviour
         btnText.fontStyle = FontStyle.Bold;
         btnText.alignment = TextAnchor.MiddleCenter;
         btnText.color = Color.white;
-        btnText.text = GameLocalization.SelectButtonText;
+        btnText.text = $"[{cardIndex}] {GameLocalization.SelectButtonText}";
+        btnText.raycastTarget = false; // Phải là false để cú click xuyên thẳng vào sBtn
     }
 
     // =========================================================================
@@ -1913,6 +2056,16 @@ public class GameHUDBridge : MonoBehaviour
                 var data = _entityManager.GetComponentData<FireballSkillData>(e);
                 data.BaseDamage *= mult;
                 data.FireZoneDamagePerTick *= mult;
+                _entityManager.SetComponentData(e, data);
+            }
+        }
+        if (!_boomerangSkillQuery.IsEmpty)
+        {
+            var e = _boomerangSkillQuery.GetSingletonEntity();
+            if (_entityManager.HasComponent<BoomerangSkillData>(e))
+            {
+                var data = _entityManager.GetComponentData<BoomerangSkillData>(e);
+                data.BaseDamage *= mult;
                 _entityManager.SetComponentData(e, data);
             }
         }

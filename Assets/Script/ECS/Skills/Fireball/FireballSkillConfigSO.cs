@@ -94,3 +94,4 @@ public class FireballSkillConfigSO : ScriptableObject
         _instance = this;
     }
 }
+

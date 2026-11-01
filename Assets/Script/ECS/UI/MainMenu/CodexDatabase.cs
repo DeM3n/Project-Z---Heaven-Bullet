@@ -351,6 +351,36 @@ public static class CodexDatabase
 
         _allEntries.Add(new CodexEntry
         {
+            Id = "skill_boomerang",
+            Category = EntryCategory.Skills,
+            TitleEn = "Celestial Boomerang",
+            TitleVi = "Phi Tiêu Hồi Toàn",
+            SubtitleEn = "Piercing Aero-Blade & Catch Synergy",
+            SubtitleVi = "Lưỡi Dao Xuyên Thấu & Khí Công Hồi Huyết",
+            DescriptionEn = "Aerodynamic cross-blade piercing all enemies in its path, then returning along the player's movement trajectory.",
+            DescriptionVi = "Phi tiêu khí động học bay xuyên thấu quái vật theo đường thẳng rồi quay về đón đầu hướng di chuyển của người chơi.",
+            StatsEn = new Dictionary<string, string>
+            {
+                { "Level 1", "35 DMG, 0.55m Hitbox, 8.0s cooldown, Catch refunds 25% cooldown" },
+                { "Level 2", "55 DMG (+57%), 0.85m Hitbox (expanded), 8.0s cooldown" },
+                { "Level 3", "2 Boomerangs (Multi-target priority), 55 DMG, 6.0s cooldown" },
+                { "Level 4 (Rebound)", "80 DMG (+45%), 5.5s cooldown + Catch RESETS cooldown & triggers Empowered Rebound (+60% DMG)" }
+            },
+            StatsVi = new Dictionary<string, string>
+            {
+                { "Cấp 1", "35 DMG, Hitbox 0.55m, Hồi chiêu 8.0s, Bắt dính giảm 25% hồi chiêu" },
+                { "Cấp 2", "55 DMG (+57%), Hitbox mở rộng 0.85m, Hồi chiêu 8.0s" },
+                { "Cấp 3", "2 Phi Tiêu (Ưu tiên đa mục tiêu), 55 DMG, Hồi chiêu 6.0s" },
+                { "Cấp 4 (Phản Hồi)", "80 DMG (+45%), Hồi chiêu 5.5s + Bắt dính RESET hồi chiêu & Bắn phản xạ Cường Hóa (+60% DMG)" }
+            },
+            MechanicsEn = "Does NOT auto-home. Returning vector is fixed based on your movement when turning around. Intercept it to catch!",
+            MechanicsVi = "Không tự động khóa mục tiêu bám đuôi. Vector quay về cố định đón đầu hướng di chuyển. Hãy di chuyển đón đầu để chụp dính!",
+            TipsEn = "Move predictably or position yourself along the return line to catch boomerangs and maintain rapid-fire uptime.",
+            TipsVi = "Giữ nhịp di chuyển ổn định hoặc đứng đón đường bay để liên tục bắt dính và kích hoạt chuỗi đòn phản xạ liên hoàn ở Cấp 4."
+        });
+
+        _allEntries.Add(new CodexEntry
+        {
             Id = "skill_giant_fusion",
             Category = EntryCategory.Skills,
             TitleEn = "Celestial Giant Sword",

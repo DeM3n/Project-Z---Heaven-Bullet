@@ -100,6 +100,7 @@ public static class GameLocalization
     public static string ProjectileSkillTitle => Get("ARCANE VOLLEY", "ĐẠN TỎA QUẠT");
     public static string FireballTitle => Get("HELLFIRE ORB", "CẦU LỬA VIÊM MA");
     public static string ShieldTitle => Get("AEGIS SHIELD", "KHIÊN HỘ THỂ");
+    public static string BoomerangTitle => Get("CELESTIAL BOOMERANG", "PHI TIÊU HỒI TOÀN");
     public static string HealTitle => Get("VITALITY ELIXIR", "TIÊN DƯỢC PHỤC HỒI");
     public static string MaxHpTitle => Get("IRON WILL", "CƯƠNG THỂ QUYẾT");
     public static string MoveSpeedTitle => Get("WIND STRIDE", "THẦN HÀNH BỘ");
@@ -229,6 +230,29 @@ public static class GameLocalization
             _ => Get(
                 "Deploys an energetic barrier that absorbs 1 instance of damage completely. Recharges after 30s.",
                 "Kích hoạt tấm khiên năng lượng chặn hoàn toàn 1 lần sát thương vào người chơi. Hồi lại sau 30s."
+            )
+        };
+    }
+
+    public static string BoomerangDesc(int level)
+    {
+        return level switch
+        {
+            2 => Get(
+                "Expanded Hitbox & +57% Damage! Increases flight slice radius to 0.85m dealing 55 DMG both ways.",
+                "Tăng mạnh Hitbox & +57% Sát thương! Mở rộng bán kính chém lên 0.85m gây 55 DMG cả lượt đi và lượt về."
+            ),
+            3 => Get(
+                "★ TWIN BOOMERANGS ★ Fires +1 Boomerang (2 Total) with smart multi-target priority! Cooldown reduced from 8s to 6s. Each catch refunds 25% cooldown.",
+                "★ SONG TIÊU LIÊN HOÀN ★ Bắn thêm +1 Phi Tiêu (Tổng 2 Phi Tiêu) ưu tiên chia đa mục tiêu! Hồi chiêu giảm xuống 6s. Bắt dính mỗi chiếc giảm 25% hồi chiêu."
+            ),
+            4 => Get(
+                "★ EMPOWERED REBOUND ★ +45% Base DMG (80 DMG). SPECIAL: Successfully catching a boomerang immediately RESETS cooldown and instantly launches an EMPOWERED BOOMERANG with +60% BONUS DAMAGE!",
+                "★ PHẢN HỒI NGUYÊN LỰC ★ Tăng sát thương (80 DMG). ĐẶC BIỆT: Bắt dính phi tiêu lập tức RESET HỒI CHIÊU và tự động phóng ngược lại 1 Phi Tiêu Cường Hóa gây thêm +60% SÁT THƯƠNG!"
+            ),
+            _ => Get(
+                "Hurls a piercing boomerang that slices through foes and flies back towards your moving trajectory. Catching it reduces current cooldown by 25%! (8s cooldown, 35 DMG).",
+                "Ném phi tiêu bay xuyên thấu quái vật rồi quay về đón đầu hướng di chuyển. Bắt dính phi tiêu giúp giảm 25% hồi chiêu hiện tại! (Hồi chiêu 8s, 35 DMG)."
             )
         };
     }

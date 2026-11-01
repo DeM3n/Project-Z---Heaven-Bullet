@@ -24,6 +24,7 @@ public class GameSettingsBridge : MonoBehaviour
     private EntityQuery _projectileQuery;
     private EntityQuery _fireballQuery;
     private EntityQuery _shieldQuery;
+    private EntityQuery _boomerangQuery;
     private EntityQuery _fusionQuery;
     private EntityQuery _enemyQuery;
     private bool _ecsInitialized;
@@ -55,6 +56,7 @@ public class GameSettingsBridge : MonoBehaviour
     private Text _projectileLvlText;
     private Text _fireballLvlText;
     private Text _shieldLvlText;
+    private Text _boomerangLvlText;
     private Text _fusionStateText;
     private Text _godModeBtnText;
     private Text _speedBtnText;
@@ -142,6 +144,10 @@ public class GameSettingsBridge : MonoBehaviour
 
         _shieldQuery = _entityManager.CreateEntityQuery(
             ComponentType.ReadOnly<ShieldSkillTag>(),
+            ComponentType.ReadWrite<SkillRuntimeData>());
+
+        _boomerangQuery = _entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<BoomerangSkillTag>(),
             ComponentType.ReadWrite<SkillRuntimeData>());
 
         _fusionQuery = _entityManager.CreateEntityQuery(
@@ -358,6 +364,20 @@ public class GameSettingsBridge : MonoBehaviour
         RefreshDevSkillTexts();
     }
 
+    public void SetBoomerangLevel(int delta, int directLevel = -1)
+    {
+        if (!_ecsInitialized && !InitECS()) return;
+        if (_boomerangQuery.IsEmpty) return;
+
+        Entity skill = _boomerangQuery.GetSingletonEntity();
+        var runtime = _entityManager.GetComponentData<SkillRuntimeData>(skill);
+        int targetLvl = (directLevel >= 0) ? directLevel : math.clamp(runtime.Level + delta, 0, 4);
+        runtime.Level = targetLvl;
+        _entityManager.SetComponentData(skill, runtime);
+
+        RefreshDevSkillTexts();
+    }
+
     public void ToggleFusion()
     {
         if (!_ecsInitialized && !InitECS()) return;
@@ -379,6 +399,7 @@ public class GameSettingsBridge : MonoBehaviour
         SetProjectileLevel(0, 5);
         SetFireballLevel(0, 4);
         SetShieldLevel(0, 4);
+        SetBoomerangLevel(0, 4);
 
         if (!_ecsInitialized && !InitECS()) return;
         if (!_fusionQuery.IsEmpty)
@@ -533,6 +554,18 @@ public class GameSettingsBridge : MonoBehaviour
                 0 => new Color(0.6f, 0.6f, 0.6f),
                 4 => new Color(1f, 0.85f, 0.2f),
                 _ => new Color(0f, 0.9f, 1f)
+            };
+        }
+
+        if (_boomerangLvlText != null && !_boomerangQuery.IsEmpty)
+        {
+            int lvl = _boomerangQuery.GetSingleton<SkillRuntimeData>().Level;
+            _boomerangLvlText.text = $"[ LV.{lvl} ]";
+            _boomerangLvlText.color = lvl switch
+            {
+                0 => new Color(0.6f, 0.6f, 0.6f),
+                4 => new Color(1f, 0.85f, 0.2f),
+                _ => new Color(0.15f, 0.95f, 0.65f)
             };
         }
 
@@ -754,7 +787,7 @@ public class GameSettingsBridge : MonoBehaviour
         var bRect = box.AddComponent<RectTransform>();
         bRect.anchorMin = new Vector2(0.5f, 0.5f);
         bRect.anchorMax = new Vector2(0.5f, 0.5f);
-        bRect.sizeDelta = new Vector2(760f, 660f);
+        bRect.sizeDelta = new Vector2(760f, 710f);
 
         var bImg = box.AddComponent<Image>();
         bImg.color = new Color(0.06f, 0.08f, 0.12f, 0.98f);
@@ -823,7 +856,15 @@ public class GameSettingsBridge : MonoBehaviour
             out _shieldLvlText);
 
         curY -= 50f;
-        // 6. Fusion Toggle Controller
+        // 6. Boomerang Controller (Lv 0 -> 4)
+        BuildSkillRow(box.transform, "Boomerang", curY, new Color(0.15f, 0.95f, 0.65f), 4,
+            () => SetBoomerangLevel(-1),
+            () => SetBoomerangLevel(1),
+            (lvl) => SetBoomerangLevel(0, lvl),
+            out _boomerangLvlText);
+
+        curY -= 50f;
+        // 7. Fusion Toggle Controller
         BuildFusionRow(box.transform, curY, out _fusionStateText);
 
         curY -= 50f;
