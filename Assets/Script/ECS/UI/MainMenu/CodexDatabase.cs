@@ -275,6 +275,20 @@ public static class CodexDatabase
             TipsVi = "Kết hợp cùng Flying Sword Lv4 để kích hoạt Hợp Thể Cự Kiếm Hoàng Kim!"
         });
 
+        var fb = FireballSkillConfigSO.Instance;
+        float fbCd1 = fb != null ? fb.GetCooldown(1) : 2.86f;
+        float fbCd2 = fb != null ? fb.GetCooldown(2) : 2.53f;
+        float fbCd3 = fb != null ? fb.GetCooldown(3) : 2.20f;
+        float fbCd4 = fb != null ? fb.GetCooldown(4) : 1.98f;
+        float fbDmg1 = fb != null ? fb.GetDamage(1) : 45f;
+        float fbDmg2 = fb != null ? fb.GetDamage(2) : 68f;
+        float fbDmg3 = fb != null ? fb.GetDamage(3) : 95f;
+        float fbDmg4 = fb != null ? fb.GetDamage(4) : 120f;
+        int fbSub1 = fb != null ? fb.GetSubFireballCount(1) : 1;
+        int fbSub2 = fb != null ? fb.GetSubFireballCount(2) : 2;
+        int fbSub3 = fb != null ? fb.GetSubFireballCount(3) : 3;
+        int fbSub4 = fb != null ? fb.GetSubFireballCount(4) : 4;
+
         _allEntries.Add(new CodexEntry
         {
             Id = "skill_fireball",
@@ -287,17 +301,17 @@ public static class CodexDatabase
             DescriptionVi = "Cầu lửa hừng hực nhắm vào quái vật, phát nổ chùm thành nhiều cầu lửa con lan tỏa.",
             StatsEn = new Dictionary<string, string>
             {
-                { "Level 1", "45 DMG, 1 Cluster sub-fireball (50% DMG)" },
-                { "Level 2", "68 DMG, 2 Cluster sub-fireballs, 2.3s cooldown" },
-                { "Level 3 (Twin)", "Twin Orbs lock 2 separate targets simultaneously, 3 clusters" },
-                { "Level 4 (Inferno)", "120 DMG, 4 clusters + Creates 3.5s Fire Zone (16 DMG / 0.25s DOT)" }
+                { "Level 1", $"{fbDmg1:0} DMG, {fbSub1} Cluster sub-fireball (50% DMG), {fbCd1:0.0}s cooldown" },
+                { "Level 2", $"{fbDmg2:0} DMG, {fbSub2} Cluster sub-fireballs, {fbCd2:0.0}s cooldown" },
+                { "Level 3 (Twin)", $"Twin Orbs lock 2 separate targets, {fbSub3} clusters, {fbCd3:0.0}s cooldown" },
+                { "Level 4 (Inferno)", $"{fbDmg4:0} DMG, {fbSub4} clusters, {fbCd4:0.0}s cooldown + 3.5s Fire Zone" }
             },
             StatsVi = new Dictionary<string, string>
             {
-                { "Cấp 1", "45 DMG, nổ chùm bắn 1 cầu con (50% DMG)" },
-                { "Cấp 2", "68 DMG, 2 cầu con, hồi chiêu giảm còn 2.3s" },
-                { "Cấp 3 (Song Hỏa)", "Song Hỏa ngắm độc lập 2 quái riêng biệt, 3 cầu con" },
-                { "Cấp 4 (Hỏa Vực)", "120 DMG, 4 cầu con + Tạo Vùng Lửa 3.5s thiêu đốt 16 DMG/0.25s" }
+                { "Cấp 1", $"{fbDmg1:0} DMG, nổ chùm {fbSub1} cầu con, hồi chiêu {fbCd1:0.0}s" },
+                { "Cấp 2", $"{fbDmg2:0} DMG, {fbSub2} cầu con, hồi chiêu {fbCd2:0.0}s" },
+                { "Cấp 3 (Song Hỏa)", $"Song Hỏa ngắm độc lập 2 quái, {fbSub3} cầu con, hồi chiêu {fbCd3:0.0}s" },
+                { "Cấp 4 (Hỏa Vực)", $"{fbDmg4:0} DMG, {fbSub4} cầu con, hồi chiêu {fbCd4:0.0}s + Vùng Lửa 3.5s" }
             },
             MechanicsEn = "High burst explosion. Level 3 prevents miss targeting, Level 4 controls ground choke points.",
             MechanicsVi = "Sát thương nổ bộc phá cực lớn. Cấp 3 không bao giờ trượt quái, Cấp 4 kiểm soát mặt đất hoàn hảo.",
@@ -509,3 +523,4 @@ public static class CodexDatabase
         });
     }
 }
+

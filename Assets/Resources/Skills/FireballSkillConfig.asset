@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5306db7d1e5ff04e967ceb12faa1f7e, type: 3}
+  m_Name: FireballSkillConfig
+  m_EditorClassIdentifier: Assembly-CSharp::FireballSkillConfigSO
+  Cooldowns:
+  - 2.86
+  - 2.53
+  - 2.2
+  - 1.98
+  BaseDamages:
+  - 45
+  - 68
+  - 95
+  - 120
+  SubFireballCounts: 01000000020000000300000004000000i
+  ExplosionRadii:
+  - 1.8
+  - 2.1
+  - 2.4
+  - 2.8
+  FireballSpeed: 9.5
+  SubFireballSpeed: 11
+  SubFireballLifetime: 0.45
+  SubExplosionRadius: 1.2
+  DetectRange: 9.5
+  FireZoneRadius: 1.8
+  FireZoneDuration: 3.5
+  FireZoneTickInterval: 0.25
+  FireZoneDamagePerTick: 16

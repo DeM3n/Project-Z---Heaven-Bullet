@@ -44,9 +44,10 @@ public partial struct FireballSkillCastSystem : ISystem
                 Entity skillEntity = state.EntityManager.CreateEntity();
                 state.EntityManager.AddComponent<FireballSkillTag>(skillEntity);
                 state.EntityManager.AddComponentData(skillEntity, new SkillOwnerData { Owner = playerEntity });
+                var cfg = FireballSkillConfigSO.Instance;
                 state.EntityManager.AddComponentData(skillEntity, new SkillRuntimeData
                 {
-                    Cooldown = 2.6f,
+                    Cooldown = cfg != null ? cfg.GetCooldown(1) : 2.86f,
                     Timer = 0.5f,
                     Level = 1,
                     SkillId = new FixedString32Bytes("fireball")
@@ -55,17 +56,39 @@ public partial struct FireballSkillCastSystem : ISystem
                 {
                     FireballPrefab = Entity.Null,
                     SubFireballPrefab = Entity.Null,
-                    BaseDamage = 45f,
-                    FireballSpeed = 9.5f,
-                    ExplosionRadius = 1.8f,
-                    SubFireballSpeed = 11.0f,
-                    SubFireballLifetime = 0.45f,
-                    SubExplosionRadius = 1.2f,
-                    FireZoneRadius = 1.8f,
-                    FireZoneDuration = 3.5f,
-                    FireZoneTickInterval = 0.25f,
-                    FireZoneDamagePerTick = 16f,
-                    DetectRange = 9.5f
+                    BaseDamage = cfg != null ? cfg.GetDamage(1) : 45f,
+                    FireballSpeed = cfg != null ? cfg.FireballSpeed : 9.5f,
+                    ExplosionRadius = cfg != null ? cfg.GetExplosionRadius(1) : 1.8f,
+                    SubFireballSpeed = cfg != null ? cfg.SubFireballSpeed : 11.0f,
+                    SubFireballLifetime = cfg != null ? cfg.SubFireballLifetime : 0.45f,
+                    SubExplosionRadius = cfg != null ? cfg.SubExplosionRadius : 1.2f,
+                    FireZoneRadius = cfg != null ? cfg.FireZoneRadius : 1.8f,
+                    FireZoneDuration = cfg != null ? cfg.FireZoneDuration : 3.5f,
+                    FireZoneTickInterval = cfg != null ? cfg.FireZoneTickInterval : 0.25f,
+                    FireZoneDamagePerTick = cfg != null ? cfg.FireZoneDamagePerTick : 16f,
+                    DetectRange = cfg != null ? cfg.DetectRange : 9.5f
+                });
+                state.EntityManager.AddComponentData(skillEntity, new FireballLevelBalanceData
+                {
+                    CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 2.86f,
+                    CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 2.53f,
+                    CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 2.20f,
+                    CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 1.98f,
+
+                    DamageLv1 = cfg != null ? cfg.GetDamage(1) : 45f,
+                    DamageLv2 = cfg != null ? cfg.GetDamage(2) : 68f,
+                    DamageLv3 = cfg != null ? cfg.GetDamage(3) : 95f,
+                    DamageLv4 = cfg != null ? cfg.GetDamage(4) : 120f,
+
+                    SubCountLv1 = cfg != null ? cfg.GetSubFireballCount(1) : 1,
+                    SubCountLv2 = cfg != null ? cfg.GetSubFireballCount(2) : 2,
+                    SubCountLv3 = cfg != null ? cfg.GetSubFireballCount(3) : 3,
+                    SubCountLv4 = cfg != null ? cfg.GetSubFireballCount(4) : 4,
+
+                    RadiusLv1 = cfg != null ? cfg.GetExplosionRadius(1) : 1.8f,
+                    RadiusLv2 = cfg != null ? cfg.GetExplosionRadius(2) : 2.1f,
+                    RadiusLv3 = cfg != null ? cfg.GetExplosionRadius(3) : 2.4f,
+                    RadiusLv4 = cfg != null ? cfg.GetExplosionRadius(4) : 2.8f
                 });
             }
             return;
@@ -87,15 +110,46 @@ public partial struct FireballSkillCastSystem : ISystem
             runtime.ValueRW.Timer -= dt;
             if (runtime.ValueRO.Timer > 0f) continue;
 
-            // Tính toán Cooldown và Sát thương scale theo cấp độ (+10% ở mọi cấp độ):
-            // Lv1: 2.86s, Lv2: 2.53s, Lv3: 2.20s, Lv4: 1.98s
-            float scaledCooldown = level switch
+            // Tính toán Cooldown, Sát thương, Bán kính nổ và Số cầu con trực tiếp từ ScriptableObject (FireballLevelBalanceData)
+            float scaledCooldown;
+            float damage;
+            float explosionRadius;
+            int subFireballCount;
+
+            if (SystemAPI.HasComponent<FireballLevelBalanceData>(entity))
             {
-                2 => 2.53f,
-                3 => 2.20f,
-                4 => 1.98f,
-                _ => 2.86f
-            };
+                var bal = SystemAPI.GetComponent<FireballLevelBalanceData>(entity);
+                scaledCooldown = bal.GetCooldown(level);
+                damage = bal.GetDamage(level);
+                explosionRadius = bal.GetRadius(level);
+                subFireballCount = bal.GetSubCount(level);
+            }
+            else
+            {
+                scaledCooldown = level switch
+                {
+                    2 => 2.53f,
+                    3 => 2.20f,
+                    4 => 1.98f,
+                    _ => 2.86f
+                };
+                damage = level switch
+                {
+                    2 => skill.ValueRO.BaseDamage * 1.45f,
+                    3 => skill.ValueRO.BaseDamage * 2.00f,
+                    4 => skill.ValueRO.BaseDamage * 2.67f,
+                    _ => skill.ValueRO.BaseDamage
+                };
+                explosionRadius = level switch
+                {
+                    2 => skill.ValueRO.ExplosionRadius + 0.3f,
+                    3 => skill.ValueRO.ExplosionRadius + 0.6f,
+                    4 => skill.ValueRO.ExplosionRadius + 1.0f,
+                    _ => skill.ValueRO.ExplosionRadius
+                };
+                subFireballCount = level;
+            }
+
             runtime.ValueRW.Timer = scaledCooldown;
 
             // Lấy vị trí Player
@@ -125,27 +179,6 @@ public partial struct FireballSkillCastSystem : ISystem
                 targetDir1 = defaultDir;
                 targetDir2 = defaultDir;
             }
-
-            // Sát thương và Bán kính nổ cầu lửa mẹ theo cấp:
-            // Lv1: 45 dmg, 1.8m
-            // Lv2: 65 dmg, 2.1m
-            // Lv3: 90 dmg, 2.4m
-            // Lv4: 120 dmg, 2.8m
-            float damage = level switch
-            {
-                2 => skill.ValueRO.BaseDamage * 1.45f,
-                3 => skill.ValueRO.BaseDamage * 2.00f,
-                4 => skill.ValueRO.BaseDamage * 2.67f,
-                _ => skill.ValueRO.BaseDamage
-            };
-
-            float explosionRadius = level switch
-            {
-                2 => skill.ValueRO.ExplosionRadius + 0.3f,
-                3 => skill.ValueRO.ExplosionRadius + 0.6f,
-                4 => skill.ValueRO.ExplosionRadius + 1.0f,
-                _ => skill.ValueRO.ExplosionRadius
-            };
 
             // Số lượng Cầu Lửa Mẹ (Main Fireball):
             // Cấp 1 & 2: 1 Cầu Lửa Mẹ ngắm vào mục tiêu chính
@@ -209,7 +242,7 @@ public partial struct FireballSkillCastSystem : ISystem
                     ExplosionRadius = explosionRadius,
                     Lifetime = 2.8f,
                     HitRadius = 0.45f,
-                    SubFireballCount = level, // Số cầu lửa con = cấp độ kỹ năng (1 ở Lv1, 2 ở Lv2, 3 ở Lv3, 4 ở Lv4)
+                    SubFireballCount = subFireballCount,
                     SkillLevel = level,
                     IsSubFireball = false
                 });

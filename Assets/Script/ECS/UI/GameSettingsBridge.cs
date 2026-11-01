@@ -471,6 +471,9 @@ public class GameSettingsBridge : MonoBehaviour
 
     private void RefreshDevSkillTexts()
     {
+        if (!Application.isPlaying) return;
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated) return;
         if (!_ecsInitialized && !InitECS()) return;
 
         if (_flyingSwordLvlText != null && !_flyingSwordQuery.IsEmpty)

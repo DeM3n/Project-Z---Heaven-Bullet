@@ -87,3 +87,75 @@ public struct FireballExplosionEvent : IComponentData
     public float Radius;
     public bool IsMainExplosion;           // true = nổ lớn cầu mẹ, false = nổ chùm cầu con
 }
+
+/// <summary>
+/// Dữ liệu Cân Bằng theo cấp độ được Bake trực tiếp từ ScriptableObject (FireballSkillConfigSO).
+/// Cung cấp dữ liệu thuần unmanaged cho Burst Compiler tính toán thời gian hồi chiêu,
+/// sát thương và số lượng đạn nổ chùm mà không cần truy cập đối tượng managed.
+/// </summary>
+public struct FireballLevelBalanceData : IComponentData
+{
+    public float CooldownLv1;
+    public float CooldownLv2;
+    public float CooldownLv3;
+    public float CooldownLv4;
+
+    public float DamageLv1;
+    public float DamageLv2;
+    public float DamageLv3;
+    public float DamageLv4;
+
+    public int SubCountLv1;
+    public int SubCountLv2;
+    public int SubCountLv3;
+    public int SubCountLv4;
+
+    public float RadiusLv1;
+    public float RadiusLv2;
+    public float RadiusLv3;
+    public float RadiusLv4;
+
+    public float GetCooldown(int level)
+    {
+        switch (level)
+        {
+            case 2: return CooldownLv2;
+            case 3: return CooldownLv3;
+            case 4: return CooldownLv4;
+            default: return CooldownLv1;
+        }
+    }
+
+    public float GetDamage(int level)
+    {
+        switch (level)
+        {
+            case 2: return DamageLv2;
+            case 3: return DamageLv3;
+            case 4: return DamageLv4;
+            default: return DamageLv1;
+        }
+    }
+
+    public int GetSubCount(int level)
+    {
+        switch (level)
+        {
+            case 2: return SubCountLv2;
+            case 3: return SubCountLv3;
+            case 4: return SubCountLv4;
+            default: return SubCountLv1;
+        }
+    }
+
+    public float GetRadius(int level)
+    {
+        switch (level)
+        {
+            case 2: return RadiusLv2;
+            case 3: return RadiusLv3;
+            case 4: return RadiusLv4;
+            default: return RadiusLv1;
+        }
+    }
+}

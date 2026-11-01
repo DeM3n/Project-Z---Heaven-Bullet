@@ -180,23 +180,32 @@ public static class GameLocalization
 
     public static string FireballDesc(int level)
     {
+        var cfg = FireballSkillConfigSO.Instance;
+        float cd2 = cfg != null ? cfg.GetCooldown(2) : 2.53f;
+        float cd3 = cfg != null ? cfg.GetCooldown(3) : 2.20f;
+        float dmg1 = cfg != null ? cfg.GetDamage(1) : 45f;
+        float dmg4 = cfg != null ? cfg.GetDamage(4) : 120f;
+        int sub2 = cfg != null ? cfg.GetSubFireballCount(2) : 2;
+        int sub3 = cfg != null ? cfg.GetSubFireballCount(3) : 3;
+        int sub4 = cfg != null ? cfg.GetSubFireballCount(4) : 4;
+
         return level switch
         {
             2 => Get(
-                "+45% Blast DMG. Bursts into 2 cluster sub-fireballs (50% DMG each). Cooldown reduced to 2.5s.",
-                "+45% Sát thương nổ. Nổ chùm văng 2 cầu lửa con (50% sát thương mỗi quả). Hồi chiêu giảm còn 2.5s."
+                $"+45% Blast DMG. Bursts into {sub2} cluster sub-fireballs (50% DMG each). Cooldown reduced to {cd2:0.0}s.",
+                $"+45% Sát thương nổ. Nổ chùm văng {sub2} cầu lửa con (50% sát thương mỗi quả). Hồi chiêu giảm còn {cd2:0.0}s."
             ),
             3 => Get(
-                "★ TWIN HELLFIRE ★ Fires +1 Main Fireball (2 Main Fireballs)! +40% Blast DMG & +15% Radius. Bursts into 3 cluster sub-fireballs. Cooldown 2.2s.",
-                "★ SONG HỎA LIÊN HOÀN ★ Bắn thêm +1 Cầu Lửa Mẹ (Tổng 2 Cầu Lửa Mẹ)! +40% Sát thương nổ, nổ chùm 3 cầu lửa con. Hồi chiêu giảm còn 2.2s."
+                $"★ TWIN HELLFIRE ★ Fires +1 Main Fireball (2 Main Fireballs)! +40% Blast DMG & +15% Radius. Bursts into {sub3} cluster sub-fireballs. Cooldown {cd3:0.0}s.",
+                $"★ SONG HỎA LIÊN HOÀN ★ Bắn thêm +1 Cầu Lửa Mẹ (Tổng 2 Cầu Lửa Mẹ)! +40% Sát thương nổ, nổ chùm {sub3} cầu lửa con. Hồi chiêu giảm còn {cd3:0.0}s."
             ),
             4 => Get(
-                "★ INFERNO CATACLYSM ★ 2 Main Fireballs with 120 Blast DMG! Bursts into 4 cluster fireballs each and ignites Scorched Fire Zones dealing continuous DOT for 3.5s!",
-                "★ ĐỊA NGỤC HỎA DIỆM ★ 2 Cầu Lửa Mẹ với 120 Sát thương nổ! Mỗi quả nổ chùm 4 cầu con và thắp sáng Vùng Lửa thiêu đốt DOT trong 3.5s!"
+                $"★ INFERNO CATACLYSM ★ 2 Main Fireballs with {dmg4:0} Blast DMG! Bursts into {sub4} cluster fireballs each and ignites Scorched Fire Zones dealing continuous DOT for 3.5s!",
+                $"★ ĐỊA NGỤC HỎA DIỆM ★ 2 Cầu Lửa Mẹ với {dmg4:0} Sát thương nổ! Mỗi quả nổ chùm {sub4} cầu con và thắp sáng Vùng Lửa thiêu đốt DOT trong 3.5s!"
             ),
             _ => Get(
-                "Fires an explosive hellfire orb that detonates for 45 AOE DMG and bursts into 1 mini cluster fireball (50% DMG).",
-                "Bắn cầu lửa Viêm Ma nổ diện rộng 45 sát thương và nổ chùm văng 1 cầu lửa con (50% sát thương)."
+                $"Fires an explosive hellfire orb that detonates for {dmg1:0} AOE DMG and bursts into 1 mini cluster fireball (50% DMG).",
+                $"Bắn cầu lửa Viêm Ma nổ diện rộng {dmg1:0} sát thương và nổ chùm văng 1 cầu lửa con (50% sát thương)."
             )
         };
     }

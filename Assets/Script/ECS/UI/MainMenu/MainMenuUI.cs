@@ -129,7 +129,7 @@ public class MainMenuUI : MonoBehaviour
                 }
             }
 
-            if (FindFirstObjectByType<MainMenuUI>() == null)
+            if (FindAnyObjectByType<MainMenuUI>() == null)
             {
                 var go = new GameObject("[MainMenuUI]");
                 go.AddComponent<MainMenuUI>();
@@ -189,7 +189,7 @@ public class MainMenuUI : MonoBehaviour
 
     private void EnsureEventSystem()
     {
-        if (FindFirstObjectByType<EventSystem>() == null)
+        if (FindAnyObjectByType<EventSystem>() == null)
         {
             var eventSystemObj = new GameObject("EventSystem");
             eventSystemObj.AddComponent<EventSystem>();

@@ -30,3 +30,4 @@ public partial struct PlayerHPRegenSystem : ISystem
         }
     }
 }
+
