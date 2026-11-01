@@ -14,10 +14,14 @@ public partial struct ProjectileSkillCastSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         _enemyQuery = SystemAPI.QueryBuilder().WithAll<EnemyTag, LocalTransform>().Build();
+        state.RequireForUpdate<SpatialGridSingleton>();
+        state.RequireForUpdate<PlayerTag>();
     }
 
     public void OnUpdate(ref SystemState state)
     {
+        if (!SystemAPI.HasSingleton<SpatialGridSingleton>()) return;
+
         float dt = SystemAPI.Time.DeltaTime;
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
@@ -39,7 +43,7 @@ public partial struct ProjectileSkillCastSystem : ISystem
             float3 casterPos = state.EntityManager.GetComponentData<LocalTransform>(owner.ValueRO.Owner).Position;
 
             if (!TryFindNearestEnemy(ref state, grid, cellSize, casterPos, out float3 targetPos))
-                continue; // hết cooldown nhưng chưa có mục tiêu → bỏ lượt bắn này
+                continue;
 
             float2 baseDir = math.normalizesafe((targetPos - casterPos).xy);
             int count = math.max(1, skill.ValueRO.ProjectileCount + (level - 1));
@@ -93,7 +97,6 @@ public partial struct ProjectileSkillCastSystem : ISystem
 
         if (found) return true;
 
-        // Fallback: 3x3 ô quanh caster trống (map thưa enemy) → quét toàn bộ 1 lần cho chắc chắn có mục tiêu
         if (!_enemyQuery.IsEmpty)
         {
             var transforms = _enemyQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);

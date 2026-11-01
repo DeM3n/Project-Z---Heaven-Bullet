@@ -81,7 +81,7 @@ public partial struct PlayerDamageResolutionSystem : ISystem
                 {
                     shield.CurrentCharges--;
 
-                    // Kích hoạt event vỡ khiên (Chỉ nổ AOE ở Cấp 4)
+                    // Kích hoạt event vỡ khiên (Chỉ nổ AOE ở Cấp 4, không gây lực đẩy lùi)
                     bool isLvl4 = (shield.SkillLevel >= 4);
                     Entity breakEvent = ecb.CreateEntity();
                     ecb.AddComponent(breakEvent, new ShieldBreakEvent
@@ -89,7 +89,7 @@ public partial struct PlayerDamageResolutionSystem : ISystem
                         Position = playerTransform.Position,
                         Radius = isLvl4 ? 4.5f : 0f,
                         Damage = isLvl4 ? 100f : 0f,
-                        KnockbackForce = isLvl4 ? 2.5f : 0f,
+                        KnockbackForce = 0f,
                         IsExplosion = isLvl4
                     });
 
@@ -123,7 +123,15 @@ public partial struct PlayerDamageResolutionSystem : ISystem
         // 3. Trừ máu thật (HealthData) nếu có sát thương lọt qua khiên
         if (totalUnblockedDamage > 0f)
         {
-            playerHealth.CurrentHP -= totalUnblockedDamage;
+            // Áp dụng Giáp hộ thân (Damage Reduction) từ Cây Thiên Phú nếu có
+            float reduction = 0f;
+            if (SystemAPI.HasComponent<PlayerDefenseData>(playerEntity))
+            {
+                reduction = SystemAPI.GetComponent<PlayerDefenseData>(playerEntity).DamageReductionPercent;
+            }
+
+            float finalDamage = math.max(1f, totalUnblockedDamage * (1f - math.clamp(reduction, 0f, 0.75f)));
+            playerHealth.CurrentHP -= finalDamage;
             SystemAPI.SetComponent(playerEntity, playerHealth);
 
             // Kích hoạt i-frames (0.2s chớp đỏ giật lùi)

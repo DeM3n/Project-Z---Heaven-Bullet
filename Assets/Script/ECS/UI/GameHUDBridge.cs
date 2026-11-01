@@ -8,6 +8,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Hybrid Bridge quản lý toàn bộ Giao diện HUD (HP, EXP, Level) ở góc trên bên trái
@@ -72,6 +73,20 @@ public class GameHUDBridge : MonoBehaviour
     private Text _collectButtonText;
     private RelicType _currentChestRelic;
 
+    // --- Game Over / Run Ended Modal ---
+    private GameObject _gameOverPanel;
+    private Text _gameOverTitleText;
+    private Text _gameOverSubText;
+    private Text _gameOverTimeText;
+    private Text _gameOverLevelText;
+    private Text _gameOverStonesText;
+    private Button _gameOverRestartBtn;
+    private Text _gameOverRestartBtnText;
+    private Button _gameOverMainMenuBtn;
+    private Text _gameOverMainMenuBtnText;
+    private int _stonesEarnedThisRun = 0;
+    private EntityQuery _playerDeadQuery;
+
     // Danh sách 3 Perk đang hiển thị trên popup hiện tại (để rebuild khi đổi ngôn ngữ)
     private readonly List<PerkType> _currentActivePerkTypes = new List<PerkType>();
 
@@ -122,17 +137,53 @@ public class GameHUDBridge : MonoBehaviour
     private void OnEnable()
     {
         GameLocalization.OnLanguageChanged += UpdateLanguageUI;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
     {
         GameLocalization.OnLanguageChanged -= UpdateLanguageUI;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        bool isGameplay = scene.name != "MainMenuScene";
+        if (_canvas != null)
+        {
+            _canvas.gameObject.SetActive(isGameplay);
+        }
+        if (isGameplay)
+        {
+            _gameSurvivalTime = 0f;
+            _stonesEarnedThisRun = 0;
+            _lastPlayerLevel = 1;
+            _pendingLevelUps = 0;
+            _rerollsRemaining = 3 + (MetaProgressionService.Instance != null ? MetaProgressionService.Instance.GetBonusRerolls() : 0);
+            if (_gameOverPanel != null) _gameOverPanel.SetActive(false);
+            if (_chestPanel != null) _chestPanel.SetActive(false);
+            if (_levelUpPanel != null) _levelUpPanel.SetActive(false);
+            Time.timeScale = 1f;
+            InitECS();
+        }
+        else
+        {
+            if (_gameOverPanel != null) _gameOverPanel.SetActive(false);
+            if (_chestPanel != null) _chestPanel.SetActive(false);
+            if (_levelUpPanel != null) _levelUpPanel.SetActive(false);
+            Time.timeScale = 1f;
+        }
     }
 
     private void Start()
     {
         InitECS();
         UpdateLanguageUI();
+        bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene";
+        if (_canvas != null)
+        {
+            _canvas.gameObject.SetActive(isGameplay);
+        }
     }
 
     private bool InitECS()
@@ -172,6 +223,10 @@ public class GameHUDBridge : MonoBehaviour
 
         _chestEventQuery = _entityManager.CreateEntityQuery(
             ComponentType.ReadOnly<ChestOpenEvent>());
+
+        _playerDeadQuery = _entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<PlayerTag>(),
+            ComponentType.ReadOnly<PlayerDeadTag>());
 
         _initialized = true;
         return true;
@@ -306,6 +361,12 @@ public class GameHUDBridge : MonoBehaviour
 
             ShowChestReward();
         }
+
+        // 6. Phát hiện sự kiện người chơi chết (PlayerDeadTag)
+        if (_playerDeadQuery != null && !_playerDeadQuery.IsEmpty && (_gameOverPanel == null || !_gameOverPanel.activeSelf))
+        {
+            TriggerGameOver();
+        }
     }
 
     /// <summary>
@@ -333,6 +394,18 @@ public class GameHUDBridge : MonoBehaviour
 
         if (_collectButtonText != null)
             _collectButtonText.text = GameLocalization.CollectButtonText;
+
+        if (_gameOverTitleText != null)
+            _gameOverTitleText.text = GameLocalization.GameOverHeader;
+
+        if (_gameOverSubText != null)
+            _gameOverSubText.text = GameLocalization.GameOverSubtitle;
+
+        if (_gameOverRestartBtnText != null)
+            _gameOverRestartBtnText.text = GameLocalization.GameOverRestartBtn;
+
+        if (_gameOverMainMenuBtnText != null)
+            _gameOverMainMenuBtnText.text = GameLocalization.GameOverMainMenuBtn;
 
         UpdateRerollButtonUI();
 
@@ -838,6 +911,9 @@ public class GameHUDBridge : MonoBehaviour
 
         // 7. Tạo Ancient Chest Popup
         BuildChestPanel(canvasObj.transform);
+
+        // 8. Tạo Game Over Modal (Run Ended Summary)
+        BuildGameOverPanel(canvasObj.transform);
     }
 
     private void BuildSurvivalTimer(Transform parent)
@@ -1770,6 +1846,12 @@ public class GameHUDBridge : MonoBehaviour
 
         _entityManager.SetComponentData(playerEntity, relicData);
 
+        // Thưởng Linh Thạch khi mở Rương Cổ Vật (nhân hệ số Vận Khí Cây Thiên Phú)
+        float goldMult = MetaProgressionService.Instance != null ? MetaProgressionService.Instance.GetGoldMultiplier() : 1f;
+        int stonesEarned = Mathf.RoundToInt(35 * goldMult);
+        _stonesEarnedThisRun += stonesEarned;
+        MetaProgressionService.Instance?.AddSpiritStones(stonesEarned);
+
         if (_chestModalAnimCoroutine != null)
         {
             StopCoroutine(_chestModalAnimCoroutine);
@@ -1845,5 +1927,238 @@ public class GameHUDBridge : MonoBehaviour
                 _entityManager.SetComponentData(e, data);
             }
         }
+    }
+
+    // =========================================================================
+    // GAME OVER / RUN ENDED MODAL (TIẾN TRÌNH KẾT THÚC VÀ TÍCH LŨY LINH THẠCH)
+    // =========================================================================
+    private void BuildGameOverPanel(Transform parent)
+    {
+        _gameOverPanel = new GameObject("GameOver_Panel");
+        _gameOverPanel.transform.SetParent(parent, false);
+
+        var rect = _gameOverPanel.AddComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        var dimImg = _gameOverPanel.AddComponent<Image>();
+        dimImg.color = new Color(0.04f, 0.02f, 0.05f, 0.92f);
+
+        // Khung Modal
+        var modalObj = new GameObject("ModalBox");
+        modalObj.transform.SetParent(_gameOverPanel.transform, false);
+        var modalRect = modalObj.AddComponent<RectTransform>();
+        modalRect.anchorMin = new Vector2(0.5f, 0.5f);
+        modalRect.anchorMax = new Vector2(0.5f, 0.5f);
+        modalRect.pivot = new Vector2(0.5f, 0.5f);
+        modalRect.sizeDelta = new Vector2(560f, 440f);
+
+        var modalBg = modalObj.AddComponent<Image>();
+        modalBg.color = new Color(0.08f, 0.09f, 0.14f, 0.98f);
+
+        var outline = modalObj.AddComponent<Outline>();
+        outline.effectColor = new Color(0.85f, 0.25f, 0.25f, 0.95f);
+        outline.effectDistance = new Vector2(3f, -3f);
+
+        // Header Title
+        var titleObj = new GameObject("Title");
+        titleObj.transform.SetParent(modalObj.transform, false);
+        var titleRect = titleObj.AddComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.5f, 1f);
+        titleRect.anchorMax = new Vector2(0.5f, 1f);
+        titleRect.pivot = new Vector2(0.5f, 1f);
+        titleRect.anchoredPosition = new Vector2(0f, -24f);
+        titleRect.sizeDelta = new Vector2(500f, 44f);
+
+        _gameOverTitleText = titleObj.AddComponent<Text>();
+        _gameOverTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _gameOverTitleText.fontSize = 28;
+        _gameOverTitleText.fontStyle = FontStyle.Bold;
+        _gameOverTitleText.alignment = TextAnchor.MiddleCenter;
+        _gameOverTitleText.color = new Color(1f, 0.35f, 0.35f);
+        _gameOverTitleText.text = GameLocalization.GameOverHeader;
+
+        // Subtitle
+        var subObj = new GameObject("Subtitle");
+        subObj.transform.SetParent(modalObj.transform, false);
+        var subRect = subObj.AddComponent<RectTransform>();
+        subRect.anchorMin = new Vector2(0.5f, 1f);
+        subRect.anchorMax = new Vector2(0.5f, 1f);
+        subRect.pivot = new Vector2(0.5f, 1f);
+        subRect.anchoredPosition = new Vector2(0f, -70f);
+        subRect.sizeDelta = new Vector2(480f, 40f);
+
+        _gameOverSubText = subObj.AddComponent<Text>();
+        _gameOverSubText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _gameOverSubText.fontSize = 14;
+        _gameOverSubText.alignment = TextAnchor.MiddleCenter;
+        _gameOverSubText.color = new Color(0.7f, 0.75f, 0.85f);
+        _gameOverSubText.text = GameLocalization.GameOverSubtitle;
+
+        // Stats Box
+        var statsObj = new GameObject("StatsBox");
+        statsObj.transform.SetParent(modalObj.transform, false);
+        var statsRect = statsObj.AddComponent<RectTransform>();
+        statsRect.anchorMin = new Vector2(0.5f, 0.5f);
+        statsRect.anchorMax = new Vector2(0.5f, 0.5f);
+        statsRect.pivot = new Vector2(0.5f, 0.5f);
+        statsRect.anchoredPosition = new Vector2(0f, 10f);
+        statsRect.sizeDelta = new Vector2(460f, 160f);
+
+        var statsBg = statsObj.AddComponent<Image>();
+        statsBg.color = new Color(0.04f, 0.06f, 0.10f, 0.9f);
+
+        // Stats Lines
+        _gameOverTimeText = CreateStatLine(statsObj.transform, 35f, GameLocalization.GameOverTimeLabel, "00:00");
+        _gameOverLevelText = CreateStatLine(statsObj.transform, -5f, GameLocalization.GameOverLevelLabel, "Lv.1");
+        _gameOverStonesText = CreateStatLine(statsObj.transform, -45f, GameLocalization.GameOverStonesLabel, "+0 💎", new Color(0.3f, 0.9f, 1f));
+
+        // Buttons Container
+        var btnContainer = new GameObject("Buttons");
+        btnContainer.transform.SetParent(modalObj.transform, false);
+        var btnRect = btnContainer.AddComponent<RectTransform>();
+        btnRect.anchorMin = new Vector2(0.5f, 0f);
+        btnRect.anchorMax = new Vector2(0.5f, 0f);
+        btnRect.pivot = new Vector2(0.5f, 0f);
+        btnRect.anchoredPosition = new Vector2(0f, 24f);
+        btnRect.sizeDelta = new Vector2(480f, 50f);
+
+        var hlg = btnContainer.AddComponent<HorizontalLayoutGroup>();
+        hlg.spacing = 16f;
+        hlg.childControlWidth = true;
+        hlg.childControlHeight = true;
+        hlg.childForceExpandWidth = true;
+        hlg.childForceExpandHeight = true;
+
+        // Restart Button
+        var restartBtnObj = new GameObject("RestartBtn");
+        restartBtnObj.transform.SetParent(btnContainer.transform, false);
+        var restartImg = restartBtnObj.AddComponent<Image>();
+        restartImg.color = new Color(0.18f, 0.42f, 0.28f, 1f);
+        _gameOverRestartBtn = restartBtnObj.AddComponent<Button>();
+        _gameOverRestartBtn.onClick.AddListener(OnGameOverRestartClicked);
+
+        var restartTextObj = new GameObject("Text");
+        restartTextObj.transform.SetParent(restartBtnObj.transform, false);
+        var rTextRect = restartTextObj.AddComponent<RectTransform>();
+        rTextRect.anchorMin = Vector2.zero;
+        rTextRect.anchorMax = Vector2.one;
+        rTextRect.offsetMin = Vector2.zero;
+        rTextRect.offsetMax = Vector2.zero;
+        _gameOverRestartBtnText = restartTextObj.AddComponent<Text>();
+        _gameOverRestartBtnText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _gameOverRestartBtnText.fontSize = 17;
+        _gameOverRestartBtnText.fontStyle = FontStyle.Bold;
+        _gameOverRestartBtnText.alignment = TextAnchor.MiddleCenter;
+        _gameOverRestartBtnText.color = Color.white;
+        _gameOverRestartBtnText.text = GameLocalization.GameOverRestartBtn;
+
+        // Main Menu Button
+        var menuBtnObj = new GameObject("MainMenuBtn");
+        menuBtnObj.transform.SetParent(btnContainer.transform, false);
+        var menuImg = menuBtnObj.AddComponent<Image>();
+        menuImg.color = new Color(0.22f, 0.26f, 0.38f, 1f);
+        _gameOverMainMenuBtn = menuBtnObj.AddComponent<Button>();
+        _gameOverMainMenuBtn.onClick.AddListener(OnGameOverMainMenuClicked);
+
+        var menuTextObj = new GameObject("Text");
+        menuTextObj.transform.SetParent(menuBtnObj.transform, false);
+        var mTextRect = menuTextObj.AddComponent<RectTransform>();
+        mTextRect.anchorMin = Vector2.zero;
+        mTextRect.anchorMax = Vector2.one;
+        mTextRect.offsetMin = Vector2.zero;
+        mTextRect.offsetMax = Vector2.zero;
+        _gameOverMainMenuBtnText = menuTextObj.AddComponent<Text>();
+        _gameOverMainMenuBtnText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        _gameOverMainMenuBtnText.fontSize = 17;
+        _gameOverMainMenuBtnText.fontStyle = FontStyle.Bold;
+        _gameOverMainMenuBtnText.alignment = TextAnchor.MiddleCenter;
+        _gameOverMainMenuBtnText.color = Color.white;
+        _gameOverMainMenuBtnText.text = GameLocalization.GameOverMainMenuBtn;
+
+        _gameOverPanel.SetActive(false);
+    }
+
+    private Text CreateStatLine(Transform parent, float posY, string label, string value, Color? valueColor = null)
+    {
+        var rowObj = new GameObject("Row_" + label);
+        rowObj.transform.SetParent(parent, false);
+        var rowRect = rowObj.AddComponent<RectTransform>();
+        rowRect.anchorMin = new Vector2(0.5f, 0.5f);
+        rowRect.anchorMax = new Vector2(0.5f, 0.5f);
+        rowRect.pivot = new Vector2(0.5f, 0.5f);
+        rowRect.anchoredPosition = new Vector2(0f, posY);
+        rowRect.sizeDelta = new Vector2(400f, 30f);
+
+        var lblObj = new GameObject("Label");
+        lblObj.transform.SetParent(rowObj.transform, false);
+        var lRect = lblObj.AddComponent<RectTransform>();
+        lRect.anchorMin = new Vector2(0f, 0f);
+        lRect.anchorMax = new Vector2(0.6f, 1f);
+        lRect.offsetMin = Vector2.zero;
+        lRect.offsetMax = Vector2.zero;
+        var lText = lblObj.AddComponent<Text>();
+        lText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        lText.fontSize = 16;
+        lText.alignment = TextAnchor.MiddleLeft;
+        lText.color = new Color(0.8f, 0.85f, 0.95f);
+        lText.text = label;
+
+        var valObj = new GameObject("Value");
+        valObj.transform.SetParent(rowObj.transform, false);
+        var vRect = valObj.AddComponent<RectTransform>();
+        vRect.anchorMin = new Vector2(0.6f, 0f);
+        vRect.anchorMax = new Vector2(1f, 1f);
+        vRect.offsetMin = Vector2.zero;
+        vRect.offsetMax = Vector2.zero;
+        var vText = valObj.AddComponent<Text>();
+        vText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        vText.fontSize = 17;
+        vText.fontStyle = FontStyle.Bold;
+        vText.alignment = TextAnchor.MiddleRight;
+        vText.color = valueColor ?? Color.white;
+        vText.text = value;
+
+        return vText;
+    }
+
+    private void TriggerGameOver()
+    {
+        if (_gameOverPanel == null) return;
+        Time.timeScale = 0f;
+
+        // Tính toán thưởng Linh Thạch sinh tồn
+        float goldMult = MetaProgressionService.Instance != null ? MetaProgressionService.Instance.GetGoldMultiplier() : 1f;
+        int survivalReward = Mathf.RoundToInt((_gameSurvivalTime / 60f) * 15f * goldMult);
+        if (survivalReward > 0)
+        {
+            _stonesEarnedThisRun += survivalReward;
+            MetaProgressionService.Instance?.AddSpiritStones(survivalReward);
+        }
+
+        int minutes = (int)(_gameSurvivalTime / 60f);
+        int seconds = (int)(_gameSurvivalTime % 60f);
+
+        if (_gameOverTimeText != null) _gameOverTimeText.text = $"{minutes:00}:{seconds:00}";
+        if (_gameOverLevelText != null) _gameOverLevelText.text = $"Lv.{_lastPlayerLevel}";
+        if (_gameOverStonesText != null) _gameOverStonesText.text = $"+{_stonesEarnedThisRun} 💎";
+
+        _gameOverPanel.SetActive(true);
+    }
+
+    private void OnGameOverRestartClicked()
+    {
+        Time.timeScale = 1f;
+        if (_gameOverPanel != null) _gameOverPanel.SetActive(false);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void OnGameOverMainMenuClicked()
+    {
+        Time.timeScale = 1f;
+        if (_gameOverPanel != null) _gameOverPanel.SetActive(false);
+        SceneManager.LoadScene("MainMenuScene");
     }
 }

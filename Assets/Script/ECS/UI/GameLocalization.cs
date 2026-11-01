@@ -214,8 +214,8 @@ public static class GameLocalization
                 "Song Khiên Hộ Vệ! Có thể tích lũy tối đa 2 lớp khiên. Tự động hồi tuần tự từng lớp khiên (16s mỗi lớp)."
             ),
             4 => Get(
-                "★ SHIELD SHATTER NOVA ★ Each shield now blocks 2 hits (Total 4 hits)! When destroyed, triggers a massive 100 DMG Shockwave that KNOCKS BACK enemies and DESTROYS all enemy bullets!",
-                "★ KHIÊN PHẢN MA TRẬN ★ Mỗi lớp khiên chịu được 2 lần sát thương (Tổng 4 hits)! Khi khiên bị phá vỡ, phát nổ sóng xung kích 100 DMG ĐẨY LÙI quái vật và TIÊU HỦY 100% đạn địch!"
+                "★ SHIELD SHATTER NOVA ★ Each shield now blocks 2 hits (Total 4 hits)! When destroyed, triggers a massive 100 DMG Shockwave that DESTROYS all enemy bullets!",
+                "★ KHIÊN PHẢN MA TRẬN ★ Mỗi lớp khiên chịu được 2 lần sát thương (Tổng 4 hits)! Khi khiên bị phá vỡ, phát nổ sóng xung kích 100 DMG và TIÊU HỦY 100% đạn địch!"
             ),
             _ => Get(
                 "Deploys an energetic barrier that absorbs 1 instance of damage completely. Recharges after 30s.",
@@ -279,4 +279,13 @@ public static class GameLocalization
         $"+2 Level-Up Rerolls added immediately (Level {lvl})!",
         $"Nhận thêm +2 Lượt đổi thẻ kỹ năng khi lên cấp (Cấp {lvl})!"
     );
+
+    // --- Game Over / Run Summary ---
+    public static string GameOverHeader => Get("✦ FATE'S RETREAT ✦", "✦ THIÊN MỆNH CHƯA TẬN ✦");
+    public static string GameOverSubtitle => Get("Your spirit returns to gather power for the next reincarnation.", "Chân linh hồi quy, tích lũy tu vi chuẩn bị cho lần luân hồi tiếp theo.");
+    public static string GameOverTimeLabel => Get("⏱️ Survival Time:", "⏱️ Thời gian sống sót:");
+    public static string GameOverLevelLabel => Get("⭐ Level Reached:", "⭐ Cấp độ đạt được:");
+    public static string GameOverStonesLabel => Get("💎 Spirit Stones Earned:", "💎 Linh Thạch thu hoạch:");
+    public static string GameOverRestartBtn => Get("🔄 RETRY / CHƠI LẠI", "🔄 LUÂN HỒI TÁI CHIẾN");
+    public static string GameOverMainMenuBtn => Get("🚪 MAIN MENU / VỀ TRANG CHỦ", "🚪 TRỞ VỀ TRANG CHỦ");
 }

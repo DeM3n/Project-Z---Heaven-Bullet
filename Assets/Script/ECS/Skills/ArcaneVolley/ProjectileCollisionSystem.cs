@@ -8,8 +8,15 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct ProjectileCollisionSystem : ISystem
 {
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<SpatialGridSingleton>();
+    }
+
     public void OnUpdate(ref SystemState state)
     {
+        if (!SystemAPI.HasSingleton<SpatialGridSingleton>()) return;
+
         var grid = SystemAPI.GetSingleton<SpatialGridSingleton>().Grid;
         float cellSize = SystemAPI.GetSingleton<SpatialGridSingleton>().CellSize;
         var ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -41,7 +48,7 @@ public partial struct ProjectileCollisionSystem : ISystem
                     hp.CurrentHP -= dmg.ValueRO.Damage;
                     ecb.SetComponent(enemy, hp);
 
-                    ecb.DestroyEntity(entity); // projectile biến mất sau khi trúng — chưa xử lý piercing (GDD 2.2 Lv5)
+                    ecb.DestroyEntity(entity);
                     hit = true;
                     break;
                 } while (grid.TryGetNextValue(out enemy, ref it));

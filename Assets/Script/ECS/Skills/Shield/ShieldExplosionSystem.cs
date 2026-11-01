@@ -71,25 +71,10 @@ public partial struct ShieldExplosionSystem : ISystem
 
                     if (distSq <= radiusSq)
                     {
-                        // Gây sát thương
+                        // Gây sát thương nổ AOE (Không áp dụng lực đẩy lùi theo chuẩn No-Knockback)
                         HealthData enemyHealth = state.EntityManager.GetComponentData<HealthData>(enemy);
                         enemyHealth.CurrentHP -= damage;
                         ecb.SetComponent(enemy, enemyHealth);
-
-                        // Đẩy lùi (Knockback) hất văng quái ra khỏi tâm vụ nổ
-                        float2 dir = enemyTransform.Position.xy - centerPos.xy;
-                        float dist = math.length(dir);
-                        if (dist > 0.001f)
-                        {
-                            dir /= dist;
-                        }
-                        else
-                        {
-                            dir = new float2(1f, 0f);
-                        }
-
-                        enemyTransform.Position.xy += dir * knockback;
-                        ecb.SetComponent(enemy, enemyTransform);
                     }
                 } while (grid.TryGetNextValue(out enemy, ref it));
             }

@@ -39,6 +39,8 @@ public class GameSettingsBridge : MonoBehaviour
     private Canvas _canvas;
     private GameObject _pausePanel;
     private GameObject _devPanel;
+    private GameObject _pauseBtnObj;
+    private GameObject _devBtnObj;
 
     // Pause UI Elements
     private Text _pauseTitleText;
@@ -76,17 +78,37 @@ public class GameSettingsBridge : MonoBehaviour
     private void OnEnable()
     {
         GameLocalization.OnLanguageChanged += UpdateLanguageUI;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
     {
         GameLocalization.OnLanguageChanged -= UpdateLanguageUI;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        bool isGameplay = scene.name != "MainMenuScene";
+        if (_pauseBtnObj != null) _pauseBtnObj.SetActive(isGameplay);
+        if (_devBtnObj != null) _devBtnObj.SetActive(isGameplay);
+        if (!isGameplay)
+        {
+            _isPaused = false;
+            _isDevPanelOpen = false;
+            if (_pausePanel != null) _pausePanel.SetActive(false);
+            if (_devPanel != null) _devPanel.SetActive(false);
+            Time.timeScale = 1f;
+        }
     }
 
     private void Start()
     {
         InitECS();
         UpdateLanguageUI();
+        bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene";
+        if (_pauseBtnObj != null) _pauseBtnObj.SetActive(isGameplay);
+        if (_devBtnObj != null) _devBtnObj.SetActive(isGameplay);
     }
 
     private bool InitECS()
@@ -209,6 +231,16 @@ public class GameSettingsBridge : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+        _isPaused = false;
+        _isDevPanelOpen = false;
+        if (_pausePanel != null) _pausePanel.SetActive(false);
+        if (_devPanel != null) _devPanel.SetActive(false);
+        SceneManager.LoadScene("MainMenuScene");
     }
 
     public void ToggleDevPanel()
@@ -619,6 +651,8 @@ public class GameSettingsBridge : MonoBehaviour
         dText.alignment = TextAnchor.MiddleCenter;
         dText.color = new Color(0.85f, 0.65f, 1f);
         dText.text = "🛠️";
+        _pauseBtnObj = pauseBtnObj;
+        _devBtnObj = devBtnObj;
     }
 
     private void BuildPauseMenu(Transform parent)
@@ -635,13 +669,13 @@ public class GameSettingsBridge : MonoBehaviour
         var dim = _pausePanel.AddComponent<Image>();
         dim.color = new Color(0.02f, 0.03f, 0.06f, 0.88f);
 
-        // Khung Panel trung tâm
+        // Khung Panel trung tâm (mở rộng chiều cao thành 440f để chứa 5 nút)
         var box = new GameObject("CenterBox");
         box.transform.SetParent(_pausePanel.transform, false);
         var bRect = box.AddComponent<RectTransform>();
         bRect.anchorMin = new Vector2(0.5f, 0.5f);
         bRect.anchorMax = new Vector2(0.5f, 0.5f);
-        bRect.sizeDelta = new Vector2(380f, 380f);
+        bRect.sizeDelta = new Vector2(380f, 440f);
 
         var bImg = box.AddComponent<Image>();
         bImg.color = new Color(0.08f, 0.11f, 0.16f, 0.98f);
@@ -653,8 +687,8 @@ public class GameSettingsBridge : MonoBehaviour
         var titleObj = new GameObject("Title");
         titleObj.transform.SetParent(box.transform, false);
         var tRect = titleObj.AddComponent<RectTransform>();
-        tRect.anchorMin = new Vector2(0.5f, 0.86f);
-        tRect.anchorMax = new Vector2(0.5f, 0.86f);
+        tRect.anchorMin = new Vector2(0.5f, 0.88f);
+        tRect.anchorMax = new Vector2(0.5f, 0.88f);
         tRect.sizeDelta = new Vector2(340f, 40f);
 
         _pauseTitleText = titleObj.AddComponent<Text>();
@@ -666,8 +700,8 @@ public class GameSettingsBridge : MonoBehaviour
         _pauseTitleText.text = GameLocalization.PauseHeader;
 
         // Container các nút
-        float startY = 80f;
-        float spacingY = 54f;
+        float startY = 110f;
+        float spacingY = 52f;
 
         // 1. Resume Button
         CreateMenuButton(box.transform, new Vector2(0f, startY), new Vector2(280f, 44f),
@@ -688,6 +722,11 @@ public class GameSettingsBridge : MonoBehaviour
         CreateMenuButton(box.transform, new Vector2(0f, startY - spacingY * 3), new Vector2(280f, 44f),
             new Color(0.28f, 0.14f, 0.42f, 1f), new Color(0.85f, 0.45f, 1f),
             GameLocalization.DevModeButton, OpenDevPanel, out _devModeBtnText);
+
+        // 5. Return to Main Menu Button
+        CreateMenuButton(box.transform, new Vector2(0f, startY - spacingY * 4), new Vector2(280f, 44f),
+            new Color(0.25f, 0.2f, 0.15f, 1f), new Color(1f, 0.8f, 0.4f),
+            "🚪 MAIN MENU / VỀ TRANG CHỦ", ReturnToMainMenu, out _);
 
         _pausePanel.SetActive(false);
     }

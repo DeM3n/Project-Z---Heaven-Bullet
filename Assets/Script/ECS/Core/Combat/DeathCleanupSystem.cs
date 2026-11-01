@@ -20,6 +20,14 @@ public partial struct DeathCleanupSystem : ISystem
     {
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
+        // Đọc vận khí rơi đồ (Drop Rate Bonus) từ Cây Thiên Phú của Player
+        float dropBonus = 0f;
+        if (SystemAPI.TryGetSingletonEntity<PlayerTag>(out Entity playerEntity) &&
+            SystemAPI.HasComponent<PlayerFortuneData>(playerEntity))
+        {
+            dropBonus = SystemAPI.GetComponent<PlayerFortuneData>(playerEntity).DropRateBonus;
+        }
+
         foreach (var (hp, transform, entity) in
                  SystemAPI.Query<RefRO<HealthData>, RefRO<LocalTransform>>()
                      .WithAll<EnemyTag>()
@@ -57,12 +65,13 @@ public partial struct DeathCleanupSystem : ISystem
                 else
                 {
                     // 2. NẾU LÀ QUÁI THƯỜNG:
-                    // Rơi ngọc EXP theo tỉ lệ DropChance
+                    // Rơi ngọc EXP theo tỉ lệ DropChance (đã nhân hệ số Vận Khí)
                     if (SystemAPI.HasComponent<EnemyDeathDropData>(entity))
                     {
                         var drop = SystemAPI.GetComponent<EnemyDeathDropData>(entity);
+                        float effectiveDropChance = Unity.Mathematics.math.clamp(drop.DropChance * (1f + dropBonus), 0f, 1f);
                         float rollExp = _random.NextFloat(0f, 1f);
-                        if (rollExp <= drop.DropChance && drop.ExpOrbPrefab != Entity.Null)
+                        if (rollExp <= effectiveDropChance && drop.ExpOrbPrefab != Entity.Null)
                         {
                             Entity orb = ecb.Instantiate(drop.ExpOrbPrefab);
                             ecb.SetComponent(orb, LocalTransform.FromPosition(transform.ValueRO.Position));
@@ -70,9 +79,11 @@ public partial struct DeathCleanupSystem : ISystem
                         }
                     }
 
-                    // Tỉ lệ rơi Trái Tim Hồi Máu (Health Heart): 3.5%
+                    // Tỉ lệ rơi Trái Tim Hồi Máu (Health Heart): cơ bản 3.5% * (1 + dropBonus)
+                    float heartChance = 0.035f * (1f + dropBonus);
+                    float magnetChance = 0.012f * (1f + dropBonus);
                     float rollLoot = _random.NextFloat(0f, 1f);
-                    if (rollLoot <= 0.035f)
+                    if (rollLoot <= heartChance)
                     {
                         Entity heart = ecb.CreateEntity();
                         ecb.AddComponent(heart, LocalTransform.FromPosition(transform.ValueRO.Position));
@@ -85,8 +96,8 @@ public partial struct DeathCleanupSystem : ISystem
                             FlySpeed = 0f
                         });
                     }
-                    // Tỉ lệ rơi Nam Châm Hút EXP (Exp Magnet): 1.2%
-                    else if (rollLoot <= 0.047f)
+                    // Tỉ lệ rơi Nam Châm Hút EXP (Exp Magnet): cơ bản 1.2% * (1 + dropBonus)
+                    else if (rollLoot <= (heartChance + magnetChance))
                     {
                         Entity magnet = ecb.CreateEntity();
                         ecb.AddComponent(magnet, LocalTransform.FromPosition(transform.ValueRO.Position));
