@@ -284,29 +284,55 @@ public partial struct BoomerangSkillCastSystem : ISystem
         int skillLevel,
         bool isEmpowered)
     {
-        Entity b = ecb.CreateEntity();
-        ecb.AddComponent<BoomerangTag>(b);
-        ecb.AddComponent(b, LocalTransform.FromPositionRotationScale(spawnPos, quaternion.identity, 1f));
-        ecb.AddComponent(b, new BoomerangProjectileData
+        Entity b;
+        if (skillData.BoomerangPrefab != Entity.Null)
         {
-            State = BoomerangFlightState.Outward,
-            Direction = direction,
-            Speed = skillData.FlySpeed,
-            Damage = damage,
-            HitRadius = hitRadius,
-            DistanceTraveled = 0f,
-            MaxDistance = skillData.MaxDistance,
-            ReturnDistanceTraveled = 0f,
-            CatchRadius = skillData.CatchRadius,
-            IsEmpowered = isEmpowered,
-            SkillLevel = skillLevel,
-            Owner = player,
-            SkillEntity = skillEntity,
-            RotationAngle = 0f
-        });
-
-        // Tạo Buffer lưu trữ các mục tiêu đã trúng đòn xuyên thấu
-        ecb.AddBuffer<BoomerangHitBuffer>(b);
+            // Nếu có Prefab được bake từ SubScene (Boomerang.prefab), instantiate prefab entity
+            b = ecb.Instantiate(skillData.BoomerangPrefab);
+            ecb.SetComponent(b, LocalTransform.FromPositionRotationScale(spawnPos, quaternion.identity, 1f));
+            ecb.SetComponent(b, new BoomerangProjectileData
+            {
+                State = BoomerangFlightState.Outward,
+                Direction = direction,
+                Speed = skillData.FlySpeed,
+                Damage = damage,
+                HitRadius = hitRadius,
+                DistanceTraveled = 0f,
+                MaxDistance = skillData.MaxDistance,
+                ReturnDistanceTraveled = 0f,
+                CatchRadius = skillData.CatchRadius,
+                IsEmpowered = isEmpowered,
+                SkillLevel = skillLevel,
+                Owner = player,
+                SkillEntity = skillEntity,
+                RotationAngle = 0f
+            });
+        }
+        else
+        {
+            // Cơ chế tự động procedural: Tự sinh entity thuần túy trong RAM
+            b = ecb.CreateEntity();
+            ecb.AddComponent<BoomerangTag>(b);
+            ecb.AddComponent(b, LocalTransform.FromPositionRotationScale(spawnPos, quaternion.identity, 1f));
+            ecb.AddComponent(b, new BoomerangProjectileData
+            {
+                State = BoomerangFlightState.Outward,
+                Direction = direction,
+                Speed = skillData.FlySpeed,
+                Damage = damage,
+                HitRadius = hitRadius,
+                DistanceTraveled = 0f,
+                MaxDistance = skillData.MaxDistance,
+                ReturnDistanceTraveled = 0f,
+                CatchRadius = skillData.CatchRadius,
+                IsEmpowered = isEmpowered,
+                SkillLevel = skillLevel,
+                Owner = player,
+                SkillEntity = skillEntity,
+                RotationAngle = 0f
+            });
+            ecb.AddBuffer<BoomerangHitBuffer>(b);
+        }
     }
 
     private static float2 RotateVector(float2 v, float angleRad)

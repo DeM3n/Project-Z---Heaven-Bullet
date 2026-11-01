@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7598303393060294001}
   - component: {fileID: 7600000000000000001}
   - component: {fileID: 7700000000000000001}
+  - component: {fileID: 7800000000000000001}
   m_Layer: 0
   m_Name: Boomerang
   m_TagString: Untagged
@@ -310,4 +311,15 @@ LineRenderer:
       m_NumAlphaKeys: 2
   m_UseWorldSpace: 1
   m_Loop: 0
-
+--- !u!114 &7800000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7422362882192681001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoomerangAuthoring
