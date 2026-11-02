@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
 
-[UpdateAfter(typeof(ProjectileCollisionSystem))]
+[UpdateAfter(typeof(EnemyDamageResolutionSystem))]
 public partial struct DeathCleanupSystem : ISystem
 {
     private Unity.Mathematics.Random _random;
@@ -35,6 +35,10 @@ public partial struct DeathCleanupSystem : ISystem
         {
             if (hp.ValueRO.CurrentHP <= 0f)
             {
+                if (SystemAPI.HasSingleton<PlayerRunStats>())
+                {
+                    SystemAPI.GetSingletonRW<PlayerRunStats>().ValueRW.EnemiesKilled++;
+                }
                 // 1. NẾU LÀ TREASURE GOBLIN BỊ TIÊU DIỆT:
                 if (SystemAPI.HasComponent<TreasureGoblinTag>(entity))
                 {

@@ -7,6 +7,7 @@ using Unity.Transforms;
 public partial struct SlashSwordSkillSystem : ISystem
 {
     private EntityQuery _swordQuery;
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
 
     public void OnCreate(ref SystemState state)
     {
@@ -16,6 +17,8 @@ public partial struct SlashSwordSkillSystem : ISystem
         _swordQuery = SystemAPI.QueryBuilder()
             .WithAll<SlashSwordTag, SlashSwordData, LocalTransform>()
             .Build();
+
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     public void OnUpdate(ref SystemState state)
@@ -31,6 +34,7 @@ public partial struct SlashSwordSkillSystem : ISystem
 
         var visualOffsetLookup = SystemAPI.GetComponentLookup<SlashSwordVisualOffset>(true);
         var ecb = new EntityCommandBuffer(Allocator.Temp);
+        _incomingDamageLookup.Update(ref state);
 
         // --- 1. Đồng bộ số lượng kiếm theo Skill Level ---
         foreach (var (runtime, owner, skillData, skillEntity) in
@@ -238,9 +242,7 @@ public partial struct SlashSwordSkillSystem : ISystem
                                 float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                                 if (math.distancesq(slashCenter, enemyPos) <= slashRadiusSq)
                                 {
-                                    HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                                    hp.CurrentHP -= currentDamage;
-                                    ecb.SetComponent(enemy, hp);
+                                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SlashSword, currentDamage);
                                 }
                             } while (grid.TryGetNextValue(out enemy, ref it));
                         }

@@ -12,9 +12,12 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct FireZoneSystem : ISystem
 {
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
+
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<SpatialGridSingleton>();
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     [BurstCompile]
@@ -27,6 +30,7 @@ public partial struct FireZoneSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
 
         var ecb = new EntityCommandBuffer(Allocator.Temp);
+        _incomingDamageLookup.Update(ref state);
 
         foreach (var (transform, zone, entity) in
                  SystemAPI.Query<RefRO<LocalTransform>, RefRW<FireZoneData>>()
@@ -71,9 +75,7 @@ public partial struct FireZoneSystem : ISystem
                     float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                     if (math.distancesq(center, enemyPos.xy) <= radiusSq)
                     {
-                        HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                        hp.CurrentHP -= damage;
-                        ecb.SetComponent(enemy, hp);
+                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.Fireball, damage);
                     }
                 } while (grid.TryGetNextValue(out enemy, ref it));
             }

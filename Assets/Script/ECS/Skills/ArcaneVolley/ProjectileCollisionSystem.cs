@@ -8,9 +8,12 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct ProjectileCollisionSystem : ISystem
 {
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
+
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<SpatialGridSingleton>();
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     public void OnUpdate(ref SystemState state)
@@ -20,6 +23,7 @@ public partial struct ProjectileCollisionSystem : ISystem
         var grid = SystemAPI.GetSingleton<SpatialGridSingleton>().Grid;
         float cellSize = SystemAPI.GetSingleton<SpatialGridSingleton>().CellSize;
         var ecb = new EntityCommandBuffer(Allocator.Temp);
+        _incomingDamageLookup.Update(ref state);
 
         foreach (var (transform, dmg, entity) in
                  SystemAPI.Query<RefRO<LocalTransform>, RefRO<DamageOnContactData>>()
@@ -44,9 +48,8 @@ public partial struct ProjectileCollisionSystem : ISystem
                     float distSq = math.distancesq(transform.ValueRO.Position, enemyTransform.Position);
                     if (distSq > hitDistSq) continue;
 
-                    HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                    hp.CurrentHP -= dmg.ValueRO.Damage;
-                    ecb.SetComponent(enemy, hp);
+                    ushort skillId = dmg.ValueRO.SkillId != 0 ? dmg.ValueRO.SkillId : SkillIds.ProjectileSkill;
+                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, skillId, dmg.ValueRO.Damage);
 
                     ecb.DestroyEntity(entity);
                     hit = true;

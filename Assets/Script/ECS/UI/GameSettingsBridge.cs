@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,8 +6,9 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Hybrid Bridge đóng vai trò Điều phối viên (Coordinator / Facade) cho hệ thống Cài đặt và Dev Mode:
-/// - Kết nối TopBarSettingsButtonsView, PauseMenuView, DevControlPanelView.
+/// - Kết nối TopBarSettingsButtonsView, PauseMenuView, ResumeCountdownView, DevControlPanelView.
 /// - Kết nối DevSkillService, DevCheatService và SettingsInputHandler.
+/// - Quản lý đếm ngược 3 giây trước khi Resume trận đấu.
 /// - Tuyệt đối không chứa mã lệnh ECS trực tiếp (0 ECS leakage) hay tự ý ghi Time.timeScale.
 /// </summary>
 public class GameSettingsBridge : MonoBehaviour
@@ -16,6 +18,7 @@ public class GameSettingsBridge : MonoBehaviour
     private Canvas _canvas;
     private TopBarSettingsButtonsView _topBarView;
     private PauseMenuView _pauseView;
+    private ResumeCountdownView _countdownView;
     private SettingsInputHandler _inputHandler;
     private DevSkillService _skillService;
 
@@ -25,6 +28,8 @@ public class GameSettingsBridge : MonoBehaviour
 #endif
 
     private bool _isDevPanelOpen = false;
+    private bool _isCountingDown = false;
+    private Coroutine _countdownCoroutine;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
@@ -68,10 +73,16 @@ public class GameSettingsBridge : MonoBehaviour
         _inputHandler?.Update(_isDevPanelOpen);
     }
 
-    #region --- Pause Menu Controller ---
+    #region --- Pause Menu Controller & 3-Second Resume Countdown ---
 
     public void TogglePause()
     {
+        if (_isCountingDown)
+        {
+            CancelCountdownAndReopenPause();
+            return;
+        }
+
         if (PauseService.HasToken(PauseReason.PauseMenu))
         {
             ResumeGame();
@@ -86,6 +97,12 @@ public class GameSettingsBridge : MonoBehaviour
     {
         if (PauseService.HasAnyHUDModal()) return;
 
+        if (_isCountingDown)
+        {
+            CancelCountdownAndReopenPause();
+            return;
+        }
+
 #if UNITY_EDITOR || DEBUG
         if (_isDevPanelOpen) CloseDevPanel();
 #endif
@@ -96,18 +113,104 @@ public class GameSettingsBridge : MonoBehaviour
 
     public void ResumeGame()
     {
-        PauseService.Release(PauseReason.PauseMenu);
         _pauseView?.Hide();
+
+        if (gameObject.activeInHierarchy)
+        {
+            if (_countdownCoroutine != null) StopCoroutine(_countdownCoroutine);
+            _countdownCoroutine = StartCoroutine(ResumeCountdownRoutine());
+        }
+        else
+        {
+            PauseService.Release(PauseReason.PauseMenu);
+        }
+    }
+
+    private void CancelCountdownAndReopenPause()
+    {
+        if (_countdownCoroutine != null)
+        {
+            StopCoroutine(_countdownCoroutine);
+            _countdownCoroutine = null;
+        }
+        _isCountingDown = false;
+        _countdownView?.Hide();
+        _pauseView?.Show();
+    }
+
+    private IEnumerator ResumeCountdownRoutine()
+    {
+        _isCountingDown = true;
+        _countdownView?.Show();
+
+        // Đếm 3
+        _countdownView?.SetCount("3", new Color(1f, 0.85f, 0.25f));
+        yield return AnimateCountdownSecond();
+
+        // Đếm 2
+        _countdownView?.SetCount("2", new Color(1f, 0.65f, 0.2f));
+        yield return AnimateCountdownSecond();
+
+        // Đếm 1
+        _countdownView?.SetCount("1", new Color(1f, 0.45f, 0.2f));
+        yield return AnimateCountdownSecond();
+
+        // GO!
+        _countdownView?.SetCount("GO!", new Color(0.2f, 1f, 0.4f));
+        _countdownView?.SetScale(1.15f);
+
+        float flashTime = 0f;
+        while (flashTime < 0.35f)
+        {
+            flashTime += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        _countdownView?.Hide();
+        _isCountingDown = false;
+        _countdownCoroutine = null;
+
+        // Chỉ khi kết thúc hoàn toàn 3 giây đếm ngược thì mới nhả token PauseMenu để unpause game!
+        PauseService.Release(PauseReason.PauseMenu);
+    }
+
+    private IEnumerator AnimateCountdownSecond()
+    {
+        float duration = 1.0f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / duration;
+            // Hiệu ứng scale punch: từ 1.35f nảy về 1.0f
+            float scale = Mathf.Lerp(1.35f, 1.0f, Mathf.SmoothStep(0f, 1f, t * 2.5f));
+            _countdownView?.SetScale(scale);
+            yield return null;
+        }
     }
 
     public void RestartGame()
     {
+        if (_countdownCoroutine != null)
+        {
+            StopCoroutine(_countdownCoroutine);
+            _countdownCoroutine = null;
+        }
+        _isCountingDown = false;
+        _countdownView?.Hide();
         PauseService.ClearAll();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void ReturnToMainMenu()
     {
+        if (_countdownCoroutine != null)
+        {
+            StopCoroutine(_countdownCoroutine);
+            _countdownCoroutine = null;
+        }
+        _isCountingDown = false;
+        _countdownView?.Hide();
         PauseService.ClearAll();
         _pauseView?.Hide();
 #if UNITY_EDITOR || DEBUG
@@ -137,6 +240,14 @@ public class GameSettingsBridge : MonoBehaviour
 
     public void OpenDevPanel()
     {
+        if (_isCountingDown)
+        {
+            if (_countdownCoroutine != null) StopCoroutine(_countdownCoroutine);
+            _countdownCoroutine = null;
+            _isCountingDown = false;
+            _countdownView?.Hide();
+        }
+
         _isDevPanelOpen = true;
         _pauseView?.Hide();
 
@@ -188,6 +299,7 @@ public class GameSettingsBridge : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);
         scaler.matchWidthOrHeight = 0.5f;
+        scaler.dynamicPixelsPerUnit = 3f;
 
         canvasObj.AddComponent<GraphicRaycaster>();
 
@@ -195,14 +307,20 @@ public class GameSettingsBridge : MonoBehaviour
         _topBarView = new TopBarSettingsButtonsView(canvasObj.transform);
         _topBarView.OnPauseClicked += TogglePause;
 
-        // 2. Pause Menu
+        // 2. Pause Menu View
         _pauseView = new PauseMenuView(canvasObj.transform);
         _pauseView.OnResumeClicked += ResumeGame;
         _pauseView.OnRestartClicked += RestartGame;
         _pauseView.OnLanguageClicked += GameLocalization.ToggleLanguage;
         _pauseView.OnMainMenuClicked += ReturnToMainMenu;
+#if UNITY_EDITOR || DEBUG
+        _pauseView.OnDevModeClicked += OpenDevPanel;
+#endif
 
-        // 3. Dev Panel
+        // 3. Resume Countdown View
+        _countdownView = new ResumeCountdownView(canvasObj.transform);
+
+        // 4. Dev Panel
         _skillService = new DevSkillService();
 
 #if UNITY_EDITOR || DEBUG
@@ -273,6 +391,14 @@ public class GameSettingsBridge : MonoBehaviour
     {
         bool isGameplay = scene.name != "MainMenuScene";
         _topBarView?.SetVisible(isGameplay);
+
+        if (_countdownCoroutine != null)
+        {
+            StopCoroutine(_countdownCoroutine);
+            _countdownCoroutine = null;
+        }
+        _isCountingDown = false;
+        _countdownView?.Hide();
 
         _pauseView?.Hide();
 #if UNITY_EDITOR || DEBUG

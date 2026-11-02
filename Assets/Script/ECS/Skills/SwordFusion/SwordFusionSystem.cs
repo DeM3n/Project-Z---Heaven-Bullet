@@ -8,9 +8,12 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct SwordFusionSystem : ISystem
 {
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
+
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<SpatialGridSingleton>();
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     [BurstCompile]
@@ -23,6 +26,7 @@ public partial struct SwordFusionSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
 
         var ecb = new EntityCommandBuffer(Allocator.Temp);
+        _incomingDamageLookup.Update(ref state);
 
         // 1. Quản lý Cooldown và Triệu Hồi Đòn Giáng Kiếm Khổng Lồ (Thiên Kiếm Giáng Trần)
         foreach (var (owner, runtime, fusion, skillEntity) in
@@ -135,9 +139,7 @@ public partial struct SwordFusionSystem : ISystem
                             float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                             if (math.distancesq(sword.ValueRO.TargetPosition, enemyPos) <= impactRadiusSq)
                             {
-                                HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                                hp.CurrentHP -= sword.ValueRO.ImpactDamage;
-                                ecb.SetComponent(enemy, hp);
+                                EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SwordFusion, sword.ValueRO.ImpactDamage);
                             }
                         } while (grid.TryGetNextValue(out enemy, ref it));
                     }

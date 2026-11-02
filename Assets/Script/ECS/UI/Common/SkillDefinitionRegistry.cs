@@ -9,6 +9,7 @@ using UnityEngine;
 public class SharedSkillDefinition
 {
     public string SkillId { get; set; }
+    public ushort NumericId { get; set; }
     public Func<string> TitleGetter { get; set; }
     public int MaxLevel { get; set; }
     public Color ThemeColor { get; set; }
@@ -28,6 +29,7 @@ public static class SkillDefinitionRegistry
         new SharedSkillDefinition
         {
             SkillId = "FlyingSword",
+            NumericId = SkillIds.FlyingSword,
             TitleGetter = () => GameLocalization.FlyingSwordTitle,
             MaxLevel = 4,
             ThemeColor = new Color(0.2f, 0.9f, 1f),
@@ -36,6 +38,7 @@ public static class SkillDefinitionRegistry
         new SharedSkillDefinition
         {
             SkillId = "SlashSword",
+            NumericId = SkillIds.SlashSword,
             TitleGetter = () => GameLocalization.SlashSwordTitle,
             MaxLevel = 4,
             ThemeColor = new Color(0.85f, 0.45f, 1f),
@@ -44,6 +47,7 @@ public static class SkillDefinitionRegistry
         new SharedSkillDefinition
         {
             SkillId = "ProjectileSkill",
+            NumericId = SkillIds.ProjectileSkill,
             TitleGetter = () => GameLocalization.ProjectileSkillTitle,
             MaxLevel = 5,
             ThemeColor = new Color(1f, 0.75f, 0.2f),
@@ -52,6 +56,7 @@ public static class SkillDefinitionRegistry
         new SharedSkillDefinition
         {
             SkillId = "Fireball",
+            NumericId = SkillIds.Fireball,
             TitleGetter = () => GameLocalization.FireballTitle,
             MaxLevel = 4,
             ThemeColor = new Color(1f, 0.42f, 0.12f),
@@ -60,6 +65,7 @@ public static class SkillDefinitionRegistry
         new SharedSkillDefinition
         {
             SkillId = "Shield",
+            NumericId = SkillIds.Shield,
             TitleGetter = () => GameLocalization.ShieldTitle,
             MaxLevel = 4,
             ThemeColor = new Color(0f, 0.9f, 1f),
@@ -68,6 +74,7 @@ public static class SkillDefinitionRegistry
         new SharedSkillDefinition
         {
             SkillId = "Boomerang",
+            NumericId = SkillIds.Boomerang,
             TitleGetter = () => GameLocalization.BoomerangTitle,
             MaxLevel = 4,
             ThemeColor = new Color(0.15f, 0.95f, 0.65f),
@@ -76,6 +83,7 @@ public static class SkillDefinitionRegistry
         new SharedSkillDefinition
         {
             SkillId = "SwordFusion",
+            NumericId = SkillIds.SwordFusion,
             TitleGetter = () => GameLocalization.SwordFusionTitle,
             MaxLevel = 1,
             ThemeColor = new Color(1f, 0.85f, 0.15f),
@@ -87,4 +95,10 @@ public static class SkillDefinitionRegistry
     {
         return AllSkills.Find(s => s.SkillId == skillId);
     }
+
+    public static SharedSkillDefinition GetByNumericId(ushort numericId)
+    {
+        return AllSkills.Find(s => s.NumericId == numericId);
+    }
 }
+

@@ -4,4 +4,5 @@ public struct DamageOnContactData : IComponentData
 {
     public float Damage;
     public float HitRadius;
+    public ushort SkillId;
 }

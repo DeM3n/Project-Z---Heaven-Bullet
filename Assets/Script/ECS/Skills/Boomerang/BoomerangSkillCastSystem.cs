@@ -52,7 +52,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
                     Cooldown = 8.0f,
                     Timer = 0.5f,
                     Level = 1,
-                    SkillId = new FixedString32Bytes("boomerang")
+                    SkillId = default
                 });
 
                 state.EntityManager.AddComponentData(skillEntity, new BoomerangSkillData

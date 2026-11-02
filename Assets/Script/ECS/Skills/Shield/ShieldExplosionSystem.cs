@@ -13,6 +13,7 @@ using Unity.Transforms;
 public partial struct ShieldExplosionSystem : ISystem
 {
     private EntityQuery _breakEventQuery;
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
 
     public void OnCreate(ref SystemState state)
     {
@@ -22,6 +23,8 @@ public partial struct ShieldExplosionSystem : ISystem
             .WithAll<ShieldBreakEvent>()
             .WithNone<ShieldExplosionProcessedTag>()
             .Build();
+
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     public void OnUpdate(ref SystemState state)
@@ -32,6 +35,7 @@ public partial struct ShieldExplosionSystem : ISystem
         float cellSize = SystemAPI.GetSingleton<SpatialGridSingleton>().CellSize;
 
         var ecb = new EntityCommandBuffer(Allocator.Temp);
+        _incomingDamageLookup.Update(ref state);
 
         foreach (var (breakEvent, eventEntity) in
                  SystemAPI.Query<RefRO<ShieldBreakEvent>>()
@@ -71,10 +75,8 @@ public partial struct ShieldExplosionSystem : ISystem
 
                     if (distSq <= radiusSq)
                     {
-                        // Gây sát thương nổ AOE (Không áp dụng lực đẩy lùi theo chuẩn No-Knockback)
-                        HealthData enemyHealth = state.EntityManager.GetComponentData<HealthData>(enemy);
-                        enemyHealth.CurrentHP -= damage;
-                        ecb.SetComponent(enemy, enemyHealth);
+                        // Gây sát thương nổ AOE qua Pipeline
+                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.Shield, damage);
                     }
                 } while (grid.TryGetNextValue(out enemy, ref it));
             }

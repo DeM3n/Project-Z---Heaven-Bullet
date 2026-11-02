@@ -18,3 +18,4 @@ public readonly struct DevSkillState
     public string FormattedLevelText => IsActive ? $"[ LV.{Level} ]" : "[ OFF ]";
     public string FormattedFusionText => (Level >= 1 && IsActive) ? "[ ACTIVE ✦ ]" : "[ DISABLED ]";
 }
+

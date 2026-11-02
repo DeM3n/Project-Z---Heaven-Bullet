@@ -18,11 +18,14 @@ public class RunLifecycleService
     private float _survivalTime = 0f;
     private int _stonesEarnedThisRun = 0;
 
+    public static RunLifecycleService Instance { get; private set; }
+
     public float SurvivalTime => _survivalTime;
     public int StonesEarnedThisRun => _stonesEarnedThisRun;
 
     public RunLifecycleService(EntityManager em)
     {
+        Instance = this;
         _entityManager = em;
         _playerDeadQuery = _entityManager.CreateEntityQuery(
             ComponentType.ReadOnly<PlayerTag>(),
@@ -34,6 +37,26 @@ public class RunLifecycleService
     {
         _survivalTime = 0f;
         _stonesEarnedThisRun = 0;
+
+        // Reset PlayerRunStats
+        var query = _entityManager.CreateEntityQuery(ComponentType.ReadWrite<PlayerRunStats>());
+        if (!query.IsEmpty)
+        {
+            var entity = query.GetSingletonEntity();
+            _entityManager.SetComponentData(entity, new PlayerRunStats());
+        }
+
+        // Reset SkillDamageRecord trên RunStats singleton (chỉ Clear buffer, KHÔNG destroy entity)
+        var runStatsQuery = _entityManager.CreateEntityQuery(ComponentType.ReadOnly<RunStatsTag>());
+        if (!runStatsQuery.IsEmpty)
+        {
+            var statsEntity = runStatsQuery.GetSingletonEntity();
+            if (_entityManager.HasBuffer<SkillDamageRecord>(statsEntity))
+            {
+                var buffer = _entityManager.GetBuffer<SkillDamageRecord>(statsEntity);
+                buffer.Clear();
+            }
+        }
     }
 
     public void AddStones(int amount)

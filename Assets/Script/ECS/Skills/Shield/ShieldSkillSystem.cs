@@ -41,7 +41,7 @@ public partial struct ShieldSkillSystem : ISystem
                 Cooldown = 30f,
                 Timer = 0f,
                 Level = 0, // Mặc định Level 0 (chưa học), nâng cấp qua Level-up hoặc Dev Menu
-                SkillId = new FixedString32Bytes("shield")
+                SkillId = default
             });
             state.EntityManager.AddComponentData(skillEntity, new ShieldSkillData
             {

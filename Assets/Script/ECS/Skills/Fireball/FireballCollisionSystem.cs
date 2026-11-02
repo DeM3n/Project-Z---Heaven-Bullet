@@ -14,9 +14,12 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct FireballCollisionSystem : ISystem
 {
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
+
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<SpatialGridSingleton>();
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     [BurstCompile]
@@ -27,6 +30,7 @@ public partial struct FireballCollisionSystem : ISystem
         var grid = SystemAPI.GetSingleton<SpatialGridSingleton>().Grid;
         float cellSize = SystemAPI.GetSingleton<SpatialGridSingleton>().CellSize;
         float dt = SystemAPI.Time.DeltaTime;
+        _incomingDamageLookup.Update(ref state);
 
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
@@ -70,7 +74,7 @@ public partial struct FireballCollisionSystem : ISystem
                     float damage = projData.ValueRO.Damage;
 
                     // 1. Gây sát thương nổ phụ (50% DMG) quanh điểm tiếp đất
-                    ApplyAoeDamage(ref state, ref ecb, grid, cellSize, impactPos, explosionRadius, damage);
+                    ApplyAoeDamage(ref state, ref ecb, ref _incomingDamageLookup, grid, cellSize, impactPos, explosionRadius, damage);
 
                     // 2. Bắn Event cho Visual Bridge
                     Entity eventEntity = ecb.CreateEntity();
@@ -128,7 +132,7 @@ public partial struct FireballCollisionSystem : ISystem
                     float damage = projData.ValueRO.Damage;
 
                     // A. Gây sát thương nổ AOE cầu mẹ
-                    ApplyAoeDamage(ref state, ref ecb, grid, cellSize, currentPos, explosionRadius, damage);
+                    ApplyAoeDamage(ref state, ref ecb, ref _incomingDamageLookup, grid, cellSize, currentPos, explosionRadius, damage);
 
                     // B. Kích hoạt Nổ Chùm: Tự động ngắm bắn các Cầu Lửa Con về phía quái vật xung quanh
                     int subCount = math.max(1, projData.ValueRO.SubFireballCount);
@@ -281,6 +285,7 @@ public partial struct FireballCollisionSystem : ISystem
     private static void ApplyAoeDamage(
         ref SystemState state,
         ref EntityCommandBuffer ecb,
+        ref BufferLookup<EnemyIncomingDamage> incomingDamageLookup,
         NativeParallelMultiHashMap<int, Entity> grid,
         float cellSize,
         float3 centerPos,
@@ -305,9 +310,7 @@ public partial struct FireballCollisionSystem : ISystem
                 float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                 if (math.distancesq(centerPos, enemyPos) <= radiusSq)
                 {
-                    HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                    hp.CurrentHP -= damage;
-                    ecb.SetComponent(enemy, hp);
+                    EnemyDamage.Add(ref incomingDamageLookup, enemy, SkillIds.Fireball, damage);
                 }
             } while (grid.TryGetNextValue(out enemy, ref it));
         }

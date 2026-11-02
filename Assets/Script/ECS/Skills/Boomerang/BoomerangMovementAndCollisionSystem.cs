@@ -14,6 +14,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
 {
     private EntityQuery _playerQuery;
     private EntityQuery _boomerangQuery;
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -27,6 +28,8 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
         _boomerangQuery = SystemAPI.QueryBuilder()
             .WithAll<BoomerangTag, LocalTransform, BoomerangProjectileData>()
             .Build();
+
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     [BurstCompile]
@@ -45,6 +48,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
 
         var ecb = new EntityCommandBuffer(Allocator.Temp);
+        _incomingDamageLookup.Update(ref state);
 
         foreach (var (transform, projData, hitBuffer, entity) in
                  SystemAPI.Query<RefRW<LocalTransform>, RefRW<BoomerangProjectileData>, DynamicBuffer<BoomerangHitBuffer>>()
@@ -65,7 +69,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                 projData.ValueRW.DistanceTraveled += math.length(moveStep);
 
                 // Quét va chạm gây sát thương xuyên thấu qua Spatial Grid
-                CheckPiercingCollision(ref state, ref ecb, grid, cellSize, transform.ValueRO.Position.xy, projData.ValueRO.HitRadius, projData.ValueRO.Damage, hitBuffer);
+                CheckPiercingCollision(ref state, ref ecb, ref _incomingDamageLookup, grid, cellSize, transform.ValueRO.Position.xy, projData.ValueRO.HitRadius, projData.ValueRO.Damage, hitBuffer);
 
                 // Khi bay đủ cự ly tối đa -> Đổi chiều quay về
                 if (projData.ValueRO.DistanceTraveled >= projData.ValueRO.MaxDistance)
@@ -105,7 +109,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                 projData.ValueRW.ReturnDistanceTraveled += math.length(moveStep);
 
                 // Tiếp tục xuyên thấu và chém quái trên đường quay về
-                CheckPiercingCollision(ref state, ref ecb, grid, cellSize, transform.ValueRO.Position.xy, projData.ValueRO.HitRadius, projData.ValueRO.Damage, hitBuffer);
+                CheckPiercingCollision(ref state, ref ecb, ref _incomingDamageLookup, grid, cellSize, transform.ValueRO.Position.xy, projData.ValueRO.HitRadius, projData.ValueRO.Damage, hitBuffer);
 
                 // --- KIỂM TRA NGƯỜI CHƠI BẮT DÍNH (CATCH) PHI TIÊU ---
                 float distToPlayerSq = math.distancesq(transform.ValueRO.Position.xy, playerPos);
@@ -187,6 +191,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
     private static void CheckPiercingCollision(
         ref SystemState state,
         ref EntityCommandBuffer ecb,
+        ref BufferLookup<EnemyIncomingDamage> incomingDamageLookup,
         NativeParallelMultiHashMap<int, Entity> grid,
         float cellSize,
         float2 currentPos,
@@ -227,10 +232,8 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                     // Đánh dấu đã chém quái để không gây sát thương liên tục nhiều frame
                     hitBuffer.Add(new BoomerangHitBuffer { Target = enemy });
 
-                    // Trừ máu quái
-                    HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                    hp.CurrentHP -= damage;
-                    ecb.SetComponent(enemy, hp);
+                    // Gây sát thương quái qua Pipeline
+                    EnemyDamage.Add(ref incomingDamageLookup, enemy, SkillIds.Boomerang, damage);
                 }
             } while (grid.TryGetNextValue(out enemy, ref it));
         }

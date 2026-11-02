@@ -60,7 +60,7 @@ public partial struct ProjectileSkillCastSystem : ISystem
                 ecb.SetComponent(projectile, LocalTransform.FromPosition(casterPos));
                 ecb.SetComponent(projectile, new MovementData { Direction = dir, MoveSpeed = skill.ValueRO.ProjectileSpeed });
                 ecb.SetComponent(projectile, new ProjectileLifetimeData { TimeRemaining = skill.ValueRO.ProjectileLifetime });
-                ecb.SetComponent(projectile, new DamageOnContactData { Damage = scaledDamage, HitRadius = skill.ValueRO.ProjectileHitRadius });
+                ecb.SetComponent(projectile, new DamageOnContactData { Damage = scaledDamage, HitRadius = skill.ValueRO.ProjectileHitRadius, SkillId = SkillIds.ProjectileSkill });
             }
         }
 

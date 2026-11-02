@@ -15,3 +15,4 @@ public class DevAction
     public Action ExecuteAction { get; set; }
     public Func<string> StateGetter { get; set; }
 }
+

@@ -50,7 +50,7 @@ public partial struct FireballSkillCastSystem : ISystem
                     Cooldown = cfg != null ? cfg.GetCooldown(1) : 2.86f,
                     Timer = 0.5f,
                     Level = 1,
-                    SkillId = new FixedString32Bytes("fireball")
+                    SkillId = default
                 });
                 state.EntityManager.AddComponentData(skillEntity, new FireballSkillData
                 {

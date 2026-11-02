@@ -8,9 +8,12 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct SwordWaveSystem : ISystem
 {
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
+
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<SpatialGridSingleton>();
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     [BurstCompile]
@@ -23,6 +26,7 @@ public partial struct SwordWaveSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
 
         var ecb = new EntityCommandBuffer(Allocator.Temp);
+        _incomingDamageLookup.Update(ref state);
 
         foreach (var (transform, wave, hitBuffer, entity) in
                  SystemAPI.Query<RefRW<LocalTransform>, RefRW<SwordWaveData>, DynamicBuffer<SwordWaveHitTargetBuffer>>()
@@ -80,9 +84,7 @@ public partial struct SwordWaveSystem : ISystem
                         hitBuffer.Add(new SwordWaveHitTargetBuffer { Target = enemy });
 
                         // Gây sát thương
-                        HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                        hp.CurrentHP -= wave.ValueRO.Damage;
-                        ecb.SetComponent(enemy, hp);
+                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SlashSword, wave.ValueRO.Damage);
 
                         // Lưu ý: KHÔNG hủy entity kiếm khí ở đây vì có thuộc tính Piercing (xuyên thấu)!
                     }

@@ -12,6 +12,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
     private EntityQuery _swordQuery;
     private EntityQuery _enemyQuery;
     private EntityQuery _enemyProjectileQuery;
+    private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
 
     public void OnCreate(ref SystemState state)
     {
@@ -26,6 +27,8 @@ public partial struct FlyingSwordSkillSystem : ISystem
         _enemyProjectileQuery = SystemAPI.QueryBuilder()
             .WithAll<EnemyProjectileTag, LocalTransform>()
             .Build();
+
+        _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
     }
 
     public void OnUpdate(ref SystemState state)
@@ -41,6 +44,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
 
         var visualOffsetLookup = SystemAPI.GetComponentLookup<FlyingSwordVisualOffset>(true);
         var ecb = new EntityCommandBuffer(Allocator.Temp);
+        _incomingDamageLookup.Update(ref state);
 
         // --- 1. Đồng bộ số lượng kiếm theo Skill Level ---
         foreach (var (runtime, owner, skillData, skillEntity) in
@@ -278,9 +282,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                             float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                             if (math.distancesq(transform.ValueRO.Position, enemyPos) <= hitDistSq)
                             {
-                                HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                                hp.CurrentHP -= currentDamage;
-                                ecb.SetComponent(enemy, hp);
+                                EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.FlyingSword, currentDamage);
 
                                 hitBuffer.Add(new SwordHitTargetBuffer { Target = enemy });
                                 sword.ValueRW.LastTarget = enemy; // Ghi nhận mục tiêu vừa đâm trúng
@@ -517,9 +519,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                 float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                 if (math.distancesq(centerPos, enemyPos) <= aoeRadiusSq)
                 {
-                    HealthData hp = state.EntityManager.GetComponentData<HealthData>(enemy);
-                    hp.CurrentHP -= aoeDamage;
-                    ecb.SetComponent(enemy, hp);
+                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.FlyingSword, aoeDamage);
                 }
             } while (grid.TryGetNextValue(out enemy, ref it));
         }

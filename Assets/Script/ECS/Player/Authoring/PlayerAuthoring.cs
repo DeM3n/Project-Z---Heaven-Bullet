@@ -46,6 +46,7 @@ public class PlayerAuthoring : MonoBehaviour
                 DamageMultiplier = 1.0f
             });
             AddBuffer<IncomingDamage>(entity);
+            AddComponent(entity, new PlayerRunStats());
         }
     }
 }
