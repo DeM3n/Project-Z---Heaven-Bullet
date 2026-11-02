@@ -127,13 +127,13 @@ public class RunLifecycleService
 
     public void RestartCurrentScene()
     {
-        Time.timeScale = 1f;
+        PauseService.ClearAll();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void ReturnToMainMenu()
     {
-        Time.timeScale = 1f;
+        PauseService.ClearAll();
         SceneManager.LoadScene("MainMenuScene");
     }
 }

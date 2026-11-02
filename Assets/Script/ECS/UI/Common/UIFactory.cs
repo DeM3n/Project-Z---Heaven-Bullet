@@ -1,9 +1,10 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 
 /// <summary>
-/// Helper chuyên trách khởi tạo Procedural UI chuẩn Hi-Bit Pixel,
+/// Helper chuyên trách khởi tạo Procedural UI chuẩn Hi-Bit Pixel cho toàn bộ hệ thống UI,
 /// triệt tiêu mã lệnh lặp lại cho RectTransform, Image, Text, Outline, Button.
 /// </summary>
 public static class UIFactory
