@@ -15,15 +15,6 @@ public struct PlayerRevivalData : IComponentData
 }
 
 /// <summary>
-/// Component quản lý tốc độ tự hồi phục HP mỗi giây (HP Regen) từ Cây Thiên Phú
-/// </summary>
-public struct PlayerHPRegenData : IComponentData
-{
-    public float RegenPerSecond;
-    public float Timer;
-}
-
-/// <summary>
 /// Component quản lý giảm sát thương nhận vào (Armor / Damage Reduction) từ Cây Thiên Phú
 /// </summary>
 public struct PlayerDefenseData : IComponentData
@@ -81,15 +72,24 @@ public partial struct PlayerMetaProgressionApplySystem : ISystem
                 float pickupBonus = meta.GetBonusPickupRange();
                 pickup.ValueRW.Range *= (1f + pickupBonus);
 
-                // 5. Thêm Tự Hồi Máu (HP Regen) nếu có điểm
+                // 5. Thêm / Cộng dồn Tự Hồi Máu (HP Regen) nếu có điểm
                 float regenPerSec = meta.GetBonusHPRegen();
                 if (regenPerSec > 0f)
                 {
-                    ecb.AddComponent(entity, new PlayerHPRegenData
+                    if (SystemAPI.HasComponent<PlayerHPRegenData>(entity))
                     {
-                        RegenPerSecond = regenPerSec,
-                        Timer = 0f
-                    });
+                        var regen = SystemAPI.GetComponent<PlayerHPRegenData>(entity);
+                        regen.RegenPerSecond += regenPerSec;
+                        SystemAPI.SetComponent(entity, regen);
+                    }
+                    else
+                    {
+                        ecb.AddComponent(entity, new PlayerHPRegenData
+                        {
+                            RegenPerSecond = regenPerSec,
+                            Timer = 0f
+                        });
+                    }
                 }
 
                 // 6. Thêm Đạo Quả Hồi Sinh (Revival) nếu đã mở khóa

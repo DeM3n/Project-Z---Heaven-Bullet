@@ -9,6 +9,7 @@ public readonly struct PlayerHudSnapshot
     public readonly float CurrentHP;
     public readonly float MaxHP;
     public readonly float HpPercent;
+    public readonly float HpRegenPerSec;
 
     public readonly bool HasShield;
     public readonly int ShieldLevel;
@@ -26,6 +27,7 @@ public readonly struct PlayerHudSnapshot
     public PlayerHudSnapshot(
         float currentHp,
         float maxHp,
+        float hpRegenPerSec,
         bool hasShield,
         int shieldLevel,
         int charges,
@@ -39,6 +41,7 @@ public readonly struct PlayerHudSnapshot
         CurrentHP = currentHp;
         MaxHP = Mathf.Max(1f, maxHp);
         HpPercent = Mathf.Clamp01(CurrentHP / MaxHP);
+        HpRegenPerSec = hpRegenPerSec;
 
         HasShield = hasShield;
         ShieldLevel = shieldLevel;
@@ -59,6 +62,10 @@ public readonly struct PlayerHudSnapshot
         get
         {
             string hpString = $"{Mathf.Max(0, (int)CurrentHP)} / {(int)MaxHP}";
+            if (HpRegenPerSec > 0f)
+            {
+                hpString += $"  <color=#4caf50>(+{HpRegenPerSec:F1}/s)</color>";
+            }
             if (HasShield && ShieldLevel > 0)
             {
                 if (ShieldCharges > 0)

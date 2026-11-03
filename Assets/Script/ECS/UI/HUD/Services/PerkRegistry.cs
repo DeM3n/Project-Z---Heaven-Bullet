@@ -20,6 +20,7 @@ public static class PerkRegistry
             new ShieldPerk(em),
             new BoomerangPerk(em),
             new HealPerk(),
+            new HpRegenPerk(),
             new MaxHpPerk(),
             new MoveSpeedPerk(),
             new PickupRangePerk()
@@ -489,6 +490,48 @@ public static class PerkRegistry
                 var pr = em.GetComponentData<PickupRangeData>(player);
                 pr.Range += 1.5f;
                 em.SetComponentData(player, pr);
+            }
+        }
+    }
+
+    // 12. HP Regen (Hồi Xuân Thuật)
+    private class HpRegenPerk : IPerkDefinition
+    {
+        public string PerkId => "HpRegen";
+        public int Priority => 0;
+        public float Weight => 1f;
+
+        public bool IsAvailable(EntityManager em, Entity player) => true;
+
+        public PerkOptionData GetOptionData(EntityManager em, Entity player)
+        {
+            return new PerkOptionData
+            {
+                PerkId = PerkId,
+                Level = 1,
+                Title = GameLocalization.HpRegenTitle,
+                LevelBadge = GameLocalization.RecoveryBadge,
+                Description = GameLocalization.HpRegenDesc,
+                HighlightColor = new Color(0.2f, 0.95f, 0.4f),
+                IsFusion = false
+            };
+        }
+
+        public void Apply(EntityManager em, Entity player)
+        {
+            if (em.HasComponent<PlayerHPRegenData>(player))
+            {
+                var regen = em.GetComponentData<PlayerHPRegenData>(player);
+                regen.RegenPerSecond += 0.5f;
+                em.SetComponentData(player, regen);
+            }
+            else
+            {
+                em.AddComponentData(player, new PlayerHPRegenData
+                {
+                    RegenPerSecond = 0.5f,
+                    Timer = 0f
+                });
             }
         }
     }

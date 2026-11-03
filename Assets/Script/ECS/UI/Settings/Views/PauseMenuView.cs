@@ -62,9 +62,11 @@ public class PauseMenuView
 
     // Damage / Skill Stats UI Components
     private readonly Text _totalDamageSummaryText;
+    private readonly Text _emptySkillsText;
     private readonly List<SkillRowUI> _skillRows = new List<SkillRowUI>();
 
     // Artifacts UI Components
+    private readonly Text _emptyArtifactsText;
     private readonly List<ArtifactRowUI> _artifactRows = new List<ArtifactRowUI>();
 
     // Bottom Navigation Buttons
@@ -89,14 +91,17 @@ public class PauseMenuView
     private class SkillRowUI
     {
         public GameObject Root;
+        public RectTransform Rect;
         public Text TitleText;
         public Text StatusText;
         public RectTransform FillBar;
+        public Image FillImage;
     }
 
     private class ArtifactRowUI
     {
         public GameObject Root;
+        public RectTransform Rect;
         public Text NameText;
         public Text DescText;
     }
@@ -192,7 +197,7 @@ public class PauseMenuView
         dRect.anchorMax = Vector2.one;
         dRect.sizeDelta = Vector2.zero;
 
-        BuildDamageStatsTab(_damageStatsContainer.transform, out _totalDamageSummaryText);
+        BuildDamageStatsTab(_damageStatsContainer.transform, out _totalDamageSummaryText, out _emptySkillsText);
         _damageStatsContainer.SetActive(false);
 
         // --- TAB 3: ARTIFACTS (CỔ VẬT BỊ ĐỘNG) ---
@@ -203,7 +208,7 @@ public class PauseMenuView
         artRect.anchorMax = Vector2.one;
         artRect.sizeDelta = Vector2.zero;
 
-        BuildArtifactsTab(_artifactsContainer.transform);
+        BuildArtifactsTab(_artifactsContainer.transform, out _emptyArtifactsText);
         _artifactsContainer.SetActive(false);
 
         // --- TAB 4: ABANDON CONFIRMATION ---
@@ -296,54 +301,77 @@ public class PauseMenuView
             _totalDamageSummaryText.text = $"TOTAL DMG: <color=#ffd54f>{snapshot.TotalDamage:N0}</color>   |   DPS: <color=#00e5ff>{snapshot.TotalDps:F1}</color>   |   TIME: <color=#ffffff>{snapshot.FormattedSurvivalTime}</color>";
         }
 
-        for (int i = 0; i < _skillRows.Count; i++)
-        {
-            if (i < snapshot.SkillStats.Count)
-            {
-                var stat = snapshot.SkillStats[i];
-                _skillRows[i].Root.SetActive(true);
+        float startY = 100f;
+        float spacingY = 38f;
+        int rowIdx = 0;
 
-                string lvlBadge = (stat.Level >= stat.MaxLevel) ? "<color=#ffd54f>[MAX]</color>" : (stat.Level > 0 ? $"<color=#00e5ff>[Lv.{stat.Level}]</color>" : "<color=#777777>[--]</color>");
-                _skillRows[i].TitleText.text = $"{stat.Title} {lvlBadge}";
+        for (int i = 0; i < snapshot.SkillStats.Count; i++)
+        {
+            var stat = snapshot.SkillStats[i];
+            // Chỉ hiển thị các kỹ năng đã học (Level > 0), không hiển thị kỹ năng chưa học
+            if (stat.Level <= 0) continue;
+
+            if (rowIdx < _skillRows.Count)
+            {
+                var row = _skillRows[rowIdx];
+                row.Root.SetActive(true);
+                row.Rect.anchoredPosition = new Vector2(0f, startY - rowIdx * spacingY);
+
+                string lvlBadge = (stat.Level >= stat.MaxLevel) ? "<color=#ffd54f>[MAX]</color>" : $"<color=#00e5ff>[Lv.{stat.Level}]</color>";
+                row.TitleText.text = $"{stat.Title} {lvlBadge}";
+                row.TitleText.color = stat.ThemeColor;
+                if (row.FillImage != null) row.FillImage.color = stat.ThemeColor;
 
                 if (stat.Damage > 0f)
                 {
-                    _skillRows[i].StatusText.text = $"<color=#ffffff>{stat.Damage:N0}</color> <color=#ffd54f>({stat.Percentage:F1}%)</color>";
+                    row.StatusText.text = $"<color=#ffffff>{stat.Damage:N0}</color> <color=#ffd54f>({stat.Percentage:F1}%)</color>";
                     float ratio = Mathf.Clamp01(stat.Percentage / 100f);
-                    _skillRows[i].FillBar.sizeDelta = new Vector2(Mathf.Max(6f, 430f * ratio), 6f);
-                }
-                else if (stat.Level > 0)
-                {
-                    _skillRows[i].StatusText.text = "<color=#aaaaaa>0 DMG (Active)</color>";
-                    _skillRows[i].FillBar.sizeDelta = new Vector2(4f, 6f);
+                    row.FillBar.sizeDelta = new Vector2(Mathf.Max(6f, 430f * ratio), 6f);
                 }
                 else
                 {
-                    _skillRows[i].StatusText.text = "<color=#555555>Not Learned</color>";
-                    _skillRows[i].FillBar.sizeDelta = new Vector2(0f, 6f);
+                    row.StatusText.text = "<color=#aaaaaa>0 DMG (Active)</color>";
+                    row.FillBar.sizeDelta = new Vector2(4f, 6f);
                 }
-            }
-            else
-            {
-                _skillRows[i].Root.SetActive(false);
+
+                rowIdx++;
             }
         }
 
-        // 4. Cập nhật Tab Artifacts (Cổ Vật)
-        for (int i = 0; i < _artifactRows.Count; i++)
+        if (_emptySkillsText != null) _emptySkillsText.gameObject.SetActive(rowIdx == 0);
+
+        // Tắt toàn bộ các hàng kỹ năng chưa dùng
+        for (int i = rowIdx; i < _skillRows.Count; i++)
         {
-            if (i < snapshot.Relics.Count)
+            _skillRows[i].Root.SetActive(false);
+        }
+
+        // 4. Cập nhật Tab Artifacts (Cổ Vật) - Chỉ hiển thị Cổ vật đã sở hữu
+        float aStartY = 100f;
+        float aSpacingY = 52f;
+        int aRowIdx = 0;
+
+        for (int i = 0; i < snapshot.Relics.Count; i++)
+        {
+            var relic = snapshot.Relics[i];
+            if (relic.Level <= 0) continue;
+
+            if (aRowIdx < _artifactRows.Count)
             {
-                var relic = snapshot.Relics[i];
-                _artifactRows[i].Root.SetActive(true);
-                string lvlTag = (relic.Level > 0) ? $"<color=#ffd54f>Lv.{relic.Level}</color>" : "<color=#777777>Not Found</color>";
-                _artifactRows[i].NameText.text = $"{relic.Name}  {lvlTag}";
-                _artifactRows[i].DescText.text = relic.Description;
+                var row = _artifactRows[aRowIdx];
+                row.Root.SetActive(true);
+                row.Rect.anchoredPosition = new Vector2(0f, aStartY - aRowIdx * aSpacingY);
+                row.NameText.text = $"{relic.Name}  <color=#ffd54f>Lv.{relic.Level}</color>";
+                row.DescText.text = relic.Description;
+                aRowIdx++;
             }
-            else
-            {
-                _artifactRows[i].Root.SetActive(false);
-            }
+        }
+
+        if (_emptyArtifactsText != null) _emptyArtifactsText.gameObject.SetActive(aRowIdx == 0);
+
+        for (int i = aRowIdx; i < _artifactRows.Count; i++)
+        {
+            _artifactRows[i].Root.SetActive(false);
         }
     }
 
@@ -457,7 +485,7 @@ public class PauseMenuView
         valueText.text = "-";
     }
 
-    private void BuildDamageStatsTab(Transform parent, out Text summaryText)
+    private void BuildDamageStatsTab(Transform parent, out Text summaryText, out Text emptyText)
     {
         // 1. Header tóm tắt kỹ năng
         var sumObj = new GameObject("TotalDmgHeader");
@@ -474,6 +502,24 @@ public class PauseMenuView
         summaryText.fontStyle = FontStyle.Bold;
         summaryText.alignment = TextAnchor.MiddleCenter;
         summaryText.color = Color.white;
+
+        // Dòng thông báo khi chưa học kỹ năng nào
+        var emptyObj = new GameObject("EmptySkillsNotice");
+        emptyObj.transform.SetParent(parent, false);
+        var eRect = emptyObj.AddComponent<RectTransform>();
+        eRect.anchorMin = new Vector2(0.5f, 0.5f);
+        eRect.anchorMax = new Vector2(0.5f, 0.5f);
+        eRect.pivot = new Vector2(0.5f, 0.5f);
+        eRect.sizeDelta = new Vector2(400f, 40f);
+        eRect.anchoredPosition = new Vector2(0f, 20f);
+
+        emptyText = emptyObj.AddComponent<Text>();
+        emptyText.font = HUDTheme.PixelFont;
+        emptyText.fontSize = 14;
+        emptyText.alignment = TextAnchor.MiddleCenter;
+        emptyText.color = new Color(0.6f, 0.65f, 0.75f);
+        emptyText.text = "No active skills learned yet.";
+        emptyObj.SetActive(false);
 
         // 2. Danh sách 7 hàng kỹ năng
         float startY = 100f;
@@ -550,15 +596,34 @@ public class PauseMenuView
             _skillRows.Add(new SkillRowUI
             {
                 Root = rowObj,
+                Rect = rRect,
                 TitleText = tText,
                 StatusText = dText,
-                FillBar = fillRect
+                FillBar = fillRect,
+                FillImage = fillImg
             });
         }
     }
 
-    private void BuildArtifactsTab(Transform parent)
+    private void BuildArtifactsTab(Transform parent, out Text emptyText)
     {
+        var emptyObj = new GameObject("EmptyArtifactsNotice");
+        emptyObj.transform.SetParent(parent, false);
+        var eRect = emptyObj.AddComponent<RectTransform>();
+        eRect.anchorMin = new Vector2(0.5f, 0.5f);
+        eRect.anchorMax = new Vector2(0.5f, 0.5f);
+        eRect.pivot = new Vector2(0.5f, 0.5f);
+        eRect.sizeDelta = new Vector2(400f, 40f);
+        eRect.anchoredPosition = new Vector2(0f, 20f);
+
+        emptyText = emptyObj.AddComponent<Text>();
+        emptyText.font = HUDTheme.PixelFont;
+        emptyText.fontSize = 14;
+        emptyText.alignment = TextAnchor.MiddleCenter;
+        emptyText.color = new Color(0.6f, 0.65f, 0.75f);
+        emptyText.text = "No artifacts collected yet.";
+        emptyObj.SetActive(false);
+
         float startY = 100f;
         float spacingY = 52f;
 
@@ -612,6 +677,7 @@ public class PauseMenuView
             _artifactRows.Add(new ArtifactRowUI
             {
                 Root = rowObj,
+                Rect = rRect,
                 NameText = nText,
                 DescText = dText
             });

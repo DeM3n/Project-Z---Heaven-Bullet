@@ -229,6 +229,7 @@ MonoBehaviour:
   PickupRange: 2
   MaxHP: 100
   InvulnerabilityDuration: 0.2
+  BaseHPRegen: 0.5
 --- !u!1 &764216964
 GameObject:
   m_ObjectHideFlags: 0

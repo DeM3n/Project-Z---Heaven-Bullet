@@ -14,7 +14,7 @@ public static class PlayerHudSnapshotReader
             return default;
         }
 
-        // 1. Đọc Máu (HP)
+        // 1. Đọc Máu (HP) & Tự hồi máu (HP Regen)
         float currentHp = 100f;
         float maxHp = 100f;
         if (em.HasComponent<HealthData>(playerEntity))
@@ -22,6 +22,12 @@ public static class PlayerHudSnapshotReader
             var hp = em.GetComponentData<HealthData>(playerEntity);
             currentHp = hp.CurrentHP;
             maxHp = hp.MaxHP;
+        }
+
+        float hpRegen = 0f;
+        if (em.HasComponent<PlayerHPRegenData>(playerEntity))
+        {
+            hpRegen = em.GetComponentData<PlayerHPRegenData>(playerEntity).RegenPerSecond;
         }
 
         // 2. Đọc Khiên (Shield)
@@ -55,6 +61,7 @@ public static class PlayerHudSnapshotReader
         return new PlayerHudSnapshot(
             currentHp,
             maxHp,
+            hpRegen,
             hasShield,
             shieldLevel,
             shieldCharges,

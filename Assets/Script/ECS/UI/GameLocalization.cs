@@ -92,6 +92,7 @@ public static class GameLocalization
     public static string DevKillAll => Get("💀 KILL ALL ENEMIES", "💀 QUÉT SẠCH QUÁI");
     public static string DevResetReroll => Get("🎲 3 REROLLS", "🎲 HỒI 3 LƯỢT ĐỔI");
     public static string DevSpeedBoost(bool on) => Get($"🏃 SPEED x2: {(on ? "ON" : "OFF")}", $"🏃 TỐC ĐỘ x2: {(on ? "BẬT" : "TẮT")}");
+    public static string DevAddRegen => Get("💚 +0.5 HP/s REGEN", "💚 +0.5 HP/s HỒI MÁU");
 
     // --- Perk Titles ---
     public static string FlyingSwordTitle => Get("FLYING SWORD", "PHI KIẾM HỘ THỂ");
@@ -102,6 +103,7 @@ public static class GameLocalization
     public static string ShieldTitle => Get("AEGIS SHIELD", "KHIÊN HỘ THỂ");
     public static string BoomerangTitle => Get("CELESTIAL BOOMERANG", "PHI TIÊU HỒI TOÀN");
     public static string HealTitle => Get("VITALITY ELIXIR", "TIÊN DƯỢC PHỤC HỒI");
+    public static string HpRegenTitle => Get("REJUVENATION", "HỒI XUÂN THUẬT");
     public static string MaxHpTitle => Get("IRON WILL", "CƯƠNG THỂ QUYẾT");
     public static string MoveSpeedTitle => Get("WIND STRIDE", "THẦN HÀNH BỘ");
     public static string PickupRangeTitle => Get("MAGNETIC AURA", "HÚT LINH THẠCH");
@@ -260,6 +262,11 @@ public static class GameLocalization
     public static string HealDesc => Get(
         "Instantly restores 40% of maximum HP to the hero.",
         "Lập tức hồi phục lại 40% lượng Máu tối đa (Max HP) cho nhân vật."
+    );
+
+    public static string HpRegenDesc => Get(
+        "Permanently increases HP Regeneration by +0.5 HP/s.",
+        "Tăng vĩnh viễn tốc độ Tự Hồi Máu thêm +0.5 HP/s trong suốt trận đấu."
     );
 
     public static string MaxHpDesc => Get(

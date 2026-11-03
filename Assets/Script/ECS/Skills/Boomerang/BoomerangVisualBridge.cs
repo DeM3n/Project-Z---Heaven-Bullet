@@ -14,6 +14,10 @@ using UnityEngine;
 /// </summary>
 public class BoomerangVisualBridge : MonoBehaviour
 {
+    [Header("Custom Visual Settings")]
+    [Tooltip("Sprite Boomerang tùy chỉnh. Nếu để trống, hệ thống sẽ tự động lấy từ Boomerang.prefab hoặc Assets/Sprite/Boomerang.png.")]
+    public Sprite CustomBoomerangSprite;
+
     private EntityManager _entityManager;
     private EntityQuery _boomerangQuery;
     private EntityQuery _catchEventQuery;
@@ -22,6 +26,7 @@ public class BoomerangVisualBridge : MonoBehaviour
     private static Sprite _boomerangSprite;
     private static Sprite _glowSprite;
     private static Sprite _ringSprite;
+    private static bool _isCustomSprite;
 
     private class BoomerangVisualItem
     {
@@ -65,7 +70,8 @@ public class BoomerangVisualBridge : MonoBehaviour
 
     private void Start()
     {
-        EnsureSprites();
+        _boomerangSprite = null; // Luôn làm mới để bắt kịp thay đổi từ Prefab hoặc Sprite folder
+        EnsureSprites(CustomBoomerangSprite);
     }
 
     private bool InitECS()
@@ -260,14 +266,20 @@ public class BoomerangVisualBridge : MonoBehaviour
 
     private BoomerangVisualItem GetOrCreateVisualItem()
     {
+        EnsureSprites(CustomBoomerangSprite);
+
         if (_freePool.Count > 0)
         {
             var item = _freePool[_freePool.Count - 1];
             _freePool.RemoveAt(_freePool.Count - 1);
+
+            // Đồng bộ lại Sprite nếu người dùng vừa đổi Sprite mới trong Prefab/Editor
+            if (item.CoreRenderer != null && item.CoreRenderer.sprite != _boomerangSprite)
+            {
+                item.CoreRenderer.sprite = _boomerangSprite;
+            }
             return item;
         }
-
-        EnsureSprites();
 
         var root = new GameObject("Boomerang_Visual");
         root.transform.SetParent(transform);
@@ -330,7 +342,8 @@ public class BoomerangVisualBridge : MonoBehaviour
         if (isEmpowered)
         {
             // Sắc vàng cam rực lửa (Fiery Sun / Empowered)
-            visual.CoreRenderer.color = new Color(1f, 0.95f, 0.7f, 1f);
+            visual.CoreRenderer.color = _isCustomSprite ? new Color(1f, 0.9f, 0.7f, 1f) : new Color(1f, 0.95f, 0.7f, 1f);
+            visual.GlowRenderer.enabled = true;
             visual.GlowRenderer.color = new Color(1f, 0.55f, 0.1f, 0.65f);
             visual.Trail.startColor = new Color(1f, 0.85f, 0.2f, 0.95f);
             visual.Trail.endColor = new Color(1f, 0.2f, 0.05f, 0f);
@@ -342,9 +355,10 @@ public class BoomerangVisualBridge : MonoBehaviour
         }
         else
         {
-            // Sắc xanh lục lam ngọc bích (Jade Cyan Wind)
-            visual.CoreRenderer.color = new Color(0.85f, 1f, 0.95f, 1f);
-            visual.GlowRenderer.color = new Color(0.1f, 0.85f, 0.9f, 0.6f);
+            // Đạn thường: Giữ nguyên màu gốc của ảnh custom để pixel art hiển thị chính xác 100%
+            visual.CoreRenderer.color = _isCustomSprite ? Color.white : new Color(0.85f, 1f, 0.95f, 1f);
+            visual.GlowRenderer.enabled = !_isCustomSprite; // Ẩn glow hình tròn thô khi dùng ảnh vẽ riêng
+            visual.GlowRenderer.color = new Color(0.1f, 0.85f, 0.9f, 0.4f);
             visual.Trail.startColor = new Color(0.2f, 1f, 0.75f, 0.9f);
             visual.Trail.endColor = new Color(0.05f, 0.4f, 0.9f, 0f);
             if (visual.TrajectoryLine != null)
@@ -364,7 +378,7 @@ public class BoomerangVisualBridge : MonoBehaviour
             return item;
         }
 
-        EnsureSprites();
+        EnsureSprites(CustomBoomerangSprite);
 
         var root = new GameObject("Boomerang_CatchRing");
         root.transform.SetParent(transform);
@@ -379,47 +393,19 @@ public class BoomerangVisualBridge : MonoBehaviour
         };
     }
 
-    private static void EnsureSprites()
+    private static void EnsureSprites(Sprite customSprite = null)
     {
-        if (_boomerangSprite != null && _glowSprite != null && _ringSprite != null) return;
+        if (_boomerangSprite == null)
+        {
+            _boomerangSprite = LoadBoomerangSprite(customSprite);
+        }
 
-        // 1. Tạo Sprite Boomerang 4 cánh khí động học sắc nhọn (64x64)
+        if (_glowSprite != null && _ringSprite != null) return;
+
         int size = 64;
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.filterMode = FilterMode.Bilinear;
         float center = size * 0.5f;
 
-        for (int y = 0; y < size; y++)
-        for (int x = 0; x < size; x++)
-        {
-            float dx = (x - center) / center;
-            float dy = (y - center) / center;
-            float dist = Mathf.Sqrt(dx * dx + dy * dy);
-
-            // Tạo hình dạng phi tiêu chữ thập 4 cánh uốn cong
-            float angle = Mathf.Atan2(dy, dx);
-            float petal = Mathf.Abs(Mathf.Cos(angle * 2f)); // 4 cánh
-            float bladeRadius = 0.3f + 0.65f * Mathf.Pow(petal, 3f);
-
-            if (dist <= bladeRadius && dist <= 0.95f)
-            {
-                // Thân phi tiêu và lưỡi viền sáng
-                float edgeFactor = Mathf.Clamp01((bladeRadius - dist) * 10f);
-                float coreDist = dist / 0.35f;
-                Color col = Color.Lerp(new Color(0.1f, 0.25f, 0.35f, 1f), new Color(0.3f, 1f, 0.85f, 1f), edgeFactor);
-                if (dist < 0.22f) col = new Color(0.9f, 1f, 1f, 1f); // Tâm ngọc phát sáng
-
-                tex.SetPixel(x, y, col);
-            }
-            else
-            {
-                tex.SetPixel(x, y, Color.clear);
-            }
-        }
-        tex.Apply();
-        _boomerangSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-
-        // 2. Tạo Sprite Radial Glow (32x32)
+        // 1. Tạo Sprite Radial Glow (32x32)
         int glowSize = 32;
         var glowTex = new Texture2D(glowSize, glowSize, TextureFormat.RGBA32, false);
         glowTex.filterMode = FilterMode.Bilinear;
@@ -438,7 +424,7 @@ public class BoomerangVisualBridge : MonoBehaviour
         glowTex.Apply();
         _glowSprite = Sprite.Create(glowTex, new Rect(0, 0, glowSize, glowSize), new Vector2(0.5f, 0.5f), glowSize);
 
-        // 3. Tạo Sprite Ring (64x64) cho hiệu ứng sóng Shockwave
+        // 2. Tạo Sprite Ring (64x64) cho hiệu ứng sóng Shockwave
         var ringTex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         ringTex.filterMode = FilterMode.Bilinear;
         for (int y = 0; y < size; y++)
@@ -464,6 +450,98 @@ public class BoomerangVisualBridge : MonoBehaviour
         }
         ringTex.Apply();
         _ringSprite = Sprite.Create(ringTex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+    }
+
+    /// <summary>
+    /// Tự động tìm và nạp Sprite Boomerang theo thứ tự ưu tiên:
+    /// 1. Sprite chỉ định trong Inspector.
+    /// 2. SpriteRenderer gắn trên Prefab (Assets/Prefabs/Skills/Boomerang.prefab).
+    /// 3. File ảnh import trong Assets/Sprite/Boomerang.png.
+    /// 4. Procedural Sprite 4 cánh dự phòng (Fallback).
+    /// </summary>
+    public static Sprite LoadBoomerangSprite(Sprite customSprite = null)
+    {
+        if (customSprite != null)
+        {
+            _isCustomSprite = true;
+            return customSprite;
+        }
+
+#if UNITY_EDITOR
+        // 1. Kiểm tra SpriteRenderer trong Boomerang.prefab
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Skills/Boomerang.prefab");
+        if (prefab != null)
+        {
+            var sr = prefab.GetComponent<SpriteRenderer>();
+            if (sr != null && sr.sprite != null)
+            {
+                _isCustomSprite = true;
+                return sr.sprite;
+            }
+        }
+
+        // 2. Kiểm tra trực tiếp file ảnh tại Assets/Sprite/Boomerang.png
+        var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Sprite/Boomerang.png");
+        if (assets != null && assets.Length > 0)
+        {
+            foreach (var a in assets)
+            {
+                if (a is Sprite s)
+                {
+                    _isCustomSprite = true;
+                    return s;
+                }
+            }
+        }
+#endif
+
+        // 3. Nạp từ Resources (cho bản build runtime độc lập nếu có)
+        var fromRes = Resources.Load<Sprite>("Boomerang");
+        if (fromRes != null)
+        {
+            _isCustomSprite = true;
+            return fromRes;
+        }
+
+        // 4. Fallback: Sinh Procedural Sprite 4 cánh khí động học
+        _isCustomSprite = false;
+        return CreateProceduralBoomerangSprite();
+    }
+
+    private static Sprite CreateProceduralBoomerangSprite()
+    {
+        int size = 64;
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        float center = size * 0.5f;
+
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float dx = (x - center) / center;
+            float dy = (y - center) / center;
+            float dist = Mathf.Sqrt(dx * dx + dy * dy);
+
+            // Tạo hình dạng phi tiêu chữ thập 4 cánh uốn cong
+            float angle = Mathf.Atan2(dy, dx);
+            float petal = Mathf.Abs(Mathf.Cos(angle * 2f)); // 4 cánh
+            float bladeRadius = 0.3f + 0.65f * Mathf.Pow(petal, 3f);
+
+            if (dist <= bladeRadius && dist <= 0.95f)
+            {
+                float edgeFactor = Mathf.Clamp01((bladeRadius - dist) * 10f);
+                Color col = Color.Lerp(new Color(0.1f, 0.25f, 0.35f, 1f), new Color(0.3f, 1f, 0.85f, 1f), edgeFactor);
+                if (dist < 0.22f) col = new Color(0.9f, 1f, 1f, 1f); // Tâm ngọc phát sáng
+
+                tex.SetPixel(x, y, col);
+            }
+            else
+            {
+                tex.SetPixel(x, y, Color.clear);
+            }
+        }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
     }
 }
 

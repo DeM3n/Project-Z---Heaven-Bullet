@@ -132,6 +132,21 @@ public class DevCheatService
         }
     }
 
+    public void AddDevRegen()
+    {
+        WasCheatedThisRun = true;
+        var em = EntityManager;
+        if (em == default) return;
+
+        using var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerTag>(), ComponentType.ReadWrite<PlayerHPRegenData>());
+        if (query.IsEmpty) return;
+
+        Entity player = query.GetSingletonEntity();
+        var regen = em.GetComponentData<PlayerHPRegenData>(player);
+        regen.RegenPerSecond += 0.5f;
+        em.SetComponentData(player, regen);
+    }
+
     public List<DevAction> GetDevActions()
     {
         return new List<DevAction>
@@ -182,6 +197,15 @@ public class DevCheatService
                 BorderColor = new Color(0.4f, 1f, 0.55f),
                 ExecuteAction = ToggleSpeedBoost,
                 StateGetter = () => IsSpeedBoosted ? "[ ON ]" : "[ OFF ]"
+            },
+            new DevAction
+            {
+                ActionId = "AddRegen",
+                LabelGetter = () => GameLocalization.DevAddRegen,
+                IsToggle = false,
+                NormalColor = new Color(0.12f, 0.32f, 0.18f, 1f),
+                BorderColor = new Color(0.4f, 1f, 0.55f),
+                ExecuteAction = AddDevRegen
             }
         };
     }
