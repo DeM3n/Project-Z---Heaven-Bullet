@@ -361,9 +361,9 @@ public class GameSettingsBridge : MonoBehaviour
             _skillService.SetSkillLevel(skillId, 0, lvl);
             RefreshDevPanel();
         };
-        _devView.OnToggleFusion += () =>
+        _devView.OnToggleFusion += (skillId) =>
         {
-            _skillService.ToggleFusion();
+            _skillService.ToggleFusion(skillId);
             RefreshDevPanel();
         };
         _devView.OnMaxAllSkills += () =>

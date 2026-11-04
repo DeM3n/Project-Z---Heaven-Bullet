@@ -7,12 +7,14 @@ public readonly struct DevSkillState
     public readonly string SkillId;
     public readonly int Level;
     public readonly bool IsActive;
+    public readonly bool IsFusion;
 
-    public DevSkillState(string skillId, int level, bool isActive = true)
+    public DevSkillState(string skillId, int level, bool isActive = true, bool isFusion = false)
     {
         SkillId = skillId;
         Level = level;
         IsActive = isActive;
+        IsFusion = isFusion;
     }
 
     public string FormattedLevelText => IsActive ? $"[ LV.{Level} ]" : "[ OFF ]";

@@ -22,7 +22,8 @@ public partial struct BomberExplodeSystem : ISystem
 
         foreach (var (transform, explode, health) in
                  SystemAPI.Query<RefRO<LocalTransform>, RefRO<BomberExplodeData>, RefRW<HealthData>>()
-                     .WithAll<BomberTag>())
+                     .WithAll<BomberTag>()
+                     .WithNone<EnemyStunData>())
         {
             if (health.ValueRO.CurrentHP <= 0f) continue; // Đã chết, để DeathCleanupSystem xử lý
 

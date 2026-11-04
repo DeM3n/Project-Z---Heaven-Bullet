@@ -57,6 +57,8 @@ public partial struct TreasureGoblinSpawnSystem : ISystem
         Entity goblin = ecb.CreateEntity();
         ecb.AddComponent(goblin, new EnemyTag());
         ecb.AddBuffer<EnemyIncomingDamage>(goblin);
+        ecb.AddComponent(goblin, new EnemyStunData { StunTimer = 0f });
+        ecb.SetComponentEnabled<EnemyStunData>(goblin, false);
         ecb.AddComponent(goblin, new TreasureGoblinTag());
         ecb.AddComponent(goblin, LocalTransform.FromPosition(spawnPos));
         ecb.AddComponent(goblin, new HealthData { CurrentHP = goblinHp, MaxHP = goblinHp });

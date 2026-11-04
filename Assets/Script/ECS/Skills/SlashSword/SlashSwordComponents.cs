@@ -69,3 +69,44 @@ public struct SlashVisualEvent : IComponentData
     public float3 Direction;
     public float Radius;
 }
+
+/// <summary>
+/// Dữ liệu cân bằng theo từng cấp độ cho Kỹ năng Trảm Kiếm (Slash Sword).
+/// Nạp trực tiếp từ ScriptableObject (SlashSwordSkillConfigSO) cho Pure ECS Burst System xử lý.
+/// </summary>
+public struct SlashSwordLevelBalanceData : IComponentData
+{
+    public float CooldownLv1;
+    public float CooldownLv2;
+    public float CooldownLv3;
+    public float CooldownLv4;
+
+    public float DamageLv1;
+    public float DamageLv2;
+    public float DamageLv3;
+    public float DamageLv4;
+
+    public float SlashRadiusLv1;
+    public float SlashRadiusLv2;
+    public float SlashRadiusLv3;
+    public float SlashRadiusLv4;
+
+    public int SwordCountLv1;
+    public int SwordCountLv2;
+    public int SwordCountLv3;
+    public int SwordCountLv4;
+
+    public float ApproachSpeedLv1;
+    public float ApproachSpeedLv2;
+    public float ApproachSpeedLv3;
+    public float ApproachSpeedLv4;
+
+    public float WaveDamageLv4;
+
+    public float GetCooldown(int level) => level switch { 2 => CooldownLv2, 3 => CooldownLv3, 4 => CooldownLv4, _ => CooldownLv1 };
+    public float GetDamage(int level) => level switch { 2 => DamageLv2, 3 => DamageLv3, 4 => DamageLv4, _ => DamageLv1 };
+    public float GetSlashRadius(int level) => level switch { 2 => SlashRadiusLv2, 3 => SlashRadiusLv3, 4 => SlashRadiusLv4, _ => SlashRadiusLv1 };
+    public int GetSwordCount(int level) => level switch { 1 => SwordCountLv1, 2 => SwordCountLv2, 3 => SwordCountLv3, 4 => SwordCountLv4, _ => (level > 4 ? SwordCountLv4 : 0) };
+    public float GetApproachSpeed(int level) => level switch { 2 => ApproachSpeedLv2, 3 => ApproachSpeedLv3, 4 => ApproachSpeedLv4, _ => ApproachSpeedLv1 };
+    public float GetWaveDamage(int level) => level >= 4 ? WaveDamageLv4 : 0f;
+}

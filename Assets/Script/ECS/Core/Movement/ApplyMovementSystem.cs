@@ -11,7 +11,8 @@ public partial struct ApplyMovementSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
 
         foreach (var (transform, movement) in
-                 SystemAPI.Query<RefRW<LocalTransform>, RefRO<MovementData>>())
+                 SystemAPI.Query<RefRW<LocalTransform>, RefRO<MovementData>>()
+                     .WithNone<EnemyStunData>())
         {
             float3 dir = new float3(movement.ValueRO.Direction.x, movement.ValueRO.Direction.y, 0);
             transform.ValueRW.Position += dir * movement.ValueRO.MoveSpeed * dt;

@@ -37,6 +37,8 @@ public class EnemyAuthoring : MonoBehaviour
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent<EnemyTag>(entity);
             AddBuffer<EnemyIncomingDamage>(entity);
+            AddComponent(entity, new EnemyStunData { StunTimer = 0f });
+            SetComponentEnabled<EnemyStunData>(entity, false);
             AddComponent(entity, new HealthData { CurrentHP = authoring.MaxHP, MaxHP = authoring.MaxHP });
             AddComponent(entity, new MovementData { MoveSpeed = authoring.MoveSpeed });
             AddComponent(entity, new EnemyDeathDropData

@@ -61,7 +61,8 @@ public class DevSkillService
         }
 
         var runtime = em.GetComponentData<SkillRuntimeData>(e);
-        return new DevSkillState(skillId, runtime.Level, runtime.Level > 0);
+        bool isFusion = SkillDefinitionRegistry.GetById(skillId)?.IsFusion ?? false;
+        return new DevSkillState(skillId, runtime.Level, runtime.Level > 0, isFusion);
     }
 
     public void SetSkillLevel(string skillId, int delta, int directLevel = -1)
@@ -89,13 +90,13 @@ public class DevSkillService
         em.SetComponentData(skillEntity, runtime);
     }
 
-    public void ToggleFusion()
+    public void ToggleFusion(string skillId = "SwordFusion")
     {
         var em = EntityManager;
         if (em == default) return;
 
-        var query = em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
-        if (query.IsEmpty) return;
+        var query = GetQueryForSkill(em, skillId);
+        if (query == default || query.IsEmpty) return;
 
         Entity e = query.GetSingletonEntity();
         var runtime = em.GetComponentData<SkillRuntimeData>(e);
@@ -113,8 +114,8 @@ public class DevSkillService
         {
             if (def.IsFusion)
             {
-                var fQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
-                if (!fQuery.IsEmpty)
+                var fQuery = GetQueryForSkill(em, def.SkillId);
+                if (fQuery != default && !fQuery.IsEmpty)
                 {
                     Entity e = fQuery.GetSingletonEntity();
                     var runtime = em.GetComponentData<SkillRuntimeData>(e);
@@ -140,7 +141,9 @@ public class DevSkillService
             "Fireball" => em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>()),
             "Shield" => em.CreateEntityQuery(ComponentType.ReadOnly<ShieldSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>()),
             "Boomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>()),
+            "Electric" => em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>()),
             "SwordFusion" => em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>()),
+            "ThunderBoomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>()),
             _ => default
         };
     }

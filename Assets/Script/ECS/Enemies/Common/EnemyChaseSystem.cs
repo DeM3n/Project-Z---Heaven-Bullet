@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-[WithNone(typeof(ShooterTag), typeof(TreasureGoblinTag))]
+[WithNone(typeof(ShooterTag), typeof(TreasureGoblinTag), typeof(EnemyStunData))]
 [BurstCompile]
 [UpdateBefore(typeof(ApplyMovementSystem))]
 public partial struct EnemyChaseSystem : ISystem

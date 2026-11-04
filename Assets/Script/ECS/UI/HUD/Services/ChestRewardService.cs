@@ -17,6 +17,7 @@ public class ChestRewardService
     private readonly EntityQuery _slashSwordSkillQuery;
     private readonly EntityQuery _fireballSkillQuery;
     private readonly EntityQuery _boomerangSkillQuery;
+    private readonly EntityQuery _electricSkillQuery;
     private readonly EntityQuery _swordFusionSkillQuery;
 
     private readonly List<IRelicDefinition> _relicDefinitions;
@@ -31,6 +32,7 @@ public class ChestRewardService
         _slashSwordSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadWrite<SlashSwordSkillData>());
         _fireballSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadWrite<FireballSkillData>());
         _boomerangSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<BoomerangSkillData>());
+        _electricSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<ElectricSkillData>());
         _swordFusionSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SwordFusionSkillData>());
 
         _relicDefinitions = new List<IRelicDefinition>
@@ -145,6 +147,16 @@ public class ChestRewardService
             if (_entityManager.HasComponent<BoomerangSkillData>(e))
             {
                 var data = _entityManager.GetComponentData<BoomerangSkillData>(e);
+                data.BaseDamage *= mult;
+                _entityManager.SetComponentData(e, data);
+            }
+        }
+        if (!_electricSkillQuery.IsEmpty)
+        {
+            var e = _electricSkillQuery.GetSingletonEntity();
+            if (_entityManager.HasComponent<ElectricSkillData>(e))
+            {
+                var data = _entityManager.GetComponentData<ElectricSkillData>(e);
                 data.BaseDamage *= mult;
                 _entityManager.SetComponentData(e, data);
             }

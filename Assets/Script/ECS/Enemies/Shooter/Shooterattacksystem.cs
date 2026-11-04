@@ -17,7 +17,8 @@ public partial struct ShooterAttackSystem : ISystem
 
         foreach (var (transform, attack) in
                  SystemAPI.Query<RefRO<LocalTransform>, RefRW<ShooterAttackData>>()
-                     .WithAll<ShooterTag>())
+                     .WithAll<ShooterTag>()
+                     .WithNone<EnemyStunData>())
         {
             attack.ValueRW.Timer -= dt;
             if (attack.ValueRO.Timer > 0f) continue;

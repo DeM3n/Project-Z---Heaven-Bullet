@@ -129,6 +129,7 @@ public class RunLifecycleService
                 ComponentType.ReadOnly<SubFireballTag>(),
                 ComponentType.ReadOnly<BoomerangTag>(),
                 ComponentType.ReadOnly<BoomerangCatchEvent>(),
+                ComponentType.ReadOnly<ElectricArcEvent>(),
                 ComponentType.ReadOnly<ChestOpenEvent>()
             }
         }))

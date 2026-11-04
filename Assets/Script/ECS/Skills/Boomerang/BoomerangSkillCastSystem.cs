@@ -7,6 +7,7 @@ using Unity.Transforms;
 /// <summary>
 /// Hệ thống ngắm bắn và kích hoạt Kỹ năng Boomerang (Phi Tiêu Hồi Toàn).
 /// Hoàn toàn Burst-compiled, tự động Bootstrap thực thể Skill nếu chưa có trong Scene.
+/// Hỗ trợ gắn kèm BoomerangLightningData nếu Kỹ năng Hợp Thể Thunder Boomerang (Boomerang + Electric) đang hoạt động.
 /// </summary>
 [BurstCompile]
 public partial struct BoomerangSkillCastSystem : ISystem
@@ -14,6 +15,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
     private EntityQuery _enemyQuery;
     private EntityQuery _playerQuery;
     private EntityQuery _skillQuery;
+    private EntityQuery _fusionQuery;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -30,6 +32,10 @@ public partial struct BoomerangSkillCastSystem : ISystem
 
         _skillQuery = SystemAPI.QueryBuilder()
             .WithAll<BoomerangSkillTag, SkillRuntimeData, BoomerangSkillData>()
+            .Build();
+
+        _fusionQuery = SystemAPI.QueryBuilder()
+            .WithAll<ThunderBoomerangFusionTag, SkillRuntimeData>()
             .Build();
     }
 
@@ -101,6 +107,8 @@ public partial struct BoomerangSkillCastSystem : ISystem
         float2 playerPos = playerPos3.xy;
         MovementData playerMove = state.EntityManager.GetComponentData<MovementData>(player);
         float deltaTime = SystemAPI.Time.DeltaTime;
+
+        bool isThunderFusion = !_fusionQuery.IsEmpty && _fusionQuery.GetSingleton<SkillRuntimeData>().Level >= 1;
 
         var gridSingleton = SystemAPI.GetSingleton<SpatialGridSingleton>();
         var grid = gridSingleton.Grid;
@@ -235,7 +243,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
             {
                 // Bắn 1 Boomerang (hoặc triệu hồi bổ sung 1 chiếc bị mất)
                 float2 shootDir = targetEnemy1 != Entity.Null ? math.normalize(targetPos1 - playerPos) : defaultDir;
-                SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, shootDir, skillData.ValueRO, currentDamage, currentHitRadius, level, false);
+                SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, shootDir, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
             }
             else
             {
@@ -245,8 +253,8 @@ public partial struct BoomerangSkillCastSystem : ISystem
                     // Có 2 quái riêng biệt -> Bắn thẳng vào 2 quái đó!
                     float2 dir1 = math.normalize(targetPos1 - playerPos);
                     float2 dir2 = math.normalize(targetPos2 - playerPos);
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false);
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false);
+                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
                 }
                 else if (targetEnemy1 != Entity.Null)
                 {
@@ -254,16 +262,16 @@ public partial struct BoomerangSkillCastSystem : ISystem
                     float2 baseDir = math.normalize(targetPos1 - playerPos);
                     float2 dir1 = RotateVector(baseDir, math.radians(-12.5f));
                     float2 dir2 = RotateVector(baseDir, math.radians(12.5f));
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false);
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false);
+                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
                 }
                 else
                 {
                     // Không có quái -> Bắn lệch góc 30 độ theo hướng di chuyển (+15° và -15°)
                     float2 dir1 = RotateVector(defaultDir, math.radians(-15f));
                     float2 dir2 = RotateVector(defaultDir, math.radians(15f));
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false);
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false);
+                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
                 }
             }
         }
@@ -282,7 +290,8 @@ public partial struct BoomerangSkillCastSystem : ISystem
         float damage,
         float hitRadius,
         int skillLevel,
-        bool isEmpowered)
+        bool isEmpowered,
+        bool isThunderFusion = false)
     {
         Entity b;
         if (skillData.BoomerangPrefab != Entity.Null)
@@ -333,6 +342,24 @@ public partial struct BoomerangSkillCastSystem : ISystem
             });
             ecb.AddBuffer<BoomerangHitBuffer>(b);
         }
+
+        // Nếu kỹ năng Hợp Thể Thunder Boomerang đang hoạt động:
+        // Gắn component BoomerangLightningData để chiếc phi tiêu tự động phóng 2 đợt sét trong hành trình bay!
+        if (isThunderFusion)
+        {
+            ecb.AddComponent(b, new BoomerangLightningData
+            {
+                DischargeCount = 0,
+                MaxDischarges = 2,
+                Timer = 0.5f,                                  // Đợt 1: Bắn sau khi bay được 0.5s!
+                BoltsPerDischarge = 2,                         // 2 tia sét mỗi lần phóng!
+                BoltDamage = math.max(90f, damage * 1.25f),    // Sát thương tia sét kế thừa Cấp 4
+                DetectRange = 8.5f,                            // Tầm quét quái quanh Boomerang
+                ChainRange = 6.0f,                             // Bán kính lan sang quái kế tiếp
+                ChainCount = 2,                                // Lan 2 lần
+                StunDuration = 0.5f                            // Làm choáng quái 0.5s
+            });
+        }
     }
 
     private static float2 RotateVector(float2 v, float angleRad)
@@ -342,4 +369,3 @@ public partial struct BoomerangSkillCastSystem : ISystem
         return new float2(v.x * cos - v.y * sin, v.x * sin + v.y * cos);
     }
 }
-

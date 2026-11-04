@@ -13,12 +13,14 @@ public static class PerkRegistry
         return new List<IPerkDefinition>
         {
             new SwordFusionPerk(em),
+            new ThunderBoomerangPerk(em),
             new FlyingSwordPerk(em),
             new SlashSwordPerk(em),
             new ProjectileSkillPerk(em),
             new FireballPerk(em),
             new ShieldPerk(em),
             new BoomerangPerk(em),
+            new ElectricPerk(em),
             new HealPerk(),
             new HpRegenPerk(),
             new MaxHpPerk(),
@@ -83,7 +85,61 @@ public static class PerkRegistry
         }
     }
 
-    // 2. Flying Sword (Phi Kiếm)
+    // 2. Thunder Boomerang Fusion (Boomerang + Electric)
+    private class ThunderBoomerangPerk : IPerkDefinition
+    {
+        private readonly EntityQuery _query;
+        private readonly EntityQuery _boomerangQuery;
+        private readonly EntityQuery _electricQuery;
+
+        public ThunderBoomerangPerk(EntityManager em)
+        {
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _boomerangQuery = em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _electricQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+        }
+
+        public string PerkId => "ThunderBoomerang";
+        public int Priority => 100; // Ưu tiên hàng đầu khi đủ điều kiện
+        public float Weight => 1f;
+
+        public bool IsAvailable(EntityManager em, Entity player)
+        {
+            int boomLvl = !_boomerangQuery.IsEmpty ? _boomerangQuery.GetSingleton<SkillRuntimeData>().Level : 0;
+            int elecLvl = !_electricQuery.IsEmpty ? _electricQuery.GetSingleton<SkillRuntimeData>().Level : 0;
+            bool isFused = !_query.IsEmpty && _query.GetSingleton<SkillRuntimeData>().Level >= 1;
+
+            return boomLvl >= 4 && elecLvl >= 4 && !isFused;
+        }
+
+        public PerkOptionData GetOptionData(EntityManager em, Entity player)
+        {
+            return new PerkOptionData
+            {
+                PerkId = PerkId,
+                Level = 1,
+                Title = GameLocalization.ThunderBoomerangTitle,
+                LevelBadge = GameLocalization.SwordFusionBadge,
+                Description = GameLocalization.ThunderBoomerangDesc,
+                HighlightColor = new Color(0.2f, 0.95f, 1f),
+                IsFusion = true
+            };
+        }
+
+        public void Apply(EntityManager em, Entity player)
+        {
+            if (!_query.IsEmpty)
+            {
+                Entity skillEntity = _query.GetSingletonEntity();
+                var runtime = em.GetComponentData<SkillRuntimeData>(skillEntity);
+                runtime.Level = 1;
+                runtime.Timer = 0f;
+                em.SetComponentData(skillEntity, runtime);
+            }
+        }
+    }
+
+    // 3. Flying Sword (Phi Kiếm)
     private class FlyingSwordPerk : IPerkDefinition
     {
         private readonly EntityQuery _query;
@@ -337,6 +393,51 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.BoomerangDesc(nextLvl),
                 HighlightColor = new Color(0.15f, 0.95f, 0.65f),
+                IsFusion = false
+            };
+        }
+
+        public void Apply(EntityManager em, Entity player)
+        {
+            if (!_query.IsEmpty)
+            {
+                Entity skillEntity = _query.GetSingletonEntity();
+                var runtime = em.GetComponentData<SkillRuntimeData>(skillEntity);
+                runtime.Level = Mathf.Min(4, runtime.Level + 1);
+                em.SetComponentData(skillEntity, runtime);
+            }
+        }
+    }
+
+    // 8. Electric (Lôi Điện Liên Hoàn)
+    private class ElectricPerk : IPerkDefinition
+    {
+        private readonly EntityQuery _query;
+
+        public ElectricPerk(EntityManager em)
+        {
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+        }
+
+        public string PerkId => "Electric";
+        public int Priority => 0;
+        public float Weight => 1f;
+
+        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 0;
+
+        public bool IsAvailable(EntityManager em, Entity player) => GetCurrentLevel() < 4;
+
+        public PerkOptionData GetOptionData(EntityManager em, Entity player)
+        {
+            int nextLvl = Mathf.Min(4, GetCurrentLevel() + 1);
+            return new PerkOptionData
+            {
+                PerkId = PerkId,
+                Level = nextLvl,
+                Title = GameLocalization.ElectricTitle,
+                LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
+                Description = GameLocalization.ElectricDesc(nextLvl),
+                HighlightColor = new Color(0f, 0.9f, 1f),
                 IsFusion = false
             };
         }

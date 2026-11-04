@@ -98,10 +98,12 @@ public static class GameLocalization
     public static string FlyingSwordTitle => Get("FLYING SWORD", "PHI KIẾM HỘ THỂ");
     public static string SlashSwordTitle => Get("CRESCENT BLADE", "TRẢM YÊU KIẾM");
     public static string SwordFusionTitle => Get("CELESTIAL BLADE FUSION", "THIÊN KIẾM HỢP THỂ");
+    public static string ThunderBoomerangTitle => Get("THUNDER BOOMERANG", "LÔI TIÊU THIÊN KIẾP");
     public static string ProjectileSkillTitle => Get("ARCANE VOLLEY", "ĐẠN TỎA QUẠT");
     public static string FireballTitle => Get("HELLFIRE ORB", "CẦU LỬA VIÊM MA");
     public static string ShieldTitle => Get("AEGIS SHIELD", "KHIÊN HỘ THỂ");
     public static string BoomerangTitle => Get("CELESTIAL BOOMERANG", "PHI TIÊU HỒI TOÀN");
+    public static string ElectricTitle => Get("CHAIN LIGHTNING", "LÔI ĐIỆN LIÊN HOÀN");
     public static string HealTitle => Get("VITALITY ELIXIR", "TIÊN DƯỢC PHỤC HỒI");
     public static string HpRegenTitle => Get("REJUVENATION", "HỒI XUÂN THUẬT");
     public static string MaxHpTitle => Get("IRON WILL", "CƯƠNG THỂ QUYẾT");
@@ -126,22 +128,31 @@ public static class GameLocalization
         "★ THIÊN KIẾM HỢP THỂ ★ Kết hợp Phi Kiếm & Trảm Yêu Kiếm! Giữ trọn vẹn sức mạnh cả hai, định kỳ giáng KIẾM KHỔNG LỒ cắm đất gây 350 sát thương nổ AOE và phóng tỏa 5 luồng Kiếm Khí xuyên thấu!"
     );
 
+    public static string ThunderBoomerangDesc => Get(
+        "★ THUNDER FUSION ★ Merges Boomerang & Chain Lightning! Every Boomerang launched discharges 2 Chain Lightning bolts twice during flight (at 0.5s and 1.5s), shocking and stunning nearby foes for 0.5s!",
+        "★ LÔI TIÊU HỢP THỂ ★ Kết hợp Phi Tiêu & Lôi Điện! Mỗi khi Boomerang được phóng ra, nó sẽ phóng 2 tia sét lan truyền tối đa 2 lần trong hành trình bay (sau 0.5s và 1.5s), giật điện và làm choáng quái 0.5s!"
+    );
+
     // --- Perk Descriptions ---
     public static string FlyingSwordDesc(int level)
     {
+        var cfg = FlyingSwordSkillConfigSO.Instance;
+        int count = cfg != null ? cfg.GetSwordCount(level) : level;
+        float aoeRad = cfg != null ? cfg.AoeRadius : 3.5f;
+
         return level switch
         {
             2 => Get(
-                "+1 Flying Sword. Increases flight speed by +20% and damage by +35%.",
-                "+1 Thanh Phi Kiếm hộ thể, tăng tốc độ bay +20% và sát thương +35%."
+                $"+1 Flying Sword ({count} total). Increases flight speed and damage.",
+                $"+1 Thanh Phi Kiếm hộ thể (tổng {count} kiếm), tăng tốc độ bay và sát thương."
             ),
             3 => Get(
-                "+1 Flying Sword (3 swords total). Expands outer engagement range.",
-                "+1 Thanh Phi Kiếm (tổng 3 kiếm), mở rộng tầm xuất chiến quanh Player."
+                $"+1 Flying Sword ({count} swords total). Expands outer engagement range.",
+                $"+1 Thanh Phi Kiếm (tổng {count} kiếm), mở rộng tầm xuất chiến quanh Player."
             ),
             4 => Get(
-                "★ ULTIMATE STRIKE ★ Periodically dives into dense enemy swarms, triggering a massive AOE blast and DESTROYING 100% of enemy bullets!",
-                "★ ĐÒN ULTIMATE ★ Tự động lao vào cụm quái đông nhất, nổ AOE cực đại và TIÊU HỦY 100% đạn địch!"
+                $"★ ULTIMATE STRIKE ★ Periodically dives into dense enemy swarms, triggering a massive {aoeRad:0.0}m AOE blast and DESTROYING 100% of enemy bullets!",
+                $"★ ĐÒN ULTIMATE ★ Tự động lao vào cụm quái đông nhất, nổ AOE cực đại {aoeRad:0.0}m và TIÊU HỦY 100% đạn địch!"
             ),
             _ => Get(
                 "Summons ethereal flying swords that patrol and slice through nearby foes.",
@@ -152,23 +163,28 @@ public static class GameLocalization
 
     public static string SlashSwordDesc(int level)
     {
+        var cfg = SlashSwordSkillConfigSO.Instance;
+        float cd = cfg != null ? cfg.GetCooldown(level) : (level switch { 2 => 3.3f, 3 => 2.6f, 4 => 2.0f, _ => 4.0f });
+        float rad = cfg != null ? cfg.GetSlashRadius(level) : (level switch { 2 => 3.55f, 3 => 3.9f, 4 => 4.25f, _ => 3.2f });
+        int count = cfg != null ? cfg.GetSwordCount(level) : (level + 1);
+
         return level switch
         {
             2 => Get(
-                "+1 Sentinel Blade (3 total). Reduces cooldown to 3.3s and expands slash AOE to 3.55m.",
-                "+1 Linh kiếm (tổng 3 kiếm). Giảm hồi chiêu xuống 3.3s và mở rộng tầm chém AOE lên 3.55m."
+                $"+1 Sentinel Blade ({count} total). Reduces cooldown to {cd:0.0}s and expands slash AOE to {rad:0.00}m.",
+                $"+1 Linh kiếm (tổng {count} kiếm). Giảm hồi chiêu xuống {cd:0.0}s và mở rộng tầm chém AOE lên {rad:0.00}m."
             ),
             3 => Get(
-                "+1 Sentinel Blade (4 total). Reduces cooldown to 2.6s and expands slash AOE to 3.9m.",
-                "+1 Linh kiếm (tổng 4 kiếm). Giảm hồi chiêu xuống 2.6s và mở rộng tầm chém AOE lên 3.9m."
+                $"+1 Sentinel Blade ({count} total). Reduces cooldown to {cd:0.0}s and expands slash AOE to {rad:0.00}m.",
+                $"+1 Linh kiếm (tổng {count} kiếm). Giảm hồi chiêu xuống {cd:0.0}s và mở rộng tầm chém AOE lên {rad:0.00}m."
             ),
             4 => Get(
-                "★ SWORD AURA EVOLUTION ★ +1 Sentinel Blade (5 total)! Cooldown 2.0s. All 5 blades slash with massive 4.25m AOE and unleash Piercing Sword Waves!",
-                "★ TIẾN HÓA KIẾM KHÍ ★ +1 Linh kiếm (tổng 5 kiếm)! Hồi chiêu 2.0s. Cả 5 kiếm chém AOE cực đại 4.25m và phóng Kiếm Khí xuyên thấu mọi mục tiêu!"
+                $"★ SWORD AURA EVOLUTION ★ +1 Sentinel Blade ({count} total)! Cooldown {cd:0.0}s. All {count} blades slash with massive {rad:0.00}m AOE and unleash Piercing Sword Waves!",
+                $"★ TIẾN HÓA KIẾM KHÍ ★ +1 Linh kiếm (tổng {count} kiếm)! Hồi chiêu {cd:0.0}s. Cả {count} kiếm chém AOE cực đại {rad:0.00}m và phóng Kiếm Khí xuyên thấu mọi mục tiêu!"
             ),
             _ => Get(
-                "Summons 2 sentinel blades that rush in to unleash lethal 3.2m arc slashes (4s cooldown, 65 DMG).",
-                "Triệu hồi 2 linh kiếm lao vào chém quét vòng cung diện rộng 3.2m (hồi chiêu 4s, 65 DMG)."
+                $"Summons {count} sentinel blades that rush in to unleash lethal {rad:0.0}m arc slashes ({cd:0}s cooldown).",
+                $"Triệu hồi {count} linh kiếm lao vào chém quét vòng cung diện rộng {rad:0.0}m (hồi chiêu {cd:0}s)."
             )
         };
     }
@@ -255,6 +271,29 @@ public static class GameLocalization
             _ => Get(
                 "Hurls a piercing boomerang that slices through foes and flies back towards your moving trajectory. Catching it reduces current cooldown by 25%! (8s cooldown, 35 DMG).",
                 "Ném phi tiêu bay xuyên thấu quái vật rồi quay về đón đầu hướng di chuyển. Bắt dính phi tiêu giúp giảm 25% hồi chiêu hiện tại! (Hồi chiêu 8s, 35 DMG)."
+            )
+        };
+    }
+
+    public static string ElectricDesc(int level)
+    {
+        return level switch
+        {
+            2 => Get(
+                "+50% Primary Bolt DMG (90 DMG) and +1 Chain Jump (2 Jumps Total). Cooldown reduced by 10% (5.4s).",
+                "Tăng sát thương tia sét cha lên 90 DMG (+50%) và số lần lan sang mục tiêu +1 (Tổng 2 lần lan). Giảm 10% hồi chiêu (5.4s)."
+            ),
+            3 => Get(
+                "★ DUAL THUNDERBOLTS ★ Fires +1 Primary Lightning Bolt (2 Bolts Total) hitting distinct targets! Each bolt chains 2 times. Cooldown reduced by 10% (4.86s).",
+                "★ SONG LÔI CUỒNG NỘ ★ Bắn thêm +1 tia sét cha (Tổng 2 tia) vào 2 mục tiêu khác nhau! Mỗi tia lan 2 lần. Giảm 10% hồi chiêu (4.86s)."
+            ),
+            4 => Get(
+                "★ ARC OVERLOAD ★ +2 Chain Jumps (4 Jumps Total). SPECIAL: Lightning can now BOUNCE BACK to previous targets, and all struck enemies are STUNNED for 0.5s!",
+                "★ THIÊN LÔI QUÁ TẢI ★ Thêm +2 lần lan (Tổng 4 lần lan). ĐẶC BIỆT: Sét có thể LAN NGƯỢC VỀ MỤC TIÊU CŨ, và toàn bộ quái dính sét bị CHOÁNG 0.5s!"
+            ),
+            _ => Get(
+                "Strikes a target for 60 DMG and chains to 1 nearby enemy dealing 30% damage (18 DMG). (6s Cooldown).",
+                "Bắn ra 1 tia sét giáng vào mục tiêu gây 60 DMG và lan sang 1 quái kế cận gây 30% sát thương gốc (18 DMG). (Hồi chiêu 6s)."
             )
         };
     }

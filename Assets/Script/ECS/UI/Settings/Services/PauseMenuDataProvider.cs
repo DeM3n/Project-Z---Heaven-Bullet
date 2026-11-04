@@ -263,7 +263,9 @@ public static class PauseMenuDataProvider
             "Fireball" => em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
             "Shield" => em.CreateEntityQuery(ComponentType.ReadOnly<ShieldSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
             "Boomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
+            "Electric" => em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
             "SwordFusion" => em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
+            "ThunderBoomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
             _ => default
         };
 

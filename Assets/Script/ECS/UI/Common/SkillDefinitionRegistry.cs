@@ -82,11 +82,29 @@ public static class SkillDefinitionRegistry
         },
         new SharedSkillDefinition
         {
+            SkillId = "Electric",
+            NumericId = SkillIds.Electric,
+            TitleGetter = () => GameLocalization.ElectricTitle,
+            MaxLevel = 4,
+            ThemeColor = new Color(0f, 0.9f, 1f),
+            IsFusion = false
+        },
+        new SharedSkillDefinition
+        {
             SkillId = "SwordFusion",
             NumericId = SkillIds.SwordFusion,
             TitleGetter = () => GameLocalization.SwordFusionTitle,
             MaxLevel = 1,
             ThemeColor = new Color(1f, 0.85f, 0.15f),
+            IsFusion = true
+        },
+        new SharedSkillDefinition
+        {
+            SkillId = "ThunderBoomerang",
+            NumericId = SkillIds.ThunderBoomerang,
+            TitleGetter = () => GameLocalization.ThunderBoomerangTitle,
+            MaxLevel = 1,
+            ThemeColor = new Color(0.2f, 0.95f, 1f),
             IsFusion = true
         }
     };

@@ -44,7 +44,16 @@ public partial struct SlashSwordSkillSystem : ISystem
         {
             if (!state.EntityManager.Exists(owner.ValueRO.Owner)) continue;
 
-            int targetSwordCount = runtime.ValueRO.Level <= 0 ? 0 : math.clamp(runtime.ValueRO.Level + 1, 2, 5);
+            int targetSwordCount;
+            if (state.EntityManager.HasComponent<SlashSwordLevelBalanceData>(skillEntity))
+            {
+                var bal = state.EntityManager.GetComponentData<SlashSwordLevelBalanceData>(skillEntity);
+                targetSwordCount = runtime.ValueRO.Level <= 0 ? 0 : bal.GetSwordCount(runtime.ValueRO.Level);
+            }
+            else
+            {
+                targetSwordCount = runtime.ValueRO.Level <= 0 ? 0 : math.clamp(runtime.ValueRO.Level + 1, 2, 5);
+            }
 
             int currentSwordCount = 0;
             var swordEntities = _swordQuery.ToEntityArray(Allocator.Temp);
@@ -138,10 +147,30 @@ public partial struct SlashSwordSkillSystem : ISystem
             var runtime = state.EntityManager.GetComponentData<SkillRuntimeData>(sword.ValueRO.SkillEntity);
             int level = runtime.Level;
 
-            // Tính toán chỉ số theo Level
-            float currentCooldown = GetCooldownForLevel(level);
-            float currentDamage = skillData.BaseDamage + (level - 1) * 32f;
-            float currentSpeed = skillData.ApproachSpeed + (level - 1) * 3f;
+            // Tính toán chỉ số theo Level (ưu tiên đọc từ ScriptableObject Balance Data)
+            float currentCooldown;
+            float currentDamage;
+            float currentSpeed;
+            float currentSlashRadius;
+            float currentWaveDamage;
+
+            if (state.EntityManager.HasComponent<SlashSwordLevelBalanceData>(sword.ValueRO.SkillEntity))
+            {
+                var bal = state.EntityManager.GetComponentData<SlashSwordLevelBalanceData>(sword.ValueRO.SkillEntity);
+                currentCooldown = bal.GetCooldown(level);
+                currentDamage = bal.GetDamage(level);
+                currentSpeed = bal.GetApproachSpeed(level);
+                currentSlashRadius = bal.GetSlashRadius(level);
+                currentWaveDamage = bal.GetWaveDamage(level);
+            }
+            else
+            {
+                currentCooldown = GetCooldownForLevel(level);
+                currentDamage = skillData.BaseDamage + (level - 1) * 32f;
+                currentSpeed = skillData.ApproachSpeed + (level - 1) * 3f;
+                currentSlashRadius = skillData.SlashRadius + (level - 1) * 0.35f;
+                currentWaveDamage = skillData.WaveDamage;
+            }
 
             // Góc bù thị giác để sprite luôn chỉ đúng mũi kiếm
             float rotOffset = visualOffsetLookup.HasComponent(swordEntity)
@@ -221,7 +250,7 @@ public partial struct SlashSwordSkillSystem : ISystem
                         sword.ValueRW.SlashProgress = 0f;
 
                         // Thực hiện đòn chém quét diện rộng (AOE tăng cường và mở rộng theo cấp độ)
-                        float slashRadius = skillData.SlashRadius + (level - 1) * 0.35f;
+                        float slashRadius = currentSlashRadius;
                         float slashRadiusSq = slashRadius * slashRadius;
                         float3 slashCenter = transform.ValueRO.Position + sword.ValueRO.SlashDirection * (slashRadius * 0.32f);
 
@@ -272,7 +301,7 @@ public partial struct SlashSwordSkillSystem : ISystem
                             {
                                 Direction = sword.ValueRO.SlashDirection.xy,
                                 Speed = skillData.WaveSpeed,
-                                Damage = skillData.WaveDamage,
+                                Damage = currentWaveDamage > 0f ? currentWaveDamage : skillData.WaveDamage,
                                 Radius = skillData.WaveRadius,
                                 Lifetime = skillData.WaveDuration,
                                 MaxLifetime = skillData.WaveDuration

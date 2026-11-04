@@ -56,3 +56,29 @@ public struct FlyingSwordAoeBlastEvent : IComponentData
     public float3 Position;
     public float Radius;
 }
+
+/// <summary>
+/// Dữ liệu cân bằng theo từng cấp độ cho Kỹ năng Phi Kiếm (Flying Sword).
+/// Nạp trực tiếp từ ScriptableObject (FlyingSwordSkillConfigSO) cho Pure ECS Burst System xử lý.
+/// </summary>
+public struct FlyingSwordLevelBalanceData : IComponentData
+{
+    public float DamageLv1;
+    public float DamageLv2;
+    public float DamageLv3;
+    public float DamageLv4;
+
+    public float RushSpeedLv1;
+    public float RushSpeedLv2;
+    public float RushSpeedLv3;
+    public float RushSpeedLv4;
+
+    public int SwordCountLv1;
+    public int SwordCountLv2;
+    public int SwordCountLv3;
+    public int SwordCountLv4;
+
+    public float GetDamage(int level) => level switch { 2 => DamageLv2, 3 => DamageLv3, 4 => DamageLv4, _ => DamageLv1 };
+    public float GetRushSpeed(int level) => level switch { 2 => RushSpeedLv2, 3 => RushSpeedLv3, 4 => RushSpeedLv4, _ => RushSpeedLv1 };
+    public int GetSwordCount(int level) => level switch { 1 => SwordCountLv1, 2 => SwordCountLv2, 3 => SwordCountLv3, 4 => SwordCountLv4, _ => (level > 4 ? SwordCountLv4 : 0) };
+}

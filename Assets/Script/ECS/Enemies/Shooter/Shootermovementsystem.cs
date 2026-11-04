@@ -21,6 +21,7 @@ public partial struct ShooterMovementSystem : ISystem
 
 [BurstCompile]
 [WithAll(typeof(ShooterTag))]
+[WithNone(typeof(EnemyStunData))]
 public partial struct ShooterMovementJob : IJobEntity
 {
     public float3 PlayerPosition;

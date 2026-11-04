@@ -215,6 +215,21 @@ public static class CodexDatabase
         // =========================================================================
         // 2. KỸ NĂNG & ĐẠN BẮN (WEAPONS & SKILLS)
         // =========================================================================
+        var fs = FlyingSwordSkillConfigSO.Instance;
+        int fsCount1 = fs != null ? fs.GetSwordCount(1) : 1;
+        int fsCount2 = fs != null ? fs.GetSwordCount(2) : 2;
+        int fsCount3 = fs != null ? fs.GetSwordCount(3) : 3;
+        int fsCount4 = fs != null ? fs.GetSwordCount(4) : 4;
+        float fsDmg1 = fs != null ? fs.GetDamage(1) : 13.5f;
+        float fsDmg2 = fs != null ? fs.GetDamage(2) : 18.2f;
+        float fsDmg3 = fs != null ? fs.GetDamage(3) : 23.0f;
+        float fsDmg4 = fs != null ? fs.GetDamage(4) : 27.7f;
+        float fsSpd1 = fs != null ? fs.GetRushSpeed(1) : 9.45f;
+        float fsSpd3 = fs != null ? fs.GetRushSpeed(3) : 13.23f;
+        float fsAoeDmg = fs != null ? fs.AoeDamage : 85f;
+        float fsAoeRad = fs != null ? fs.AoeRadius : 3.5f;
+        float fsUltCd = fs != null ? fs.UltimateCooldown : 6.0f;
+
         _allEntries.Add(new CodexEntry
         {
             Id = "skill_flying_sword",
@@ -227,23 +242,39 @@ public static class CodexDatabase
             DescriptionVi = "Những thanh kiếm bay xoay quanh người chơi, tự động lao liên hoàn từ quái này sang quái khác.",
             StatsEn = new Dictionary<string, string>
             {
-                { "Level 1", "1 Blade, 13.5 DMG, 9.45 m/s rush speed" },
-                { "Level 2", "2 Blades, 18.2 DMG (+35%)" },
-                { "Level 3", "3 Blades, 23.0 DMG, 13.2 m/s rush speed" },
-                { "Level 4 (Ultimate)", "4 Blades, 85 DMG AOE Blast (3.5m) every 6s, destroys all bullets" }
+                { "Level 1", $"{fsCount1} Blade, {fsDmg1:0.0} DMG, {fsSpd1:0.0} m/s rush speed" },
+                { "Level 2", $"{fsCount2} Blades, {fsDmg2:0.0} DMG" },
+                { "Level 3", $"{fsCount3} Blades, {fsDmg3:0.0} DMG, {fsSpd3:0.0} m/s rush speed" },
+                { "Level 4 (Ultimate)", $"{fsCount4} Blades, {fsAoeDmg:0} DMG AOE Blast ({fsAoeRad:0.0}m) every {fsUltCd:0}s, destroys all bullets" }
             },
             StatsVi = new Dictionary<string, string>
             {
-                { "Cấp 1", "1 Kiếm, 13.5 DMG, tốc độ lướt 9.45 m/s" },
-                { "Cấp 2", "2 Kiếm, 18.2 DMG (+35% sát thương)" },
-                { "Cấp 3", "3 Kiếm, 23.0 DMG, tốc độ lướt vọt 13.2 m/s" },
-                { "Cấp 4 (Ultimate)", "4 Kiếm, nổ AOE 85 DMG (3.5m) mỗi 6s, tiêu hủy 100% đạn địch" }
+                { "Cấp 1", $"{fsCount1} Kiếm, {fsDmg1:0.0} DMG, tốc độ lướt {fsSpd1:0.0} m/s" },
+                { "Cấp 2", $"{fsCount2} Kiếm, {fsDmg2:0.0} DMG" },
+                { "Cấp 3", $"{fsCount3} Kiếm, {fsDmg3:0.0} DMG, tốc độ lướt vọt {fsSpd3:0.0} m/s" },
+                { "Cấp 4 (Ultimate)", $"{fsCount4} Kiếm, nổ AOE {fsAoeDmg:0} DMG ({fsAoeRad:0.0}m) mỗi {fsUltCd:0}s, tiêu hủy 100% đạn địch" }
             },
             MechanicsEn = "Continuous combat state. Switches targets intelligently without 180° ping-pong jitter.",
             MechanicsVi = "Tấn công liên hoàn. Tự động chuyển hướng mượt mà giữa các quái, không bị giật lùi.",
             TipsEn = "Evolves into Sword Tempest with Ancient Sword Talisman.",
             TipsVi = "Kết hợp với Cổ Kiếm Phù để tiến hóa thành Vạn Kiếm Quy Tông."
         });
+
+        var ss = SlashSwordSkillConfigSO.Instance;
+        int ssCount1 = ss != null ? ss.GetSwordCount(1) : 2;
+        int ssCount2 = ss != null ? ss.GetSwordCount(2) : 3;
+        int ssCount3 = ss != null ? ss.GetSwordCount(3) : 4;
+        int ssCount4 = ss != null ? ss.GetSwordCount(4) : 5;
+        float ssDmg1 = ss != null ? ss.GetDamage(1) : 38f;
+        float ssDmg2 = ss != null ? ss.GetDamage(2) : 70f;
+        float ssDmg3 = ss != null ? ss.GetDamage(3) : 102f;
+        float ssDmg4 = ss != null ? ss.GetDamage(4) : 134f;
+        float ssRad1 = ss != null ? ss.GetSlashRadius(1) : 3.2f;
+        float ssRad3 = ss != null ? ss.GetSlashRadius(3) : 3.9f;
+        float ssRad4 = ss != null ? ss.GetSlashRadius(4) : 4.25f;
+        float ssWaveDmg = ss != null ? ss.WaveDamage : 65f;
+        float ssCd1 = ss != null ? ss.GetCooldown(1) : 4.0f;
+        float ssCd4 = ss != null ? ss.GetCooldown(4) : 2.0f;
 
         _allEntries.Add(new CodexEntry
         {
@@ -257,17 +288,17 @@ public static class CodexDatabase
             DescriptionVi = "Linh kiếm cận chiến vung những đường chém bán nguyệt dũng mãnh quét sạch mọi kẻ địch áp sát.",
             StatsEn = new Dictionary<string, string>
             {
-                { "Level 1", "2 Blades, 28 DMG, 155° sweep, 3.2m radius" },
-                { "Level 2", "3 Blades, 60 DMG" },
-                { "Level 3", "4 Blades, 92 DMG, 3.9m sweep radius" },
-                { "Level 4 (Wave)", "5 Blades, 124 DMG + Fires Piercing Sword Wave (65 DMG)" }
+                { "Level 1", $"{ssCount1} Blades, {ssDmg1:0} DMG, 155° sweep, {ssRad1:0.0}m radius ({ssCd1:0.0}s CD)" },
+                { "Level 2", $"{ssCount2} Blades, {ssDmg2:0} DMG" },
+                { "Level 3", $"{ssCount3} Blades, {ssDmg3:0} DMG, {ssRad3:0.0}m sweep radius" },
+                { "Level 4 (Wave)", $"{ssCount4} Blades, {ssDmg4:0} DMG, {ssRad4:0.0}m AOE ({ssCd4:0.0}s CD) + Piercing Wave ({ssWaveDmg:0} DMG)" }
             },
             StatsVi = new Dictionary<string, string>
             {
-                { "Cấp 1", "2 Kiếm, 28 DMG, góc quét 155°, bán kính 3.2m" },
-                { "Cấp 2", "3 Kiếm, 60 DMG" },
-                { "Cấp 3", "4 Kiếm, 92 DMG, bán kính chém rộng 3.9m" },
-                { "Cấp 4 (Kiếm Khí)", "5 Kiếm, 124 DMG + Bắn luồng Kiếm Khí xuyên thấu (65 DMG)" }
+                { "Cấp 1", $"{ssCount1} Kiếm, {ssDmg1:0} DMG, góc quét 155°, bán kính {ssRad1:0.0}m (hồi {ssCd1:0.0}s)" },
+                { "Cấp 2", $"{ssCount2} Kiếm, {ssDmg2:0} DMG" },
+                { "Cấp 3", $"{ssCount3} Kiếm, {ssDmg3:0} DMG, bán kính chém rộng {ssRad3:0.0}m" },
+                { "Cấp 4 (Kiếm Khí)", $"{ssCount4} Kiếm, {ssDmg4:0} DMG, AOE {ssRad4:0.0}m (hồi {ssCd4:0.0}s) + Bắn Kiếm Khí ({ssWaveDmg:0} DMG)" }
             },
             MechanicsEn = "Applies wide AOE sweep. Level 4 fires a piercing energy projectile cutting through all enemies.",
             MechanicsVi = "Chém quét diện rộng cực mạnh. Cấp 4 bắn luồng kiếm khí lưỡi liềm bay xuyên thấu toàn bộ quái.",
@@ -381,6 +412,36 @@ public static class CodexDatabase
 
         _allEntries.Add(new CodexEntry
         {
+            Id = "skill_electric",
+            Category = EntryCategory.Skills,
+            TitleEn = "Chain Lightning",
+            TitleVi = "Lôi Điện Liên Hoàn",
+            SubtitleEn = "High-Voltage Arc & Stun Chain",
+            SubtitleVi = "Hồ Quang Cao Thế & Choáng Dòng Điện",
+            DescriptionEn = "Summons devastating lightning arcs striking the nearest enemy and violently chaining to adjacent foes.",
+            DescriptionVi = "Triệu hồi sấm sét giáng xuống quái vật gần nhất rồi phóng luồng hồ quang chuyền sang các mục tiêu lân cận.",
+            StatsEn = new Dictionary<string, string>
+            {
+                { "Level 1", "60 DMG, 1 Chain Jump (30% DMG = 18 DMG), 6.0s Cooldown" },
+                { "Level 2", "90 DMG (+50%), 2 Chain Jumps (27 DMG each), 5.4s Cooldown (-10%)" },
+                { "Level 3", "Dual Thunderbolts (2 Primary Bolts, 90 DMG each, 2 Jumps each), 4.86s Cooldown (-10%)" },
+                { "Level 4 (Overload)", "120 DMG (+33%), 4 Chain Jumps (36 DMG each). SPECIAL: Bounces back to previous foes + Stuns all targets for 0.5s!" }
+            },
+            StatsVi = new Dictionary<string, string>
+            {
+                { "Cấp 1", "60 DMG, 1 Lần lan (30% DMG = 18 DMG), Hồi chiêu 6.0s" },
+                { "Cấp 2", "90 DMG (+50%), 2 Lần lan (27 DMG mỗi tia), Hồi chiêu 5.4s (-10%)" },
+                { "Cấp 3", "Song Lôi Cuồng Nộ (2 Tia sét cha, 90 DMG mỗi tia, lan 2 lần), Hồi chiêu 4.86s (-10%)" },
+                { "Cấp 4 (Quá Tải)", "120 DMG (+33%), 4 Lần lan (36 DMG mỗi tia). ĐẶC BIỆT: Nảy ngược về quái cũ + Gây Choáng 0.5s!" }
+            },
+            MechanicsEn = "Procedural fractal lightning arc with staggered jump delay. At Lv4, bouncing allows single-target annihilation.",
+            MechanicsVi = "Tia sét fractal gãy góc tự nhiên với độ trễ truyền dẫn nối tiếp. Ở Cấp 4, khả năng nảy ngược giúp dồn sát thương cực khủng vào mục tiêu đơn lẻ.",
+            TipsEn = "At Level 4, grouping 2 elites or a boss with a minion causes the lightning to bounce back and forth, melting them instantly.",
+            TipsVi = "Ở Cấp 4, khi đánh Boss có quái con đi kèm, sét sẽ nảy liên tục giữa Boss và quái con gây lượng sát thương dồn khổng lồ kèm khống chế cứng."
+        });
+
+        _allEntries.Add(new CodexEntry
+        {
             Id = "skill_giant_fusion",
             Category = EntryCategory.Skills,
             TitleEn = "Celestial Giant Sword",
@@ -407,6 +468,36 @@ public static class CodexDatabase
             MechanicsVi = "Uy lực hủy diệt diện rộng, quét sạch bầy quái quanh tâm cắm kiếm và bắn tỏa 5 kiếm khí.",
             TipsEn = "Select the Fusion Perk card as soon as both swords reach Level 4!",
             TipsVi = "Hãy chọn thẻ bài Hợp Thể ngay khi cả hai kỹ năng kiếm đạt Cấp 4!"
+        });
+
+        _allEntries.Add(new CodexEntry
+        {
+            Id = "skill_thunder_boomerang",
+            Category = EntryCategory.Skills,
+            TitleEn = "Thunder Boomerang",
+            TitleVi = "Lôi Tiêu Thiên Kiếp",
+            SubtitleEn = "Ultimate Fusion Skill (Boomerang + Electric)",
+            SubtitleVi = "Kỹ Năng Hợp Thể (Phi Tiêu + Lôi Điện)",
+            DescriptionEn = "Infuses aerodynamic boomerangs with celestial lightning, transforming each into a mobile lightning storm conduit.",
+            DescriptionVi = "Ngưng tụ sấm sét cửu thiên vào phi tiêu hồi toàn, biến mỗi chiếc phi tiêu thành một trạm phóng lôi điện di động quét sạch chiến trường.",
+            StatsEn = new Dictionary<string, string>
+            {
+                { "Requirement", "Boomerang Lv4 + Electric Lv4" },
+                { "Discharge Pattern", "Fires 2 Chain Lightning bolts twice (at 0.5s and 1.5s)" },
+                { "Bolt Damage", "90 DMG per bolt + 30% Chain Damage" },
+                { "Special Effect", "Stuns all struck enemies for 0.5s + Bounces back to previous targets" }
+            },
+            StatsVi = new Dictionary<string, string>
+            {
+                { "Điều Kiện", "Boomerang Cấp 4 + Electric Cấp 4" },
+                { "Quy Luật Phóng Sét", "Bắn 2 tia sét tối đa 2 lần (sau 0.5s và 1.5s bay)" },
+                { "Sát Thương Sét", "90 DMG mỗi tia + 30% Sát thương lan" },
+                { "Hiệu Ứng Kèm", "Gây Choáng 0.5s toàn bộ mục tiêu + Nảy ngược về quái cũ" }
+            },
+            MechanicsEn = "While slicing through enemies, each boomerang discharges 2 bolts at the apex and return journey, delivering devastating crowd control.",
+            MechanicsVi = "Trong suốt hành trình bay cắt quái, phi tiêu phóng 2 tia sét tại điểm xa nhất và trên đường bay về, tạo lượng sát thương và khống chế diện rộng cực khủng.",
+            TipsEn = "Pair with catching mechanics to maintain a storm of multiple boomerangs discharging lightning constantly!",
+            TipsVi = "Tận dụng cơ chế bắt dính phi tiêu ở Cấp 4 để duy trì liên tục đàn phi tiêu phóng sét không ngừng nghỉ!"
         });
 
         // =========================================================================

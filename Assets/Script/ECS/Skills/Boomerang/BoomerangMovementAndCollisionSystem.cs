@@ -14,6 +14,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
 {
     private EntityQuery _playerQuery;
     private EntityQuery _boomerangQuery;
+    private EntityQuery _fusionQuery;
     private BufferLookup<EnemyIncomingDamage> _incomingDamageLookup;
 
     [BurstCompile]
@@ -27,6 +28,10 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
 
         _boomerangQuery = SystemAPI.QueryBuilder()
             .WithAll<BoomerangTag, LocalTransform, BoomerangProjectileData>()
+            .Build();
+
+        _fusionQuery = SystemAPI.QueryBuilder()
+            .WithAll<ThunderBoomerangFusionTag, SkillRuntimeData>()
             .Build();
 
         _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
@@ -46,6 +51,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
         var grid = gridSingleton.Grid;
         float cellSize = gridSingleton.CellSize;
         float dt = SystemAPI.Time.DeltaTime;
+        bool isThunderFusion = !_fusionQuery.IsEmpty && _fusionQuery.GetSingleton<SkillRuntimeData>().Level >= 1;
 
         var ecb = new EntityCommandBuffer(Allocator.Temp);
         _incomingDamageLookup.Update(ref state);
@@ -166,7 +172,8 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                                 empoweredDamage,
                                 projData.ValueRO.HitRadius,
                                 projData.ValueRO.SkillLevel,
-                                true // IsEmpowered = true!
+                                true, // IsEmpowered = true!
+                                isThunderFusion
                             );
                         }
                     }

@@ -20,7 +20,7 @@ public class DevControlPanelView
 
     public event Action<string, int> OnSkillLevelDelta;
     public event Action<string, int> OnSkillDirectLevel;
-    public event Action OnToggleFusion;
+    public event Action<string> OnToggleFusion;
     public event Action OnMaxAllSkills;
     public event Action OnCloseClicked;
 
@@ -176,7 +176,7 @@ public class DevControlPanelView
         {
             if (_skillLevelTexts.TryGetValue(state.SkillId, out var txt))
             {
-                txt.text = state.SkillId == "SwordFusion" ? state.FormattedFusionText : state.FormattedLevelText;
+                txt.text = state.IsFusion ? state.FormattedFusionText : state.FormattedLevelText;
                 txt.color = state.Level switch
                 {
                     0 => new Color(0.6f, 0.6f, 0.6f),
@@ -324,7 +324,7 @@ public class DevControlPanelView
             new Vector2(230f, 34f),
             new Color(0.4f, 0.3f, 0.05f, 1f),
             new Color(1f, 0.9f, 0.35f),
-            () => OnToggleFusion?.Invoke()
+            () => OnToggleFusion?.Invoke(info.SkillId)
         );
         var tRect = toggleBtn.GetComponent<RectTransform>();
         tRect.anchorMin = new Vector2(0.5f, 0.5f);

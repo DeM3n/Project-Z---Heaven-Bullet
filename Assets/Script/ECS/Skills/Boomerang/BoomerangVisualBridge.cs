@@ -36,6 +36,7 @@ public class BoomerangVisualBridge : MonoBehaviour
         public TrailRenderer Trail;
         public LineRenderer TrajectoryLine;
         public bool IsEmpowered;
+        public bool IsThunder;
     }
 
     private class CatchRingEffect
@@ -153,11 +154,13 @@ public class BoomerangVisualBridge : MonoBehaviour
             float visualScale = data.HitRadius * 2.3f;
             visual.Root.transform.localScale = new Vector3(visualScale, visualScale, 1f);
 
-            // Thay đổi màu sắc nếu là đòn Cường Hóa (Empowered Lv4)
-            if (visual.IsEmpowered != data.IsEmpowered)
+            // Thay đổi màu sắc nếu là đòn Cường Hóa (Empowered Lv4) hoặc Hợp Thể Lôi Tiêu (Thunder Fusion)
+            bool isThunder = _entityManager.HasComponent<BoomerangLightningData>(entity);
+            if (visual.IsEmpowered != data.IsEmpowered || visual.IsThunder != isThunder)
             {
                 visual.IsEmpowered = data.IsEmpowered;
-                ApplyVisualTheme(visual, data.IsEmpowered);
+                visual.IsThunder = isThunder;
+                ApplyVisualTheme(visual, data.IsEmpowered, isThunder);
             }
 
             // Hiển thị đường thẳng dẫn đường (Trajectory Aim Line) khi Boomerang đang quay về
@@ -333,13 +336,27 @@ public class BoomerangVisualBridge : MonoBehaviour
             IsEmpowered = false
         };
 
-        ApplyVisualTheme(visual, false);
+        ApplyVisualTheme(visual, false, false);
         return visual;
     }
 
-    private void ApplyVisualTheme(BoomerangVisualItem visual, bool isEmpowered)
+    private void ApplyVisualTheme(BoomerangVisualItem visual, bool isEmpowered, bool isThunder = false)
     {
-        if (isEmpowered)
+        if (isThunder)
+        {
+            // Sắc Lôi Điện Thiên Kiếp (Cyan Neon kết hợp Vàng Kim Hợp Thể)
+            visual.CoreRenderer.color = new Color(0.9f, 1f, 1f, 1f);
+            visual.GlowRenderer.enabled = true;
+            visual.GlowRenderer.color = isEmpowered ? new Color(1f, 0.85f, 0.2f, 0.85f) : new Color(0f, 0.95f, 1f, 0.75f);
+            visual.Trail.startColor = isEmpowered ? new Color(1f, 0.9f, 0.3f, 0.95f) : new Color(0.1f, 0.95f, 1f, 0.95f);
+            visual.Trail.endColor = new Color(0f, 0.4f, 1f, 0f);
+            if (visual.TrajectoryLine != null)
+            {
+                visual.TrajectoryLine.startColor = new Color(0.2f, 0.95f, 1f, 0.9f);
+                visual.TrajectoryLine.endColor = new Color(0f, 0.3f, 0.8f, 0f);
+            }
+        }
+        else if (isEmpowered)
         {
             // Sắc vàng cam rực lửa (Fiery Sun / Empowered)
             visual.CoreRenderer.color = _isCustomSprite ? new Color(1f, 0.9f, 0.7f, 1f) : new Color(1f, 0.95f, 0.7f, 1f);

@@ -54,7 +54,16 @@ public partial struct FlyingSwordSkillSystem : ISystem
         {
             if (!state.EntityManager.Exists(owner.ValueRO.Owner)) continue;
 
-            int targetSwordCount = runtime.ValueRO.Level <= 0 ? 0 : math.clamp(runtime.ValueRO.Level, 1, 4);
+            int targetSwordCount;
+            if (state.EntityManager.HasComponent<FlyingSwordLevelBalanceData>(skillEntity))
+            {
+                var bal = state.EntityManager.GetComponentData<FlyingSwordLevelBalanceData>(skillEntity);
+                targetSwordCount = runtime.ValueRO.Level <= 0 ? 0 : bal.GetSwordCount(runtime.ValueRO.Level);
+            }
+            else
+            {
+                targetSwordCount = runtime.ValueRO.Level <= 0 ? 0 : math.clamp(runtime.ValueRO.Level, 1, 4);
+            }
 
             int currentSwordCount = 0;
             var swordEntities = _swordQuery.ToEntityArray(Allocator.Temp);
@@ -147,8 +156,21 @@ public partial struct FlyingSwordSkillSystem : ISystem
             var runtime = state.EntityManager.GetComponentData<SkillRuntimeData>(sword.ValueRO.SkillEntity);
             int level = runtime.Level;
 
-            float currentDamage = skillData.BaseDamage * (1f + (level - 1) * 0.35f);
-            float currentRushSpeed = skillData.RushSpeed * (1f + (level - 1) * 0.2f);
+            // Tính toán chỉ số theo Level (ưu tiên đọc từ ScriptableObject Balance Data)
+            float currentDamage;
+            float currentRushSpeed;
+
+            if (state.EntityManager.HasComponent<FlyingSwordLevelBalanceData>(sword.ValueRO.SkillEntity))
+            {
+                var bal = state.EntityManager.GetComponentData<FlyingSwordLevelBalanceData>(sword.ValueRO.SkillEntity);
+                currentDamage = bal.GetDamage(level);
+                currentRushSpeed = bal.GetRushSpeed(level);
+            }
+            else
+            {
+                currentDamage = skillData.BaseDamage * (1f + (level - 1) * 0.35f);
+                currentRushSpeed = skillData.RushSpeed * (1f + (level - 1) * 0.2f);
+            }
             float maxLeashSq = skillData.MaxLeashRange * skillData.MaxLeashRange;
             float detectRangeSq = skillData.DetectRange * skillData.DetectRange;
 
