@@ -86,4 +86,15 @@ public struct PauseMenuSnapshot
             return $"{min:00} : {sec:00}";
         }
     }
+
+    public static PauseMenuSnapshot Empty => new PauseMenuSnapshot
+    {
+        Level = 1,
+        CurrentHP = 100f,
+        MaxHP = 100f,
+        GlobalDamageMultiplier = 1f,
+        GoldMultiplier = 1f,
+        SkillStats = new List<SkillDamageStatItem>(),
+        Relics = new List<RelicStatItem>()
+    };
 }

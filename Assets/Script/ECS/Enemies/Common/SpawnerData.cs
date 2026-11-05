@@ -15,5 +15,6 @@ public struct SpawnerData : IComponentData
 public struct EnemySpawnEntry : IBufferElementData
 {
     public Entity Prefab;
+    public EnemyBehaviorType Behavior;
     public int Weight; // Trọng số xuất hiện theo tỉ lệ (ví dụ: Chaser 50, Shooter 25, Tank 15, Bomber 10)
 }

@@ -1,7 +1,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-public enum EnemyBehaviorType { Chaser, Tank, Shooter, Bomber }
+public enum EnemyBehaviorType { Chaser, Tank, Shooter, Bomber, Charger }
 
 public class EnemyAuthoring : MonoBehaviour
 {
@@ -21,8 +21,6 @@ public class EnemyAuthoring : MonoBehaviour
     public float ContactDamage = 5f;
     public float ContactRadius = 0.6f;
     public float ContactTickInterval = 1f;
-
-
 
     class Baker : Baker<EnemyAuthoring>
     {
@@ -55,13 +53,32 @@ public class EnemyAuthoring : MonoBehaviour
                 Timer = 0f
             });
 
+            // Gán Tag phân loại cụ thể
+            if (authoring.Behavior == EnemyBehaviorType.Chaser)
+            {
+                AddComponent<ChaserTag>(entity);
+            }
+            else if (authoring.Behavior == EnemyBehaviorType.Tank)
+            {
+                AddComponent<TankTag>(entity);
+            }
+
+            // Gán AI Flocking chống đè quái và bọc sườn
+            AddComponent(entity, new EnemyFlockingData
+            {
+                SeparationRadius = (authoring.Behavior == EnemyBehaviorType.Tank) ? 1.15f : 0.75f,
+                SeparationWeight = 0.6f,
+                FlankAngleOffset = 0.6f,
+                TangentialWeight = 0.45f
+            });
+
             var behaviors = authoring.GetComponents<IEnemyBehaviorAuthoring>();
             if (behaviors.Length > 1)
             {
                 Debug.LogWarning($"[EnemyAuthoring] {authoring.name} đang gắn {behaviors.Length} behavior cùng lúc — hiện chưa hỗ trợ kết hợp nhiều behavior trên 1 enemy.", authoring);
             }
-           foreach (var behavior in behaviors)
-           {
+            foreach (var behavior in behaviors)
+            {
                 DependsOn(behavior as Object); // đảm bảo incremental baking re-chạy khi số liệu trong behavior này đổi
                 behavior.Bake(this, entity);
             }

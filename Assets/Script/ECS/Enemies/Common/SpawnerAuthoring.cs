@@ -30,11 +30,29 @@ public class SpawnerAuthoring : MonoBehaviour
             AddComponent(entity, new SpawnerData
             {
                 Interval = authoring.SpawnInterval,
-                Timer = 0f,
+                Timer = 1.0f,
                 SpawnRadius = authoring.SpawnRadius,
                 CountPerSpawn = math.max(1, authoring.CountPerSpawn),
                 Rng = new Unity.Mathematics.Random(12345),
                 ElapsedGameTime = 0f
+            });
+
+            AddComponent(entity, new WaveManagerData
+            {
+                State = WaveState.NormalTimeline,
+                ElapsedGameTime = 0f,
+                IsTimerPaused = false,
+                ActiveMegaWaveMinute = 0,
+                MegaWaveDuration = 60f,
+                MegaWaveTimer = 0f,
+                MegaWaveSubSpawnTimer = 0f,
+                MegaWaveSurgeStage = 0,
+                MegaWaveEnemiesKilled = 0,
+                MegaWaveRemainingEnemies = 0,
+                MegaWaveTotalEnemies = 0,
+                Triggered3Min = 0,
+                Triggered6Min = 0,
+                Triggered9Min = 0
             });
 
             var buffer = AddBuffer<EnemySpawnEntry>(entity);
@@ -43,9 +61,12 @@ public class SpawnerAuthoring : MonoBehaviour
                 foreach (var item in authoring.EnemyPool)
                 {
                     if (item.Prefab == null) continue;
+                    var enemyAuth = item.Prefab.GetComponent<EnemyAuthoring>();
+                    EnemyBehaviorType bType = enemyAuth != null ? enemyAuth.Behavior : EnemyBehaviorType.Chaser;
                     buffer.Add(new EnemySpawnEntry
                     {
                         Prefab = GetEntity(item.Prefab, TransformUsageFlags.Dynamic),
+                        Behavior = bType,
                         Weight = math.max(1, item.Weight)
                     });
                 }

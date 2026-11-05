@@ -107,4 +107,7 @@ InitTestScene*.unity*
 
 # AI Assistant Context files
 /CLAUDE.md
-/GEMINI.md
+/GEMINI.md
+
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta

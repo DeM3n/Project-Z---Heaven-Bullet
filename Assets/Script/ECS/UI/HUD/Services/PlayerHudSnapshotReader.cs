@@ -58,6 +58,26 @@ public static class PlayerHudSnapshotReader
             expToNext = lvl.ExpToNextLevel;
         }
 
+        // 4. Đọc trạng thái đợt tổng tấn công Mega Wave
+        bool isMegaWaveActive = false;
+        int megaWaveRemaining = 0;
+        int megaWaveTotal = 0;
+        int megaWaveMinute = 0;
+        float megaWaveTimeRemaining = 0f;
+        int megaWaveKills = 0;
+
+        var waveQuery = em.CreateEntityQuery(ComponentType.ReadOnly<WaveManagerData>());
+        if (!waveQuery.IsEmpty)
+        {
+            var wave = waveQuery.GetSingleton<WaveManagerData>();
+            isMegaWaveActive = wave.State == WaveState.MegaWaveActive;
+            megaWaveRemaining = wave.MegaWaveRemainingEnemies;
+            megaWaveTotal = wave.MegaWaveTotalEnemies;
+            megaWaveMinute = wave.ActiveMegaWaveMinute;
+            megaWaveTimeRemaining = wave.MegaWaveTimer;
+            megaWaveKills = wave.MegaWaveEnemiesKilled;
+        }
+
         return new PlayerHudSnapshot(
             currentHp,
             maxHp,
@@ -70,7 +90,13 @@ public static class PlayerHudSnapshotReader
             currentExp,
             expToNext,
             level,
-            survivalTime
+            survivalTime,
+            isMegaWaveActive,
+            megaWaveRemaining,
+            megaWaveTotal,
+            megaWaveMinute,
+            megaWaveTimeRemaining,
+            megaWaveKills
         );
     }
 }

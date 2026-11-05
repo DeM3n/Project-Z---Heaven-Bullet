@@ -107,14 +107,16 @@ public static class CodexDatabase
                 { "Base HP", "28" },
                 { "Movement Speed", "1.8 m/s (Kiting)" },
                 { "Attack Range", "5.0 meters" },
-                { "Projectile Damage", "15 DMG per arrow" }
+                { "Attack Cooldown", "2.6s" },
+                { "Projectile Damage", "10 DMG per arrow" }
             },
             StatsVi = new Dictionary<string, string>
             {
                 { "Máu Cơ Bản", "28 HP" },
                 { "Tốc Độ Di Chuyển", "1.8 m/s (Giữ Cự Ly)" },
                 { "Tầm Bắn", "5.0 mét" },
-                { "Sát Thương Đạn", "15 DMG mỗi mũi tên" }
+                { "Hồi Chiêu Bắn", "2.6 giây" },
+                { "Sát Thương Đạn", "10 DMG mỗi mũi tên" }
             },
             MechanicsEn = "Flees if the player approaches too close and shoots dark arrows on cooldown.",
             MechanicsVi = "Tháo chạy lùi lại nếu người chơi áp sát và bắn đạn ma đạo khi đủ hồi chiêu.",
@@ -135,16 +137,16 @@ public static class CodexDatabase
             StatsEn = new Dictionary<string, string>
             {
                 { "Base HP", "46" },
-                { "Movement Speed", "2.5 m/s (Sprinting)" },
+                { "Movement Speed", "2.4 m/s (Sprint: 3.2 m/s)" },
                 { "Trigger Radius", "1.5 meters" },
-                { "Explosion Damage", "45 DMG (AOE)" }
+                { "Explosion Damage", "25 DMG (AOE)" }
             },
             StatsVi = new Dictionary<string, string>
             {
                 { "Máu Cơ Bản", "46 HP" },
-                { "Tốc Độ Chạy", "2.5 m/s (Lao Cực Nhanh)" },
+                { "Tốc Độ Chạy", "2.4 m/s (Bộc Tốc: 3.2 m/s)" },
                 { "Cự Ly Kích Nổ", "1.5 mét" },
-                { "Sát Thương Nổ", "45 DMG diện rộng" }
+                { "Sát Thương Nổ", "25 DMG diện rộng" }
             },
             MechanicsEn = "Detonates automatically within 1.5m, dealing massive damage to the player.",
             MechanicsVi = "Tự nổ khi vào bán kính 1.5m, gây lượng sát thương khủng khiếp làm tụt máu rất nhanh.",

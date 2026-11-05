@@ -44,6 +44,10 @@ public class GameHUDBridge : MonoBehaviour
     private ChestRewardService _chestRewardService;
     private RunLifecycleService _runLifecycleService;
 
+    // --- Mega Wave Notification Tracking ---
+    private bool _lastMegaWaveActive = false;
+    private int _lastAnnouncedMegaWave = 0;
+
     // --- Active Modal Cache ---
     private readonly List<IPerkDefinition> _currentPerks = new List<IPerkDefinition>();
     private readonly HashSet<string> _lastExcludedPerkIds = new HashSet<string>();
@@ -117,7 +121,20 @@ public class GameHUDBridge : MonoBehaviour
         var snapshot = PlayerHudSnapshotReader.Read(_entityManager, playerEntity, _runLifecycleService.SurvivalTime);
         _hudView.UpdateSnapshot(snapshot);
 
-        // 5. Kiểm tra sự kiện lên cấp (Level-Up)
+        // 5. Kiểm tra thông báo đợt tổng tấn công Mega Wave
+        if (snapshot.IsMegaWaveActive && !_lastMegaWaveActive)
+        {
+            _lastMegaWaveActive = true;
+            _lastAnnouncedMegaWave = snapshot.MegaWaveMinute;
+            ShowBannerNotification(GameLocalization.MegaWaveAlert(snapshot.MegaWaveMinute));
+        }
+        else if (!snapshot.IsMegaWaveActive && _lastMegaWaveActive)
+        {
+            _lastMegaWaveActive = false;
+            ShowBannerNotification(GameLocalization.MegaWaveCleared(_lastAnnouncedMegaWave));
+        }
+
+        // 6. Kiểm tra sự kiện lên cấp (Level-Up)
         if (snapshot.Level > _lastPlayerLevel)
         {
             _pendingLevelUps += (snapshot.Level - _lastPlayerLevel);

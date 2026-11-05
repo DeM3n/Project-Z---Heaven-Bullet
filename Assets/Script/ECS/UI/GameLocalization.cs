@@ -74,6 +74,30 @@ public static class GameLocalization
     public static string RerollButtonText(int count) => Get($"🎲 REROLL ({count}) [R]", $"🎲 ĐỔI THẺ ({count}) [R]");
     public static string RerollEmptyText => Get("🎲 NO REROLLS", "🎲 HẾT LƯỢT ĐỔI");
 
+    // --- Mega Wave & Siege Notifications ---
+    public static string MegaWaveAlert(int minute) => minute switch
+    {
+        3 => Get("⚠️ MEGA WAVE (03:00): THE SIEGE OF FURY! SURVIVE 1 MINUTE! ⚠️", "⚠️ ĐỢT TỔNG TẤN CÔNG (PHÚT 3): CUỘC VÂY HÃM CUỒNG NỘ! SINH TỒN 1 PHÚT! ⚠️"),
+        6 => Get("⚠️ MEGA WAVE (06:00): CROSSFIRE & BOMBERS! SURVIVE 1 MINUTE! ⚠️", "⚠️ ĐỢT TỔNG TẤN CÔNG (PHÚT 6): HỎA NGỤC BẮN TỈA & BOM QUỶ! SINH TỒN 1 PHÚT! ⚠️"),
+        9 => Get("☠️ APOCALYPSE SIEGE (09:00): THE FINAL STAND! SURVIVE 1 MINUTE! ☠️", "☠️ TỔNG TẤN CÔNG TẬN DIỆT (PHÚT 9): PHÒNG THỦ TỬ CHIẾN! SINH TỒN 1 PHÚT! ☠️"),
+        _ => Get($"⚠️ MEGA WAVE ({minute:00}:00): SURVIVE 1 MINUTE! ⚠️", $"⚠️ ĐỢT TỔNG TẤN CÔNG ({minute:00}:00)! SINH TỒN 1 PHÚT! ⚠️")
+    };
+
+    public static string MegaWaveCleared(int minute) => Get(
+        $"🎉 SIEGE {minute:00}:00 DEFENDED! YOU SURVIVED 1 MINUTE! 🎉",
+        $"🎉 VƯỢT QUA ĐỢT TỔNG TẤN CÔNG ({minute:00}:00)! SINH TỒN 1 PHÚT THÀNH CÔNG! 🎉"
+    );
+
+    public static string SiegeRemainingText(int remaining, int total) => Get(
+        $"⚔️ SIEGE: {remaining} / {total} ENEMIES REMAINING ⚔️",
+        $"⚔️ MỤC TIÊU: CÒN LẠI {remaining} / {total} QUÁI ⚔️"
+    );
+
+    public static string SiegeSurvivalText(int secondsRemaining, int kills) => Get(
+        $"⏳ SURVIVE: {secondsRemaining}s | KILLS: {kills} ⚔️",
+        $"⏳ SINH TỒN: {secondsRemaining}s | ĐÃ TIÊU DIỆT: {kills} QUÁI ⚔️"
+    );
+
     // --- Pause & Settings Menu ---
     public static string PauseHeader => Get("✦ GAME PAUSED ✦", "✦ TẠM DỪNG TRẬN ĐẤU ✦");
     public static string ResumeButton => Get("▶ RESUME [ESC]", "▶ TIẾP TỤC [ESC]");
@@ -93,6 +117,8 @@ public static class GameLocalization
     public static string DevResetReroll => Get("🎲 3 REROLLS", "🎲 HỒI 3 LƯỢT ĐỔI");
     public static string DevSpeedBoost(bool on) => Get($"🏃 SPEED x2: {(on ? "ON" : "OFF")}", $"🏃 TỐC ĐỘ x2: {(on ? "BẬT" : "TẮT")}");
     public static string DevAddRegen => Get("💚 +0.5 HP/s REGEN", "💚 +0.5 HP/s HỒI MÁU");
+    public static string DevJumpWave3 => Get("⚡ JUMP TO 3M WAVE", "⚡ NHẢY TỚI WAVE PHÚT 3");
+    public static string DevJumpWave6 => Get("⚡ JUMP TO 6M WAVE", "⚡ NHẢY TỚI WAVE PHÚT 6");
 
     // --- Perk Titles ---
     public static string FlyingSwordTitle => Get("FLYING SWORD", "PHI KIẾM HỘ THỂ");

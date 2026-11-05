@@ -15,14 +15,16 @@ public class GameHUDView
     private readonly Text _expText;
     private readonly Text _levelBadgeText;
     private readonly Text _survivalTimerText;
+    private readonly GameObject _siegeObjectiveObj;
+    private readonly Text _siegeObjectiveText;
 
     private readonly Text _langButtonText;
     private readonly Text _langHintText;
 
     public GameHUDView(Transform canvasParent)
     {
-        // 1. Đồng hồ sinh tồn (Survival Timer: mm:ss) ở giữa phía trên
-        _survivalTimerText = BuildSurvivalTimer(canvasParent);
+        // 1. Đồng hồ sinh tồn (Survival Timer: mm:ss) ở giữa phía trên & Thanh mục tiêu phòng thủ Siege
+        _survivalTimerText = BuildSurvivalTimer(canvasParent, out _siegeObjectiveObj, out _siegeObjectiveText);
 
         // 2. HUD Panel góc trên bên trái (Level Badge, HP Bar, EXP Bar)
         _hudRoot = BuildHUDPanel(canvasParent, out _hpFillImage, out _hpText, out _expFillImage, out _expText, out _levelBadgeText);
@@ -49,7 +51,32 @@ public class GameHUDView
 
         if (_levelBadgeText != null) _levelBadgeText.text = snapshot.FormattedLevelBadge;
 
-        if (_survivalTimerText != null) _survivalTimerText.text = snapshot.FormattedSurvivalTimer;
+        if (_survivalTimerText != null)
+        {
+            if (snapshot.IsMegaWaveActive)
+            {
+                _survivalTimerText.text = $"⚠️ {snapshot.FormattedSurvivalTimer}";
+                _survivalTimerText.color = (Time.unscaledTime % 0.8f < 0.4f) ? new Color(1f, 0.35f, 0.35f) : new Color(1f, 0.9f, 0.4f);
+            }
+            else
+            {
+                _survivalTimerText.text = snapshot.FormattedSurvivalTimer;
+                _survivalTimerText.color = new Color(1f, 0.9f, 0.4f);
+            }
+        }
+
+        if (_siegeObjectiveObj != null && _siegeObjectiveText != null)
+        {
+            if (snapshot.IsMegaWaveActive)
+            {
+                _siegeObjectiveObj.SetActive(true);
+                _siegeObjectiveText.text = GameLocalization.SiegeSurvivalText(snapshot.MegaWaveTimeRemainingSec, snapshot.MegaWaveEnemiesKilled);
+            }
+            else
+            {
+                _siegeObjectiveObj.SetActive(false);
+            }
+        }
     }
 
     /// <summary>
@@ -61,12 +88,12 @@ public class GameHUDView
         if (_langHintText != null) _langHintText.text = GameLocalization.LangHintText;
     }
 
-    private Text BuildSurvivalTimer(Transform parent)
+    private Text BuildSurvivalTimer(Transform parent, out GameObject siegeObj, out Text siegeTxt)
     {
         var timerObj = UIFactory.CreatePanel(
             parent,
             "Survival_Timer",
-            new Vector2(130f, 38f),
+            new Vector2(140f, 38f),
             HUDTheme.PanelBgDark,
             HUDTheme.MetalBorder,
             new Vector2(2f, -2f)
@@ -78,7 +105,7 @@ public class GameHUDView
         rect.pivot = new Vector2(0.5f, 1f);
         rect.anchoredPosition = new Vector2(0f, -24f);
 
-        return UIFactory.CreateText(
+        var timerText = UIFactory.CreateText(
             timerObj.transform,
             "Text",
             "00:00",
@@ -88,6 +115,35 @@ public class GameHUDView
             TextAnchor.MiddleCenter,
             Color.black
         );
+
+        // Thanh mục tiêu phòng thủ Siege (chỉ hiển thị khi đang diễn ra Mega Wave)
+        siegeObj = UIFactory.CreatePanel(
+            parent,
+            "Siege_Objective_Panel",
+            new Vector2(430f, 32f),
+            new Color(0.2f, 0.04f, 0.04f, 0.94f),
+            HUDTheme.GoldBorder,
+            new Vector2(2f, -2f)
+        );
+        var sRect = siegeObj.GetComponent<RectTransform>();
+        sRect.anchorMin = new Vector2(0.5f, 1f);
+        sRect.anchorMax = new Vector2(0.5f, 1f);
+        sRect.pivot = new Vector2(0.5f, 1f);
+        sRect.anchoredPosition = new Vector2(0f, -68f);
+
+        siegeTxt = UIFactory.CreateText(
+            siegeObj.transform,
+            "Siege_Text",
+            "",
+            14,
+            new Color(1f, 0.88f, 0.35f),
+            FontStyle.Bold,
+            TextAnchor.MiddleCenter,
+            Color.black
+        );
+
+        siegeObj.SetActive(false);
+        return timerText;
     }
 
     private GameObject BuildHUDPanel(

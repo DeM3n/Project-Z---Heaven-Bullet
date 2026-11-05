@@ -305,36 +305,39 @@ public class PauseMenuView
         float spacingY = 38f;
         int rowIdx = 0;
 
-        for (int i = 0; i < snapshot.SkillStats.Count; i++)
+        if (snapshot.SkillStats != null)
         {
-            var stat = snapshot.SkillStats[i];
-            // Chỉ hiển thị các kỹ năng đã học (Level > 0), không hiển thị kỹ năng chưa học
-            if (stat.Level <= 0) continue;
-
-            if (rowIdx < _skillRows.Count)
+            for (int i = 0; i < snapshot.SkillStats.Count; i++)
             {
-                var row = _skillRows[rowIdx];
-                row.Root.SetActive(true);
-                row.Rect.anchoredPosition = new Vector2(0f, startY - rowIdx * spacingY);
+                var stat = snapshot.SkillStats[i];
+                // Chỉ hiển thị các kỹ năng đã học (Level > 0), không hiển thị kỹ năng chưa học
+                if (stat.Level <= 0) continue;
 
-                string lvlBadge = (stat.Level >= stat.MaxLevel) ? "<color=#ffd54f>[MAX]</color>" : $"<color=#00e5ff>[Lv.{stat.Level}]</color>";
-                row.TitleText.text = $"{stat.Title} {lvlBadge}";
-                row.TitleText.color = stat.ThemeColor;
-                if (row.FillImage != null) row.FillImage.color = stat.ThemeColor;
-
-                if (stat.Damage > 0f)
+                if (rowIdx < _skillRows.Count)
                 {
-                    row.StatusText.text = $"<color=#ffffff>{stat.Damage:N0}</color> <color=#ffd54f>({stat.Percentage:F1}%)</color>";
-                    float ratio = Mathf.Clamp01(stat.Percentage / 100f);
-                    row.FillBar.sizeDelta = new Vector2(Mathf.Max(6f, 430f * ratio), 6f);
-                }
-                else
-                {
-                    row.StatusText.text = "<color=#aaaaaa>0 DMG (Active)</color>";
-                    row.FillBar.sizeDelta = new Vector2(4f, 6f);
-                }
+                    var row = _skillRows[rowIdx];
+                    row.Root.SetActive(true);
+                    row.Rect.anchoredPosition = new Vector2(0f, startY - rowIdx * spacingY);
 
-                rowIdx++;
+                    string lvlBadge = (stat.Level >= stat.MaxLevel) ? "<color=#ffd54f>[MAX]</color>" : $"<color=#00e5ff>[Lv.{stat.Level}]</color>";
+                    row.TitleText.text = $"{stat.Title} {lvlBadge}";
+                    row.TitleText.color = stat.ThemeColor;
+                    if (row.FillImage != null) row.FillImage.color = stat.ThemeColor;
+
+                    if (stat.Damage > 0f)
+                    {
+                        row.StatusText.text = $"<color=#ffffff>{stat.Damage:N0}</color> <color=#ffd54f>({stat.Percentage:F1}%)</color>";
+                        float ratio = Mathf.Clamp01(stat.Percentage / 100f);
+                        row.FillBar.sizeDelta = new Vector2(Mathf.Max(6f, 430f * ratio), 6f);
+                    }
+                    else
+                    {
+                        row.StatusText.text = "<color=#aaaaaa>0 DMG (Active)</color>";
+                        row.FillBar.sizeDelta = new Vector2(4f, 6f);
+                    }
+
+                    rowIdx++;
+                }
             }
         }
 
@@ -351,19 +354,22 @@ public class PauseMenuView
         float aSpacingY = 52f;
         int aRowIdx = 0;
 
-        for (int i = 0; i < snapshot.Relics.Count; i++)
+        if (snapshot.Relics != null)
         {
-            var relic = snapshot.Relics[i];
-            if (relic.Level <= 0) continue;
-
-            if (aRowIdx < _artifactRows.Count)
+            for (int i = 0; i < snapshot.Relics.Count; i++)
             {
-                var row = _artifactRows[aRowIdx];
-                row.Root.SetActive(true);
-                row.Rect.anchoredPosition = new Vector2(0f, aStartY - aRowIdx * aSpacingY);
-                row.NameText.text = $"{relic.Name}  <color=#ffd54f>Lv.{relic.Level}</color>";
-                row.DescText.text = relic.Description;
-                aRowIdx++;
+                var relic = snapshot.Relics[i];
+                if (relic.Level <= 0) continue;
+
+                if (aRowIdx < _artifactRows.Count)
+                {
+                    var row = _artifactRows[aRowIdx];
+                    row.Root.SetActive(true);
+                    row.Rect.anchoredPosition = new Vector2(0f, aStartY - aRowIdx * aSpacingY);
+                    row.NameText.text = $"{relic.Name}  <color=#ffd54f>Lv.{relic.Level}</color>";
+                    row.DescText.text = relic.Description;
+                    aRowIdx++;
+                }
             }
         }
 

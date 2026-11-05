@@ -13,7 +13,7 @@ public static class PauseMenuDataProvider
     public static PauseMenuSnapshot Capture()
     {
         var world = World.DefaultGameObjectInjectionWorld;
-        if (world == null || !world.IsCreated) return default;
+        if (world == null || !world.IsCreated) return PauseMenuSnapshot.Empty;
         var em = world.EntityManager;
 
         // 1. Tìm Player Entity
@@ -28,7 +28,7 @@ public static class PauseMenuDataProvider
 
         if (playerEntity == Entity.Null || !em.Exists(playerEntity))
         {
-            return default;
+            return PauseMenuSnapshot.Empty;
         }
 
         // 2. Thông tin cơ bản & sinh tồn

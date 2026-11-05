@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 #if UNITY_EDITOR || DEBUG
@@ -109,6 +110,15 @@ public class DevCheatService
         lvl.Level += 1;
         lvl.CurrentExp = 0;
         em.SetComponentData(player, lvl);
+
+        // +10 Máu Tối Đa (Max HP) cho Player khi Level Up
+        if (em.HasComponent<HealthData>(player))
+        {
+            var hp = em.GetComponentData<HealthData>(player);
+            hp.MaxHP += 10f;
+            hp.CurrentHP += 10f;
+            em.SetComponentData(player, hp);
+        }
     }
 
     public void KillAllEnemies()
@@ -145,6 +155,45 @@ public class DevCheatService
         var regen = em.GetComponentData<PlayerHPRegenData>(player);
         regen.RegenPerSecond += 0.5f;
         em.SetComponentData(player, regen);
+    }
+
+    public void FastForwardToWave(int minute)
+    {
+        WasCheatedThisRun = true;
+        var em = EntityManager;
+        if (em == default) return;
+
+        using var query = em.CreateEntityQuery(ComponentType.ReadWrite<WaveManagerData>(), ComponentType.ReadWrite<SpawnerData>());
+        if (query.IsEmpty) return;
+
+        Entity spawner = query.GetSingletonEntity();
+        var wave = em.GetComponentData<WaveManagerData>(spawner);
+        var spawnData = em.GetComponentData<SpawnerData>(spawner);
+
+        float targetTime = math.max(0f, (minute * 60f) - 3f); // Đặt thời gian đến 3 giây trước đợt Mega Wave
+        wave.ElapsedGameTime = targetTime;
+        spawnData.ElapsedGameTime = targetTime;
+        wave.State = WaveState.NormalTimeline;
+        wave.IsTimerPaused = false;
+        wave.MegaWaveTimer = 0f;
+        wave.MegaWaveSubSpawnTimer = 0f;
+        wave.MegaWaveSurgeStage = 0;
+        wave.MegaWaveEnemiesKilled = 0;
+        wave.MegaWaveRemainingEnemies = 0;
+        wave.MegaWaveTotalEnemies = 0;
+
+        if (targetTime < 180f) wave.Triggered3Min = 0;
+        if (targetTime < 360f) wave.Triggered6Min = 0;
+        if (targetTime < 540f) wave.Triggered9Min = 0;
+
+        em.SetComponentData(spawner, wave);
+        em.SetComponentData(spawner, spawnData);
+
+        if (RunLifecycleService.Instance != null)
+        {
+            var field = typeof(RunLifecycleService).GetField("_survivalTime", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null) field.SetValue(RunLifecycleService.Instance, targetTime);
+        }
     }
 
     public List<DevAction> GetDevActions()
@@ -200,12 +249,47 @@ public class DevCheatService
             },
             new DevAction
             {
+                ActionId = "CameraZoom",
+                LabelGetter = () => {
+                    float size = CameraFollowPlayer.Instance != null ? CameraFollowPlayer.Instance.OrthographicSize : 7.2f;
+                    return GameLocalization.Get($"📷 Camera Zoom: {size:F1}", $"📷 Tầm nhìn Camera: {size:F1}");
+                },
+                IsToggle = false,
+                NormalColor = new Color(0.15f, 0.22f, 0.35f, 1f),
+                BorderColor = new Color(0.45f, 0.75f, 1f),
+                ExecuteAction = () => {
+                    if (CameraFollowPlayer.Instance == null) return;
+                    float cur = CameraFollowPlayer.Instance.OrthographicSize;
+                    float next = (cur < 6.8f) ? 7.2f : ((cur < 8.0f) ? 8.5f : 6.0f);
+                    CameraFollowPlayer.Instance.OrthographicSize = next;
+                }
+            },
+            new DevAction
+            {
                 ActionId = "AddRegen",
                 LabelGetter = () => GameLocalization.DevAddRegen,
                 IsToggle = false,
                 NormalColor = new Color(0.12f, 0.32f, 0.18f, 1f),
                 BorderColor = new Color(0.4f, 1f, 0.55f),
                 ExecuteAction = AddDevRegen
+            },
+            new DevAction
+            {
+                ActionId = "JumpWave3",
+                LabelGetter = () => GameLocalization.DevJumpWave3,
+                IsToggle = false,
+                NormalColor = new Color(0.38f, 0.18f, 0.08f, 1f),
+                BorderColor = new Color(1f, 0.6f, 0.2f),
+                ExecuteAction = () => FastForwardToWave(3)
+            },
+            new DevAction
+            {
+                ActionId = "JumpWave6",
+                LabelGetter = () => GameLocalization.DevJumpWave6,
+                IsToggle = false,
+                NormalColor = new Color(0.32f, 0.08f, 0.35f, 1f),
+                BorderColor = new Color(0.85f, 0.3f, 1f),
+                ExecuteAction = () => FastForwardToWave(6)
             }
         };
     }

@@ -39,6 +39,18 @@ public partial struct DeathCleanupSystem : ISystem
                 {
                     SystemAPI.GetSingletonRW<PlayerRunStats>().ValueRW.EnemiesKilled++;
                 }
+
+                // Cập nhật số quái Mega Wave bị tiêu diệt
+                if (SystemAPI.HasComponent<MegaWaveEnemyTag>(entity) && SystemAPI.HasSingleton<WaveManagerData>())
+                {
+                    var wave = SystemAPI.GetSingletonRW<WaveManagerData>();
+                    wave.ValueRW.MegaWaveEnemiesKilled++;
+                    if (wave.ValueRO.MegaWaveRemainingEnemies > 0)
+                    {
+                        wave.ValueRW.MegaWaveRemainingEnemies--;
+                    }
+                }
+
                 // 1. NẾU LÀ TREASURE GOBLIN BỊ TIÊU DIỆT:
                 if (SystemAPI.HasComponent<TreasureGoblinTag>(entity))
                 {

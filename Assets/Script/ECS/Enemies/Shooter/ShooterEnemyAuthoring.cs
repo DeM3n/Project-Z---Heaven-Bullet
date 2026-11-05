@@ -4,7 +4,7 @@ using UnityEngine;
 public class ShooterEnemyAuthoring : MonoBehaviour, IEnemyBehaviorAuthoring
 {
     public GameObject ProjectilePrefab;
-    public float AttackCooldown = 1.5f;
+    public float AttackCooldown = 2.6f;
     public float PreferredRange = 5f;
     public float ProjectileDamage = 10f;
     public float ProjectileSpeed = 6f;
@@ -28,6 +28,14 @@ public class ShooterEnemyAuthoring : MonoBehaviour, IEnemyBehaviorAuthoring
             ProjectileSpeed = ProjectileSpeed,
             ProjectileHitRadius = ProjectileHitRadius,
             ProjectilePrefab = baker.GetEntity(ProjectilePrefab, TransformUsageFlags.Dynamic)
+        });
+
+        // Gán AI Chiến Thuật Xạ Thủ: Circle-Strafe & Kiting
+        baker.AddComponent(entity, new ShooterTacticsData
+        {
+            StrafeDirection = 1.0f,
+            StrafeTimer = 3.0f,
+            CircleStrafeSpeed = 0.85f
         });
     }
 }

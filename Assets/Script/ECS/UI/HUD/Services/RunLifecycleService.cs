@@ -57,6 +57,30 @@ public class RunLifecycleService
                 buffer.Clear();
             }
         }
+
+        // Reset WaveManagerData singleton
+        var waveQuery = _entityManager.CreateEntityQuery(ComponentType.ReadWrite<WaveManagerData>());
+        if (!waveQuery.IsEmpty)
+        {
+            var waveEntity = waveQuery.GetSingletonEntity();
+            _entityManager.SetComponentData(waveEntity, new WaveManagerData
+            {
+                State = WaveState.NormalTimeline,
+                ElapsedGameTime = 0f,
+                IsTimerPaused = false,
+                ActiveMegaWaveMinute = 0,
+                MegaWaveDuration = 60f,
+                MegaWaveTimer = 0f,
+                MegaWaveSubSpawnTimer = 0f,
+                MegaWaveSurgeStage = 0,
+                MegaWaveEnemiesKilled = 0,
+                MegaWaveRemainingEnemies = 0,
+                MegaWaveTotalEnemies = 0,
+                Triggered3Min = 0,
+                Triggered6Min = 0,
+                Triggered9Min = 0
+            });
+        }
     }
 
     public void AddStones(int amount)
@@ -68,7 +92,18 @@ public class RunLifecycleService
     {
         if (Time.timeScale > 0f)
         {
-            _survivalTime += deltaTime;
+            // Kiểm tra trạng thái đóng băng thời gian của Mega Wave
+            var waveQuery = _entityManager.CreateEntityQuery(ComponentType.ReadOnly<WaveManagerData>());
+            bool isTimerPaused = false;
+            if (!waveQuery.IsEmpty)
+            {
+                isTimerPaused = waveQuery.GetSingleton<WaveManagerData>().IsTimerPaused;
+            }
+
+            if (!isTimerPaused)
+            {
+                _survivalTime += deltaTime;
+            }
         }
     }
 

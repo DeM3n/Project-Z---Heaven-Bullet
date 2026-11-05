@@ -106,7 +106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAuthoring
   MoveSpeed: 1
-  MaxHP: 95
+  MaxHP: 120
   ExpOrbPrefab: {fileID: 4710301940314887447, guid: e4f0a07f52ef4d84bd3f3c575ad1055c, type: 3}
   ExpReward: 20
   DropChance: 1
@@ -114,11 +114,3 @@ MonoBehaviour:
   ContactDamage: 5
   ContactRadius: 0.6
   ContactTickInterval: 1
-  ProjectilePrefab: {fileID: 0}
-  AttackCooldown: 1.5
-  PreferredRange: 5
-  ProjectileDamage: 10
-  ProjectileSpeed: 6
-  ProjectileHitRadius: 0.2
-  ExplodeRadius: 1.5
-  ExplodeDamage: 25

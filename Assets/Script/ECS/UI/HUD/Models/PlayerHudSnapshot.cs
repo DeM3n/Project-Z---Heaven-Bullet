@@ -24,6 +24,13 @@ public readonly struct PlayerHudSnapshot
     public readonly int Level;
     public readonly float SurvivalTimeSeconds;
 
+    public readonly bool IsMegaWaveActive;
+    public readonly int MegaWaveRemainingEnemies;
+    public readonly int MegaWaveTotalEnemies;
+    public readonly int MegaWaveMinute;
+    public readonly float MegaWaveTimeRemaining;
+    public readonly int MegaWaveEnemiesKilled;
+
     public PlayerHudSnapshot(
         float currentHp,
         float maxHp,
@@ -36,7 +43,13 @@ public readonly struct PlayerHudSnapshot
         int currentExp,
         int expToNext,
         int level,
-        float survivalTime)
+        float survivalTime,
+        bool isMegaWaveActive = false,
+        int megaWaveRemaining = 0,
+        int megaWaveTotal = 0,
+        int megaWaveMinute = 0,
+        float megaWaveTimeRemaining = 0f,
+        int megaWaveEnemiesKilled = 0)
     {
         CurrentHP = currentHp;
         MaxHP = Mathf.Max(1f, maxHp);
@@ -55,7 +68,16 @@ public readonly struct PlayerHudSnapshot
 
         Level = level;
         SurvivalTimeSeconds = survivalTime;
+
+        IsMegaWaveActive = isMegaWaveActive;
+        MegaWaveRemainingEnemies = megaWaveRemaining;
+        MegaWaveTotalEnemies = megaWaveTotal;
+        MegaWaveMinute = megaWaveMinute;
+        MegaWaveTimeRemaining = megaWaveTimeRemaining;
+        MegaWaveEnemiesKilled = megaWaveEnemiesKilled;
     }
+
+    public int MegaWaveTimeRemainingSec => Mathf.Max(0, Mathf.CeilToInt(MegaWaveTimeRemaining));
 
     public string FormattedHpText
     {

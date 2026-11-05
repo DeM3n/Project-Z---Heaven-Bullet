@@ -5,3 +5,4 @@ public struct PlayerTag : IComponentData {}
 public struct EnemyTag : IComponentData {}
 public struct ProjectileTag : IComponentData {}
 public struct EliteTag : IComponentData {}
+public struct ChargerTag : IComponentData {}

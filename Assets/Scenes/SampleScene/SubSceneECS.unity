@@ -345,7 +345,7 @@ MonoBehaviour:
   EnemyPool:
   - Name: 
     Prefab: {fileID: 100785456706693687, guid: ff0799e8377945045ab42fcaa332483a, type: 3}
-    Weight: 28
+    Weight: 25
   - Name: 
     Prefab: {fileID: 100785456706693687, guid: a337d02e98bb6204aa48c6a39de0afbe, type: 3}
     Weight: 42
@@ -355,9 +355,12 @@ MonoBehaviour:
   - Name: 
     Prefab: {fileID: 100785456706693687, guid: 26f0600c19c5c754aaf214b8185b6878, type: 3}
     Weight: 20
+  - Name: 
+    Prefab: {fileID: 100785456706693687, guid: ec53055942571134c8d166f478037d63, type: 3}
+    Weight: 82
   SpawnInterval: 1.5
-  SpawnRadius: 10
-  CountPerSpawn: 2
+  SpawnRadius: 12
+  CountPerSpawn: 3
 --- !u!1 &964216964
 GameObject:
   m_ObjectHideFlags: 0
@@ -419,6 +422,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: def38b6cbfa834a4bb1de11ce69d3e16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FlyingSwordSkillAuthoring
+  Config: {fileID: 0}
   SwordPrefab: {fileID: 6422362882192681001, guid: 27ac59a03a592114f96a4c5a6843017d, type: 3}
   BaseDamage: 13.5
   RushSpeed: 9.45
@@ -493,6 +497,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c10b23f81e44f8ab45e01928374a504, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlashSwordSkillAuthoring
+  Config: {fileID: 0}
   SwordPrefab: {fileID: 6422362882192681001, guid: 7c10b23f81e44f8ab45e01928374a511, type: 3}
   SwordWavePrefab: {fileID: 5422362882192681375, guid: 7c10b23f81e44f8ab45e01928374a512, type: 3}
   BaseDamage: 38
