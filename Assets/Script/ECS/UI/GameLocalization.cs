@@ -260,20 +260,20 @@ public static class GameLocalization
         return level switch
         {
             2 => Get(
-                "Reduces recharge cooldown from 30s down to 18s (Recharges 40% faster!).",
-                "Giảm thời gian hồi khiên từ 30s xuống 18s (Hồi nhanh hơn 40%!)."
+                "Reduces recharge cooldown from 27s down to 16.2s (Recharges 40% faster!).",
+                "Giảm thời gian hồi khiên từ 27s xuống 16.2s (Hồi nhanh hơn 40%!)."
             ),
             3 => Get(
-                "Dual Aegis! Can stack up to 2 Shields simultaneously. Each shield recharges independently (16s).",
-                "Song Khiên Hộ Vệ! Có thể tích lũy tối đa 2 lớp khiên. Tự động hồi tuần tự từng lớp khiên (16s mỗi lớp)."
+                "Dual Aegis! Can stack up to 2 Shields simultaneously. Each shield recharges independently (14.4s).",
+                "Song Khiên Hộ Vệ! Có thể tích lũy tối đa 2 lớp khiên. Tự động hồi tuần tự từng lớp khiên (14.4s mỗi lớp)."
             ),
             4 => Get(
-                "★ SHIELD SHATTER NOVA ★ Each shield now blocks 2 hits (Total 4 hits)! When destroyed, triggers a massive 100 DMG Shockwave that DESTROYS all enemy bullets!",
-                "★ KHIÊN PHẢN MA TRẬN ★ Mỗi lớp khiên chịu được 2 lần sát thương (Tổng 4 hits)! Khi khiên bị phá vỡ, phát nổ sóng xung kích 100 DMG và TIÊU HỦY 100% đạn địch!"
+                "★ SHIELD SHATTER NOVA ★ Each shield now blocks 2 hits (Total 4 hits)! When destroyed, triggers a massive 100 DMG Shockwave that DESTROYS all enemy bullets! (12.6s recovery)",
+                "★ KHIÊN PHẢN MA TRẬN ★ Mỗi lớp khiên chịu được 2 lần sát thương (Tổng 4 hits)! Khi khiên bị phá vỡ, phát nổ sóng xung kích 100 DMG và TIÊU HỦY 100% đạn địch! (Hồi 12.6s)"
             ),
             _ => Get(
-                "Deploys an energetic barrier that absorbs 1 instance of damage completely. Recharges after 30s.",
-                "Kích hoạt tấm khiên năng lượng chặn hoàn toàn 1 lần sát thương vào người chơi. Hồi lại sau 30s."
+                "Deploys an energetic barrier that absorbs 1 instance of damage completely. Recharges after 27s.",
+                "Kích hoạt tấm khiên năng lượng chặn hoàn toàn 1 lần sát thương vào người chơi. Hồi lại sau 27s."
             )
         };
     }
@@ -287,16 +287,16 @@ public static class GameLocalization
                 "Tăng mạnh Hitbox & +57% Sát thương! Mở rộng bán kính chém lên 0.85m gây 55 DMG cả lượt đi và lượt về."
             ),
             3 => Get(
-                "★ TWIN BOOMERANGS ★ Fires +1 Boomerang (2 Total) with smart multi-target priority! Cooldown reduced from 8s to 6s. Each catch refunds 25% cooldown.",
-                "★ SONG TIÊU LIÊN HOÀN ★ Bắn thêm +1 Phi Tiêu (Tổng 2 Phi Tiêu) ưu tiên chia đa mục tiêu! Hồi chiêu giảm xuống 6s. Bắt dính mỗi chiếc giảm 25% hồi chiêu."
+                "★ TWIN BOOMERANGS ★ Fires +1 Boomerang (2 Total) with smart multi-target priority! Cooldown reduced from 7.2s to 6.3s. Each catch refunds 25% cooldown.",
+                "★ SONG TIÊU LIÊN HOÀN ★ Bắn thêm +1 Phi Tiêu (Tổng 2 Phi Tiêu) ưu tiên chia đa mục tiêu! Hồi chiêu giảm xuống 6.3s. Bắt dính mỗi chiếc giảm 25% hồi chiêu."
             ),
             4 => Get(
-                "★ EMPOWERED REBOUND ★ +45% Base DMG (80 DMG). SPECIAL: Successfully catching a boomerang immediately RESETS cooldown and instantly launches an EMPOWERED BOOMERANG with +60% BONUS DAMAGE!",
-                "★ PHẢN HỒI NGUYÊN LỰC ★ Tăng sát thương (80 DMG). ĐẶC BIỆT: Bắt dính phi tiêu lập tức RESET HỒI CHIÊU và tự động phóng ngược lại 1 Phi Tiêu Cường Hóa gây thêm +60% SÁT THƯƠNG!"
+                "★ EMPOWERED REBOUND ★ +45% Base DMG (80 DMG). SPECIAL: Successfully catching a boomerang immediately RESETS cooldown and instantly launches an EMPOWERED BOOMERANG with +60% BONUS DAMAGE! (5.4s cooldown)",
+                "★ PHẢN HỒI NGUYÊN LỰC ★ Tăng sát thương (80 DMG). ĐẶC BIỆT: Bắt dính phi tiêu lập tức RESET HỒI CHIÊU và tự động phóng ngược lại 1 Phi Tiêu Cường Hóa gây thêm +60% SÁT THƯƠNG! (Hồi chiêu 5.4s)"
             ),
             _ => Get(
-                "Hurls a piercing boomerang that slices through foes and flies back towards your moving trajectory. Catching it reduces current cooldown by 25%! (8s cooldown, 35 DMG).",
-                "Ném phi tiêu bay xuyên thấu quái vật rồi quay về đón đầu hướng di chuyển. Bắt dính phi tiêu giúp giảm 25% hồi chiêu hiện tại! (Hồi chiêu 8s, 35 DMG)."
+                "Hurls a piercing boomerang that slices through foes and flies back towards your moving trajectory. Catching it reduces current cooldown by 25%! (8.1s cooldown, 35 DMG).",
+                "Ném phi tiêu bay xuyên thấu quái vật rồi quay về đón đầu hướng di chuyển. Bắt dính phi tiêu giúp giảm 25% hồi chiêu hiện tại! (Hồi chiêu 8.1s, 35 DMG)."
             )
         };
     }
@@ -306,20 +306,20 @@ public static class GameLocalization
         return level switch
         {
             2 => Get(
-                "+50% Primary Bolt DMG (90 DMG) and +1 Chain Jump (2 Jumps Total). Cooldown reduced by 10% (5.4s).",
-                "Tăng sát thương tia sét cha lên 90 DMG (+50%) và số lần lan sang mục tiêu +1 (Tổng 2 lần lan). Giảm 10% hồi chiêu (5.4s)."
+                "+50% Primary Bolt DMG (90 DMG) and +1 Chain Jump (2 Jumps Total). Cooldown reduced to 4.86s.",
+                "Tăng sát thương tia sét cha lên 90 DMG (+50%) và số lần lan sang mục tiêu +1 (Tổng 2 lần lan). Hồi chiêu giảm còn 4.86s."
             ),
             3 => Get(
-                "★ DUAL THUNDERBOLTS ★ Fires +1 Primary Lightning Bolt (2 Bolts Total) hitting distinct targets! Each bolt chains 2 times. Cooldown reduced by 10% (4.86s).",
-                "★ SONG LÔI CUỒNG NỘ ★ Bắn thêm +1 tia sét cha (Tổng 2 tia) vào 2 mục tiêu khác nhau! Mỗi tia lan 2 lần. Giảm 10% hồi chiêu (4.86s)."
+                "★ DUAL THUNDERBOLTS ★ Fires +1 Primary Lightning Bolt (2 Bolts Total) hitting distinct targets! Each bolt chains 2 times. Cooldown reduced to 4.37s.",
+                "★ SONG LÔI CUỒNG NỘ ★ Bắn thêm +1 tia sét cha (Tổng 2 tia) vào 2 mục tiêu khác nhau! Mỗi tia lan 2 lần. Hồi chiêu giảm còn 4.37s."
             ),
             4 => Get(
                 "★ ARC OVERLOAD ★ +2 Chain Jumps (4 Jumps Total). SPECIAL: Lightning can now BOUNCE BACK to previous targets, and all struck enemies are STUNNED for 0.5s!",
                 "★ THIÊN LÔI QUÁ TẢI ★ Thêm +2 lần lan (Tổng 4 lần lan). ĐẶC BIỆT: Sét có thể LAN NGƯỢC VỀ MỤC TIÊU CŨ, và toàn bộ quái dính sét bị CHOÁNG 0.5s!"
             ),
             _ => Get(
-                "Strikes a target for 60 DMG and chains to 1 nearby enemy dealing 30% damage (18 DMG). (6s Cooldown).",
-                "Bắn ra 1 tia sét giáng vào mục tiêu gây 60 DMG và lan sang 1 quái kế cận gây 30% sát thương gốc (18 DMG). (Hồi chiêu 6s)."
+                "Strikes a target for 60 DMG and chains to 1 nearby enemy dealing 30% damage (18 DMG). (5.4s Cooldown).",
+                "Bắn ra 1 tia sét giáng vào mục tiêu gây 60 DMG và lan sang 1 quái kế cận gây 30% sát thương gốc (18 DMG). (Hồi chiêu 5.4s)."
             )
         };
     }

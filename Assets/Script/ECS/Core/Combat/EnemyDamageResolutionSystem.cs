@@ -5,8 +5,9 @@ using Unity.Mathematics;
 
 /// <summary>
 /// Hệ thống TRUNG TÂM duy nhất giải quyết toàn bộ sát thương tiếp nhận của Quái vật (Enemy Damage Pipeline).
-/// Duyệt tuần tự các packet trong EnemyIncomingDamage, tính sát thương hiệu dụng (Effective Damage),
-/// cập nhật bộ đếm SkillDamageRecord trên singleton RunStats, trừ CurrentHP và dọn sạch buffer.
+/// Duyệt tuần tự các packet trong EnemyIncomingDamage, áp dụng hệ số sát thương tổng thể (Player ATK / DamageMultiplier),
+/// tính sát thương hiệu dụng (Effective Damage), cập nhật bộ đếm SkillDamageRecord trên singleton RunStats,
+/// trừ CurrentHP và dọn sạch buffer.
 /// </summary>
 [UpdateAfter(typeof(ShieldExplosionSystem))]
 [UpdateBefore(typeof(DeathCleanupSystem))]
@@ -31,6 +32,14 @@ public partial struct EnemyDamageResolutionSystem : ISystem
         Entity statsEntity = SystemAPI.GetSingletonEntity<RunStatsTag>();
         DynamicBuffer<SkillDamageRecord> records = SystemAPI.GetBuffer<SkillDamageRecord>(statsEntity);
 
+        // Lấy Hệ số Sát thương Tổng thể (ATK Multiplier) của Người chơi từ PlayerRelicData
+        float globalDamageMultiplier = 1.0f;
+        if (SystemAPI.TryGetSingletonEntity<PlayerTag>(out Entity playerEntity) &&
+            SystemAPI.HasComponent<PlayerRelicData>(playerEntity))
+        {
+            globalDamageMultiplier = math.max(0.01f, SystemAPI.GetComponent<PlayerRelicData>(playerEntity).DamageMultiplier);
+        }
+
         foreach (var (damageBuffer, health, entity) in
                  SystemAPI.Query<DynamicBuffer<EnemyIncomingDamage>, RefRW<HealthData>>()
                      .WithAll<EnemyTag>()
@@ -49,9 +58,14 @@ public partial struct EnemyDamageResolutionSystem : ISystem
                     if (packet.Amount <= 0f) continue;
                     if (currentHP <= 0f) break; // Quái đã gục bởi hit trước trong cùng frame
 
-                    // Sát thương hiệu dụng = max(0, min(Amount, HP trước đòn))
-                    float effectiveDamage = math.max(0f, math.min(packet.Amount, currentHP));
-                    currentHP -= packet.Amount; // Trừ máu thực tế theo Amount gốc
+                    // Áp dụng hệ số ATK tổng thể cho các đòn đánh kỹ năng
+                    float scaledAmount = packet.SkillId != SkillIds.Unattributed
+                        ? packet.Amount * globalDamageMultiplier
+                        : packet.Amount;
+
+                    // Sát thương hiệu dụng = max(0, min(Amount đã scale, HP trước đòn))
+                    float effectiveDamage = math.max(0f, math.min(scaledAmount, currentHP));
+                    currentHP -= scaledAmount; // Trừ máu thực tế theo Amount đã scale
 
                     // Ghi nhận vào SkillDamageRecord của singleton
                     RecordSkillDamage(ref records, packet.SkillId, effectiveDamage);

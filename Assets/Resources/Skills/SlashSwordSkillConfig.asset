@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: SlashSwordSkillConfig
   m_EditorClassIdentifier: Assembly-CSharp::SlashSwordSkillConfigSO
   Cooldowns:
-  - 4
-  - 3.3
-  - 2.6
-  - 2
+  - 3.6
+  - 2.97
+  - 2.34
+  - 1.8
   BaseDamages:
   - 38
   - 70

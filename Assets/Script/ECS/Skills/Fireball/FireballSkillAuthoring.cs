@@ -68,10 +68,10 @@ public class FireballSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
         // Bake toàn bộ bảng thông số Cooldown & Sát thương 4 cấp độ từ ScriptableObject vào ECS Component
         baker.AddComponent(entity, new FireballLevelBalanceData
         {
-            CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 2.86f,
-            CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 2.53f,
-            CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 2.20f,
-            CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 1.98f,
+            CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 5.4f,
+            CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 3.6f,
+            CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 2.7f,
+            CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 2.25f,
 
             DamageLv1 = cfg != null ? cfg.GetDamage(1) : 45f,
             DamageLv2 = cfg != null ? cfg.GetDamage(2) : 68f,

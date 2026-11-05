@@ -278,7 +278,7 @@ MonoBehaviour:
   OwnerAuthoring: {fileID: 144040417}
   SkillId: auto_bolt
   Level: 1
-  Cooldown: 2
+  Cooldown: 1.8
 --- !u!114 &764216967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -361,6 +361,12 @@ MonoBehaviour:
   SpawnInterval: 1.5
   SpawnRadius: 12
   CountPerSpawn: 3
+  SmallExpOrbPrefab: {fileID: 4710301940314887447, guid: 64c9060452aa49fbb8d13b2dc2682dcc, type: 3}
+  MediumExpOrbPrefab: {fileID: 4710301940314887447, guid: f78179dbce5b40c8a62f1dc065d0fc7b, type: 3}
+  AmbientSpawnInterval: 3.5
+  MaxAmbientOrbs: 15
+  AmbientMinRadius: 4.5
+  AmbientMaxRadius: 11.5
 --- !u!1 &964216964
 GameObject:
   m_ObjectHideFlags: 0
@@ -409,7 +415,7 @@ MonoBehaviour:
   OwnerAuthoring: {fileID: 144040417}
   SkillId: flying_sword
   Level: 1
-  Cooldown: 2.2
+  Cooldown: 1.98
 --- !u!114 &964216967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -429,11 +435,11 @@ MonoBehaviour:
   ReturnSpeed: 11
   OrbitRadius: 2.2
   OrbitSpeed: 3.5
-  AttackInterval: 0.5
+  AttackInterval: 0.45
   HitRadius: 0.5
   DetectRange: 6.5
   MaxLeashRange: 7.5
-  UltimateCooldown: 6
+  UltimateCooldown: 5.4
   AoeRadius: 3.5
   AoeDamage: 85
 --- !u!1 &1064216964
@@ -484,7 +490,7 @@ MonoBehaviour:
   OwnerAuthoring: {fileID: 144040417}
   SkillId: slash_sword
   Level: 1
-  Cooldown: 4
+  Cooldown: 3.6
 --- !u!114 &1064216967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -558,7 +564,7 @@ MonoBehaviour:
   OwnerAuthoring: {fileID: 144040417}
   SkillId: sword_fusion
   Level: 0
-  Cooldown: 5.5
+  Cooldown: 4.95
 --- !u!114 &1164216967
 MonoBehaviour:
   m_ObjectHideFlags: 0

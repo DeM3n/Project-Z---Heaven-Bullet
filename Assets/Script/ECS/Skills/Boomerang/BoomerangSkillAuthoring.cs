@@ -47,10 +47,10 @@ public class BoomerangSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
         // Bake toàn bộ bảng thông số cân bằng 4 cấp độ
         baker.AddComponent(entity, new BoomerangLevelBalanceData
         {
-            CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 8.0f,
-            CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 8.0f,
-            CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 6.0f,
-            CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 5.5f,
+            CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 8.1f,
+            CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 7.2f,
+            CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 6.3f,
+            CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 5.4f,
 
             DamageLv1 = cfg != null ? cfg.GetDamage(1) : 35f,
             DamageLv2 = cfg != null ? cfg.GetDamage(2) : 55f,

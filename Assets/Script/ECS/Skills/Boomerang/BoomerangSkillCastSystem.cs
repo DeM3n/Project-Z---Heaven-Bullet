@@ -55,7 +55,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
                 // Mặc định khởi tạo Level 1
                 state.EntityManager.AddComponentData(skillEntity, new SkillRuntimeData
                 {
-                    Cooldown = 8.0f,
+                    Cooldown = 8.1f,
                     Timer = 0.5f,
                     Level = 1,
                     SkillId = default
@@ -76,10 +76,10 @@ public partial struct BoomerangSkillCastSystem : ISystem
 
                 state.EntityManager.AddComponentData(skillEntity, new BoomerangLevelBalanceData
                 {
-                    CooldownLv1 = 8.0f,
-                    CooldownLv2 = 8.0f,
-                    CooldownLv3 = 6.0f,
-                    CooldownLv4 = 5.5f,
+                    CooldownLv1 = 8.1f,
+                    CooldownLv2 = 7.2f,
+                    CooldownLv3 = 6.3f,
+                    CooldownLv4 = 5.4f,
 
                     DamageLv1 = 35f,
                     DamageLv2 = 55f,

@@ -38,17 +38,17 @@ public partial struct ShieldSkillSystem : ISystem
             state.EntityManager.AddComponentData(skillEntity, new SkillOwnerData { Owner = playerEntity });
             state.EntityManager.AddComponentData(skillEntity, new SkillRuntimeData
             {
-                Cooldown = 30f,
+                Cooldown = 27f,
                 Timer = 0f,
                 Level = 0, // Mặc định Level 0 (chưa học), nâng cấp qua Level-up hoặc Dev Menu
                 SkillId = default
             });
             state.EntityManager.AddComponentData(skillEntity, new ShieldSkillData
             {
-                BaseCooldown = 30f,
-                Lv2Cooldown = 18f,
-                Lv3Cooldown = 16f,
-                Lv4Cooldown = 14f,
+                BaseCooldown = 27f,
+                Lv2Cooldown = 16.2f,
+                Lv3Cooldown = 14.4f,
+                Lv4Cooldown = 12.6f,
                 ExplosionRadius = 4.5f,
                 ExplosionDamage = 100f,
                 KnockbackForce = 2.5f
@@ -67,7 +67,7 @@ public partial struct ShieldSkillSystem : ISystem
                 HitsRemainingInCurrentShield = 0,
                 HitsPerShield = 1,
                 RechargeTimer = 0f,
-                RechargeCooldown = 30f,
+                RechargeCooldown = 27f,
                 HasJustBlocked = false
             });
             return;

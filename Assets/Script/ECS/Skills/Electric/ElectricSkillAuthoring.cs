@@ -35,10 +35,10 @@ public class ElectricSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
         // Nạp bảng cân bằng 4 cấp độ
         baker.AddComponent(entity, new ElectricLevelBalanceData
         {
-            CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 6.0f,
-            CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 5.4f,
-            CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 4.86f,
-            CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 4.86f,
+            CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 5.4f,
+            CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 4.86f,
+            CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 4.374f,
+            CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 4.374f,
 
             DamageLv1 = cfg != null ? cfg.GetDamage(1) : 60f,
             DamageLv2 = cfg != null ? cfg.GetDamage(2) : 90f,

@@ -60,7 +60,7 @@ public partial struct ElectricSkillCastSystem : ISystem
 
                 state.EntityManager.AddComponentData(skillEntity, new SkillRuntimeData
                 {
-                    Cooldown = 6.0f,
+                    Cooldown = 5.4f,
                     Timer = 0.5f,
                     Level = 1,
                     SkillId = default
@@ -80,10 +80,10 @@ public partial struct ElectricSkillCastSystem : ISystem
 
                 state.EntityManager.AddComponentData(skillEntity, new ElectricLevelBalanceData
                 {
-                    CooldownLv1 = 6.0f,
-                    CooldownLv2 = 5.4f,
-                    CooldownLv3 = 4.86f,
-                    CooldownLv4 = 4.86f,
+                    CooldownLv1 = 5.4f,
+                    CooldownLv2 = 4.86f,
+                    CooldownLv3 = 4.374f,
+                    CooldownLv4 = 4.374f,
 
                     DamageLv1 = 60f,
                     DamageLv2 = 90f,

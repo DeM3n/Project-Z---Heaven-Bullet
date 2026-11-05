@@ -66,10 +66,10 @@ public class SlashSwordSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
 
         baker.AddComponent(entity, new SlashSwordLevelBalanceData
         {
-            CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 4.0f,
-            CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 3.3f,
-            CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 2.6f,
-            CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 2.0f,
+            CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 3.6f,
+            CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 2.97f,
+            CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 2.34f,
+            CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 1.8f,
 
             DamageLv1 = cfg != null ? cfg.GetDamage(1) : 38f,
             DamageLv2 = cfg != null ? cfg.GetDamage(2) : 70f,

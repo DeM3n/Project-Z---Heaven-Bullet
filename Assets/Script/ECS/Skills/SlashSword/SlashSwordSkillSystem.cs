@@ -363,10 +363,10 @@ public partial struct SlashSwordSkillSystem : ISystem
     {
         switch (level)
         {
-            case 1: return 4.0f; // Cấp 1: 4.0s
-            case 2: return 3.3f;
-            case 3: return 2.6f;
-            default: return 2.0f; // Cấp 4: 2.0s
+            case 1: return 3.6f; // Cấp 1: 3.6s
+            case 2: return 2.97f;
+            case 3: return 2.34f;
+            default: return 1.8f; // Cấp 4: 1.8s
         }
     }
 

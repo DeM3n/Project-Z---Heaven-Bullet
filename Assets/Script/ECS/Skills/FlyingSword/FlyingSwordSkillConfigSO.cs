@@ -50,8 +50,8 @@ public class FlyingSwordSkillConfigSO : ScriptableObject
     [Tooltip("Tốc độ quay quanh quỹ đạo IDLE (~3.5 rad/s)")]
     public float OrbitSpeed = 3.5f;
 
-    [Tooltip("Khoảng dừng ngắn giữa các nhịp khi ở IDLE (~0.5s)")]
-    public float AttackInterval = 0.5f;
+    [Tooltip("Khoảng dừng ngắn giữa các nhịp khi ở IDLE (~0.45s)")]
+    public float AttackInterval = 0.45f;
 
     [Tooltip("Bán kính va chạm trực tiếp của mũi kiếm (~0.5m)")]
     public float HitRadius = 0.5f;
@@ -63,8 +63,8 @@ public class FlyingSwordSkillConfigSO : ScriptableObject
     public float MaxLeashRange = 7.5f;
 
     [Header("5. Thông Số Kỹ Năng Ultimate Cấp 4 (Ultimate Strike & AOE Blast)")]
-    [Tooltip("Thời gian hồi chiêu riêng của đòn Ultimate Level 4 (~6.0s)")]
-    public float UltimateCooldown = 6.0f;
+    [Tooltip("Thời gian hồi chiêu riêng của đòn Ultimate Level 4 (~5.4s)")]
+    public float UltimateCooldown = 5.4f;
 
     [Tooltip("Bán kính nổ AOE của cú lướt Ultimate (~3.5m)")]
     public float AoeRadius = 3.5f;

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: ElectricSkillConfig
   m_EditorClassIdentifier: Assembly-CSharp::ElectricSkillConfigSO
   Cooldowns:
-  - 6
   - 5.4
   - 4.86
-  - 4.86
+  - 4.374
+  - 4.374
   BaseDamages:
   - 30
   - 50

@@ -26,10 +26,10 @@ MonoBehaviour:
   ReturnSpeed: 11
   OrbitRadius: 2.2
   OrbitSpeed: 3.5
-  AttackInterval: 0.5
+  AttackInterval: 0.45
   HitRadius: 0.5
   DetectRange: 6.5
   MaxLeashRange: 7.5
-  UltimateCooldown: 6
+  UltimateCooldown: 5.4
   AoeRadius: 3.5
   AoeDamage: 85

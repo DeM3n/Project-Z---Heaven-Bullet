@@ -47,7 +47,7 @@ public class SwordFusionSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
         {
             GiantSwordPrefab = giantSwordEntity,
             SwordWavePrefab = wavePrefabEntity,
-            Cooldown = 5.5f,
+            Cooldown = 4.95f,
             Timer = 0f,
             ImpactDamage = ImpactDamage,
             ImpactRadius = ImpactRadius,

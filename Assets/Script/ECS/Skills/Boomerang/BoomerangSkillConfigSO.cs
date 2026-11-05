@@ -29,7 +29,7 @@ public class BoomerangSkillConfigSO : ScriptableObject
 
     [Header("1. Thời Gian Hồi Chiêu Từng Cấp (Cooldowns in Seconds)")]
     [Tooltip("Lv1: 8.0s, Lv2: 8.0s, Lv3: 6.0s, Lv4: 5.5s")]
-    public float[] Cooldowns = new float[] { 8.0f, 8.0f, 6.0f, 5.5f };
+    public float[] Cooldowns = new float[] { 8.1f, 7.2f, 6.3f, 5.4f };
 
     [Header("2. Sát Thương Cơ Bản Từng Cấp (Base Damage)")]
     [Tooltip("Lv1: 35 (Trung bình), Lv2: 55 (+57%), Lv3: 55, Lv4: 80 (+45%)")]

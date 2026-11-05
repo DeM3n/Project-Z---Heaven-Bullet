@@ -16,7 +16,7 @@ public class FlyingSwordSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
     public float ReturnSpeed = 11.0f;
     public float OrbitRadius = 2.2f;
     public float OrbitSpeed = 3.5f;
-    public float AttackInterval = 0.5f;
+    public float AttackInterval = 0.45f;
     public float HitRadius = 0.5f;
 
     [Header("Phạm vi hoạt động (Tầm nhìn Camera)")]
@@ -24,7 +24,7 @@ public class FlyingSwordSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
     public float MaxLeashRange = 7.5f;
 
     [Header("Chỉ số Ultimate Fallback (Level 4 AOE)")]
-    public float UltimateCooldown = 6.0f;
+    public float UltimateCooldown = 5.4f;
     public float AoeRadius = 3.5f;
     public float AoeDamage = 85f;
 

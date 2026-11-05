@@ -25,7 +25,7 @@ public class FireballSkillConfigSO : ScriptableObject
 
     [Header("1. Thời Gian Hồi Chiêu Từng Cấp (Cooldowns in Seconds)")]
     [Tooltip("Thời gian hồi chiêu từng cấp: Lv1, Lv2, Lv3, Lv4")]
-    public float[] Cooldowns = new float[] { 2.86f, 2.53f, 2.20f, 1.98f };
+    public float[] Cooldowns = new float[] { 5.4f, 3.6f, 2.7f, 2.25f };
 
     [Header("2. Sát Thương Nổ Cầu Mẹ Từng Cấp (Base Explosion Damage)")]
     [Tooltip("Sát thương nổ của cầu lửa mẹ từng cấp: Lv1, Lv2, Lv3, Lv4")]

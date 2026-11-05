@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: BoomerangSkillConfig
   m_EditorClassIdentifier: Assembly-CSharp::BoomerangSkillConfigSO
   Cooldowns:
-  - 9
-  - 8
-  - 7
-  - 6
+  - 8.1
+  - 7.2
+  - 6.3
+  - 5.4
   BaseDamages:
   - 35
   - 55

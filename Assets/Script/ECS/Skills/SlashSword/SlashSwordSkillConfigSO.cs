@@ -30,7 +30,7 @@ public class SlashSwordSkillConfigSO : ScriptableObject
 
     [Header("1. Thời Gian Hồi Chiêu Từng Cấp (Cooldowns in Seconds)")]
     [Tooltip("Lv1: 4.0s, Lv2: 3.3s, Lv3: 2.6s, Lv4: 2.0s")]
-    public float[] Cooldowns = new float[] { 4.0f, 3.3f, 2.6f, 2.0f };
+    public float[] Cooldowns = new float[] { 3.6f, 2.97f, 2.34f, 1.8f };
 
     [Header("2. Sát Thương Cơ Bản Từng Cấp (Base Damage)")]
     [Tooltip("Lv1: 38 (hoặc 65 DMG thực tế), Lv2: 70, Lv3: 102, Lv4: 134 (+32 mỗi cấp)")]

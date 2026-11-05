@@ -364,17 +364,17 @@ public static class CodexDatabase
             DescriptionVi = "Lớp màng năng lượng lục giác bảo vệ nhân vật, chặn đứng 100% mọi đòn tấn công nguy hiểm.",
             StatsEn = new Dictionary<string, string>
             {
-                { "Level 1", "1 Shield layer (blocks 1 hit), 30s recovery" },
-                { "Level 2", "2 Shield layers, 18s recovery" },
-                { "Level 3", "2 Shield layers, 16s recovery" },
-                { "Level 4 (Shatter)", "14s recovery + Shatter Nova (100 AOE DMG, 4.5m, clears bullets)" }
+                { "Level 1", "1 Shield layer (blocks 1 hit), 27s recovery" },
+                { "Level 2", "2 Shield layers, 16.2s recovery" },
+                { "Level 3", "2 Shield layers, 14.4s recovery" },
+                { "Level 4 (Shatter)", "12.6s recovery + Shatter Nova (100 AOE DMG, 4.5m, clears bullets)" }
             },
             StatsVi = new Dictionary<string, string>
             {
-                { "Cấp 1", "1 Lớp khiên (đỡ 1 đòn), hồi sau 30s" },
-                { "Cấp 2", "2 Lớp khiên độc lập, hồi sau 18s" },
-                { "Cấp 3", "2 Lớp khiên độc lập, hồi sau 16s" },
-                { "Cấp 4 (Phản Pháo)", "Hồi sau 14s + Nổ vỡ khiên 100 AOE DMG (4.5m), quét sạch đạn địch" }
+                { "Cấp 1", "1 Lớp khiên (đỡ 1 đòn), hồi sau 27s" },
+                { "Cấp 2", "2 Lớp khiên độc lập, hồi sau 16.2s" },
+                { "Cấp 3", "2 Lớp khiên độc lập, hồi sau 14.4s" },
+                { "Cấp 4 (Phản Pháo)", "Hồi sau 12.6s + Nổ vỡ khiên 100 AOE DMG (4.5m), quét sạch đạn địch" }
             },
             MechanicsEn = "Each layer recovers on an independent timer. Shatter triggers when last shield breaks.",
             MechanicsVi = "Từng lớp khiên đếm hồi độc lập. Cấp 4 kích hoạt vụ nổ phản pháo cứu nguy khi vỡ khiên.",
@@ -394,17 +394,17 @@ public static class CodexDatabase
             DescriptionVi = "Phi tiêu khí động học bay xuyên thấu quái vật theo đường thẳng rồi quay về đón đầu hướng di chuyển của người chơi.",
             StatsEn = new Dictionary<string, string>
             {
-                { "Level 1", "35 DMG, 0.55m Hitbox, 8.0s cooldown, Catch refunds 25% cooldown" },
-                { "Level 2", "55 DMG (+57%), 0.85m Hitbox (expanded), 8.0s cooldown" },
-                { "Level 3", "2 Boomerangs (Multi-target priority), 55 DMG, 6.0s cooldown" },
-                { "Level 4 (Rebound)", "80 DMG (+45%), 5.5s cooldown + Catch RESETS cooldown & triggers Empowered Rebound (+60% DMG)" }
+                { "Level 1", "35 DMG, 0.55m Hitbox, 8.1s cooldown, Catch refunds 25% cooldown" },
+                { "Level 2", "55 DMG (+57%), 0.85m Hitbox (expanded), 7.2s cooldown" },
+                { "Level 3", "2 Boomerangs (Multi-target priority), 55 DMG, 6.3s cooldown" },
+                { "Level 4 (Rebound)", "80 DMG (+45%), 5.4s cooldown + Catch RESETS cooldown & triggers Empowered Rebound (+60% DMG)" }
             },
             StatsVi = new Dictionary<string, string>
             {
-                { "Cấp 1", "35 DMG, Hitbox 0.55m, Hồi chiêu 8.0s, Bắt dính giảm 25% hồi chiêu" },
-                { "Cấp 2", "55 DMG (+57%), Hitbox mở rộng 0.85m, Hồi chiêu 8.0s" },
-                { "Cấp 3", "2 Phi Tiêu (Ưu tiên đa mục tiêu), 55 DMG, Hồi chiêu 6.0s" },
-                { "Cấp 4 (Phản Hồi)", "80 DMG (+45%), Hồi chiêu 5.5s + Bắt dính RESET hồi chiêu & Bắn phản xạ Cường Hóa (+60% DMG)" }
+                { "Cấp 1", "35 DMG, Hitbox 0.55m, Hồi chiêu 8.1s, Bắt dính giảm 25% hồi chiêu" },
+                { "Cấp 2", "55 DMG (+57%), Hitbox mở rộng 0.85m, Hồi chiêu 7.2s" },
+                { "Cấp 3", "2 Phi Tiêu (Ưu tiên đa mục tiêu), 55 DMG, Hồi chiêu 6.3s" },
+                { "Cấp 4 (Phản Hồi)", "80 DMG (+45%), Hồi chiêu 5.4s + Bắt dính RESET hồi chiêu & Bắn phản xạ Cường Hóa (+60% DMG)" }
             },
             MechanicsEn = "Does NOT auto-home. Returning vector is fixed based on your movement when turning around. Intercept it to catch!",
             MechanicsVi = "Không tự động khóa mục tiêu bám đuôi. Vector quay về cố định đón đầu hướng di chuyển. Hãy di chuyển đón đầu để chụp dính!",
@@ -424,17 +424,17 @@ public static class CodexDatabase
             DescriptionVi = "Triệu hồi sấm sét giáng xuống quái vật gần nhất rồi phóng luồng hồ quang chuyền sang các mục tiêu lân cận.",
             StatsEn = new Dictionary<string, string>
             {
-                { "Level 1", "60 DMG, 1 Chain Jump (30% DMG = 18 DMG), 6.0s Cooldown" },
-                { "Level 2", "90 DMG (+50%), 2 Chain Jumps (27 DMG each), 5.4s Cooldown (-10%)" },
-                { "Level 3", "Dual Thunderbolts (2 Primary Bolts, 90 DMG each, 2 Jumps each), 4.86s Cooldown (-10%)" },
-                { "Level 4 (Overload)", "120 DMG (+33%), 4 Chain Jumps (36 DMG each). SPECIAL: Bounces back to previous foes + Stuns all targets for 0.5s!" }
+                { "Level 1", "60 DMG, 1 Chain Jump (30% DMG = 18 DMG), 5.4s Cooldown" },
+                { "Level 2", "90 DMG (+50%), 2 Chain Jumps (27 DMG each), 4.86s Cooldown (-10%)" },
+                { "Level 3", "Dual Thunderbolts (2 Primary Bolts, 90 DMG each, 2 Jumps each), 4.37s Cooldown (-10%)" },
+                { "Level 4 (Overload)", "120 DMG (+33%), 4 Chain Jumps (36 DMG each), 4.37s Cooldown. SPECIAL: Bounces back to previous foes + Stuns all targets for 0.5s!" }
             },
             StatsVi = new Dictionary<string, string>
             {
-                { "Cấp 1", "60 DMG, 1 Lần lan (30% DMG = 18 DMG), Hồi chiêu 6.0s" },
-                { "Cấp 2", "90 DMG (+50%), 2 Lần lan (27 DMG mỗi tia), Hồi chiêu 5.4s (-10%)" },
-                { "Cấp 3", "Song Lôi Cuồng Nộ (2 Tia sét cha, 90 DMG mỗi tia, lan 2 lần), Hồi chiêu 4.86s (-10%)" },
-                { "Cấp 4 (Quá Tải)", "120 DMG (+33%), 4 Lần lan (36 DMG mỗi tia). ĐẶC BIỆT: Nảy ngược về quái cũ + Gây Choáng 0.5s!" }
+                { "Cấp 1", "60 DMG, 1 Lần lan (30% DMG = 18 DMG), Hồi chiêu 5.4s" },
+                { "Cấp 2", "90 DMG (+50%), 2 Lần lan (27 DMG mỗi tia), Hồi chiêu 4.86s (-10%)" },
+                { "Cấp 3", "Song Lôi Cuồng Nộ (2 Tia sét cha, 90 DMG mỗi tia, lan 2 lần), Hồi chiêu 4.37s (-10%)" },
+                { "Cấp 4 (Quá Tải)", "120 DMG (+33%), 4 Lần lan (36 DMG mỗi tia), Hồi chiêu 4.37s. ĐẶC BIỆT: Nảy ngược về quái cũ + Gây Choáng 0.5s!" }
             },
             MechanicsEn = "Procedural fractal lightning arc with staggered jump delay. At Lv4, bouncing allows single-target annihilation.",
             MechanicsVi = "Tia sét fractal gãy góc tự nhiên với độ trễ truyền dẫn nối tiếp. Ở Cấp 4, khả năng nảy ngược giúp dồn sát thương cực khủng vào mục tiêu đơn lẻ.",
@@ -455,14 +455,14 @@ public static class CodexDatabase
             StatsEn = new Dictionary<string, string>
             {
                 { "Requirement", "Flying Sword Lv4 + Slash Sword Lv4" },
-                { "Cooldown", "Periodic trigger every 5.5 seconds" },
+                { "Cooldown", "Periodic trigger every 4.95 seconds" },
                 { "Impact Damage", "220 AOE DMG (4.5m radius shockwave)" },
                 { "Radiant Waves", "Fires 5 Piercing Sword Waves (75 DMG) at 72° angles" }
             },
             StatsVi = new Dictionary<string, string>
             {
                 { "Điều Kiện", "Flying Sword Cấp 4 + Slash Sword Cấp 4" },
-                { "Hồi Chiêu", "Định kỳ rơi mỗi 5.5 giây" },
+                { "Hồi Chiêu", "Định kỳ rơi mỗi 4.95 giây" },
                 { "Sát Thương Cắm Đất", "220 AOE DMG (Sóng chấn động 4.5m)" },
                 { "Kiếm Khí Lan Tỏa", "Bắn tỏa 5 luồng Kiếm Khí (75 DMG) theo góc đều 72°" }
             },

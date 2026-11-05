@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: FireballSkillConfig
   m_EditorClassIdentifier: Assembly-CSharp::FireballSkillConfigSO
   Cooldowns:
-  - 6
-  - 4
-  - 3
-  - 2.5
+  - 5.4
+  - 3.6
+  - 2.7
+  - 2.25
   BaseDamages:
   - 45
   - 70

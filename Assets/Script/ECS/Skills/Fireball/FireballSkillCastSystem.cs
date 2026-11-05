@@ -47,7 +47,7 @@ public partial struct FireballSkillCastSystem : ISystem
                 var cfg = FireballSkillConfigSO.Instance;
                 state.EntityManager.AddComponentData(skillEntity, new SkillRuntimeData
                 {
-                    Cooldown = cfg != null ? cfg.GetCooldown(1) : 2.86f,
+                    Cooldown = cfg != null ? cfg.GetCooldown(1) : 5.4f,
                     Timer = 0.5f,
                     Level = 1,
                     SkillId = default
@@ -70,10 +70,10 @@ public partial struct FireballSkillCastSystem : ISystem
                 });
                 state.EntityManager.AddComponentData(skillEntity, new FireballLevelBalanceData
                 {
-                    CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 2.86f,
-                    CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 2.53f,
-                    CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 2.20f,
-                    CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 1.98f,
+                    CooldownLv1 = cfg != null ? cfg.GetCooldown(1) : 5.4f,
+                    CooldownLv2 = cfg != null ? cfg.GetCooldown(2) : 3.6f,
+                    CooldownLv3 = cfg != null ? cfg.GetCooldown(3) : 2.7f,
+                    CooldownLv4 = cfg != null ? cfg.GetCooldown(4) : 2.25f,
 
                     DamageLv1 = cfg != null ? cfg.GetDamage(1) : 45f,
                     DamageLv2 = cfg != null ? cfg.GetDamage(2) : 68f,
@@ -128,10 +128,10 @@ public partial struct FireballSkillCastSystem : ISystem
             {
                 scaledCooldown = level switch
                 {
-                    2 => 2.53f,
-                    3 => 2.20f,
-                    4 => 1.98f,
-                    _ => 2.86f
+                    2 => 3.6f,
+                    3 => 2.7f,
+                    4 => 2.25f,
+                    _ => 5.4f
                 };
                 damage = level switch
                 {

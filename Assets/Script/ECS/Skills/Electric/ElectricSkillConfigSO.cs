@@ -29,7 +29,7 @@ public class ElectricSkillConfigSO : ScriptableObject
 
     [Header("1. Thời Gian Hồi Chiêu Từng Cấp (Cooldowns in Seconds)")]
     [Tooltip("Lv1: 6.0s, Lv2: 5.4s (-10%), Lv3: 4.86s (-10%), Lv4: 4.86s")]
-    public float[] Cooldowns = new float[] { 6.0f, 5.4f, 4.86f, 4.86f };
+    public float[] Cooldowns = new float[] { 5.4f, 4.86f, 4.374f, 4.374f };
 
     [Header("2. Sát Thương Cơ Bản Tia Cha Từng Cấp (Base Damage)")]
     [Tooltip("Lv1: 60, Lv2: 90 (+50%), Lv3: 90, Lv4: 120 (+33%)")]
