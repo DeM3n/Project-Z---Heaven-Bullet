@@ -197,6 +197,15 @@ public class PickupVisualBridge : MonoBehaviour
                 if (kvp.Value.Type == PickupType.TreasureChest)
                 {
                     PlayChestOpenAnimation(kvp.Value.LastPos, 1.2f);
+                    AudioManager.Instance.PlaySFX(SFXType.ChestOpen);
+                }
+                else if (kvp.Value.Type == PickupType.HealthHeart)
+                {
+                    AudioManager.Instance.PlaySFX(SFXType.HealthPickup);
+                }
+                else if (kvp.Value.Type == PickupType.ExpMagnet)
+                {
+                    AudioManager.Instance.PlaySFX(SFXType.MagnetPickup);
                 }
                 kvp.Value.Root.SetActive(false);
                 _pool.Add(kvp.Value);

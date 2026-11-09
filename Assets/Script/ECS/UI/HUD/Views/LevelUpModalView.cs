@@ -92,7 +92,11 @@ public class LevelUpModalView
             new Vector2(260f, 44f),
             HUDTheme.RerollBtnBg,
             HUDTheme.RerollBtnBorder,
-            () => OnRerollClicked?.Invoke()
+            () =>
+            {
+                AudioManager.Instance.PlayUI(UIType.Reroll);
+                OnRerollClicked?.Invoke();
+            }
         );
         var rerollRect = _rerollButton.GetComponent<RectTransform>();
         rerollRect.anchorMin = new Vector2(0.5f, 0.13f);
@@ -120,7 +124,11 @@ public class LevelUpModalView
         UpdateRerollButtonUI();
         RenderCards();
 
-        if (_panelObj != null) _panelObj.SetActive(true);
+        if (_panelObj != null)
+        {
+            _panelObj.SetActive(true);
+            AudioManager.Instance.PlayUI(UIType.LevelUp);
+        }
     }
 
     public void Hide()
@@ -132,6 +140,7 @@ public class LevelUpModalView
     {
         if (index >= 0 && index < _currentOptions.Count)
         {
+            AudioManager.Instance.PlayUI(UIType.PerkSelect);
             OnPerkSelected?.Invoke(_currentOptions[index]);
         }
     }

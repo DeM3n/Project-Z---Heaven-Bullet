@@ -15,6 +15,7 @@ public enum PauseMenuTab
     Attributes,
     DamageStats,
     Artifacts,
+    Settings,
     Abandon
 }
 
@@ -42,7 +43,9 @@ public class PauseMenuView
     private readonly GameObject _attributesContainer;
     private readonly GameObject _damageStatsContainer;
     private readonly GameObject _artifactsContainer;
+    private readonly GameObject _settingsContainer;
     private readonly GameObject _abandonContainer;
+    private Text _muteBtnText;
 
     // Cột 1 (Left Column) - 6 chỉ số thực tế
     private readonly Text _hpValueText;
@@ -210,6 +213,17 @@ public class PauseMenuView
 
         BuildArtifactsTab(_artifactsContainer.transform, out _emptyArtifactsText);
         _artifactsContainer.SetActive(false);
+
+        // --- TAB: AUDIO & SETTINGS ---
+        _settingsContainer = new GameObject("SettingsTab");
+        _settingsContainer.transform.SetParent(contentObj.transform, false);
+        var setRect = _settingsContainer.AddComponent<RectTransform>();
+        setRect.anchorMin = Vector2.zero;
+        setRect.anchorMax = Vector2.one;
+        setRect.sizeDelta = Vector2.zero;
+
+        BuildSettingsTab(_settingsContainer.transform);
+        _settingsContainer.SetActive(false);
 
         // --- TAB 4: ABANDON CONFIRMATION ---
         _abandonContainer = new GameObject("AbandonTab");
@@ -387,6 +401,7 @@ public class PauseMenuView
         _attributesContainer.SetActive(tab == PauseMenuTab.Attributes);
         _damageStatsContainer.SetActive(tab == PauseMenuTab.DamageStats);
         _artifactsContainer.SetActive(tab == PauseMenuTab.Artifacts);
+        _settingsContainer.SetActive(tab == PauseMenuTab.Settings);
         _abandonContainer.SetActive(tab == PauseMenuTab.Abandon);
 
         // Highlight màu các nút thanh điều hướng dưới
@@ -749,6 +764,200 @@ public class PauseMenuView
         UIFactory.CreateText(backBtn.transform, "T", "↩ BACK / QUAY LẠI", 13, new Color(0.8f, 0.85f, 0.9f), FontStyle.Bold, TextAnchor.MiddleCenter);
     }
 
+    private void BuildSettingsTab(Transform parent)
+    {
+        // 1. Title / Header
+        var promptObj = new GameObject("SettingsPrompt");
+        promptObj.transform.SetParent(parent, false);
+        var pRect = promptObj.AddComponent<RectTransform>();
+        pRect.anchorMin = new Vector2(0.5f, 1f);
+        pRect.anchorMax = new Vector2(0.5f, 1f);
+        pRect.pivot = new Vector2(0.5f, 1f);
+        pRect.anchoredPosition = new Vector2(0f, -10f);
+        pRect.sizeDelta = new Vector2(420f, 30f);
+
+        var pText = promptObj.AddComponent<Text>();
+        pText.font = HUDTheme.PixelFont;
+        pText.fontSize = 16;
+        pText.fontStyle = FontStyle.Bold;
+        pText.alignment = TextAnchor.MiddleCenter;
+        pText.color = new Color(0.95f, 0.85f, 0.45f);
+        pText.text = "🔊 CÀI ĐẶT ÂM THANH (AUDIO SETTINGS)";
+
+        // 2. Sliders
+        CreateSliderRow(parent, "MasterVol", "🔊 Master", new Vector2(0f, 65f), AudioManager.Instance.MasterVolume, v => AudioManager.Instance.SetMasterVolume(v));
+        CreateSliderRow(parent, "BGMVol", "🎵 BGM", new Vector2(0f, 22f), AudioManager.Instance.BGMVolume, v => AudioManager.Instance.SetBGMVolume(v));
+        CreateSliderRow(parent, "SFXVol", "⚔️ SFX", new Vector2(0f, -21f), AudioManager.Instance.SFXVolume, v => AudioManager.Instance.SetSFXVolume(v));
+
+        // 3. Mute button & Language button
+        var muteBtn = UIFactory.CreateButton(
+            parent,
+            "Btn_Mute",
+            new Vector2(170f, 36f),
+            new Color(0.15f, 0.18f, 0.25f, 1f),
+            new Color(0.5f, 0.65f, 0.85f),
+            () =>
+            {
+                AudioManager.Instance.ToggleMute();
+                RefreshSettingsTab();
+            }
+        );
+        var mRect = muteBtn.GetComponent<RectTransform>();
+        mRect.anchoredPosition = new Vector2(-95f, -65f);
+        _muteBtnText = UIFactory.CreateText(muteBtn.transform, "T", AudioManager.Instance.IsMuted ? "🔇 UNMUTE" : "🔊 MUTE", 12, Color.white, FontStyle.Bold, TextAnchor.MiddleCenter);
+
+        var langBtn = UIFactory.CreateButton(
+            parent,
+            "Btn_LangTab",
+            new Vector2(170f, 36f),
+            new Color(0.12f, 0.16f, 0.25f, 1f),
+            new Color(0.3f, 0.5f, 0.8f),
+            () =>
+            {
+                OnLanguageClicked?.Invoke();
+                RefreshData();
+            }
+        );
+        var lRect = langBtn.GetComponent<RectTransform>();
+        lRect.anchoredPosition = new Vector2(95f, -65f);
+        UIFactory.CreateText(langBtn.transform, "T", "🌐 NGÔN NGỮ", 12, Color.white, FontStyle.Bold, TextAnchor.MiddleCenter);
+
+        // 4. Back button
+        var backBtn = UIFactory.CreateButton(
+            parent,
+            "Btn_BackSettings",
+            new Vector2(280f, 36f),
+            new Color(0.12f, 0.15f, 0.2f, 1f),
+            new Color(0.4f, 0.5f, 0.65f),
+            () => SetTab(PauseMenuTab.Attributes)
+        );
+        var bRect = backBtn.GetComponent<RectTransform>();
+        bRect.anchoredPosition = new Vector2(0f, -110f);
+        UIFactory.CreateText(backBtn.transform, "T", "↩ BACK / QUAY LẠI", 13, new Color(0.8f, 0.85f, 0.9f), FontStyle.Bold, TextAnchor.MiddleCenter);
+    }
+
+    private void RefreshSettingsTab()
+    {
+        if (_muteBtnText != null)
+        {
+            _muteBtnText.text = AudioManager.Instance.IsMuted ? "🔇 UNMUTE" : "🔊 MUTE";
+            _muteBtnText.color = AudioManager.Instance.IsMuted ? new Color(1f, 0.45f, 0.45f) : Color.white;
+        }
+    }
+
+    private Slider CreateSliderRow(Transform parent, string name, string label, Vector2 pos, float initialVal, Action<float> onValChanged)
+    {
+        var rowObj = new GameObject(name + "_Row");
+        rowObj.transform.SetParent(parent, false);
+        var rRect = rowObj.AddComponent<RectTransform>();
+        rRect.anchorMin = new Vector2(0.5f, 0.5f);
+        rRect.anchorMax = new Vector2(0.5f, 0.5f);
+        rRect.pivot = new Vector2(0.5f, 0.5f);
+        rRect.anchoredPosition = pos;
+        rRect.sizeDelta = new Vector2(400f, 32f);
+
+        // Label
+        var lblObj = new GameObject("Label");
+        lblObj.transform.SetParent(rowObj.transform, false);
+        var lRect = lblObj.AddComponent<RectTransform>();
+        lRect.anchorMin = new Vector2(0f, 0.5f);
+        lRect.anchorMax = new Vector2(0f, 0.5f);
+        lRect.pivot = new Vector2(0f, 0.5f);
+        lRect.anchoredPosition = new Vector2(10f, 0f);
+        lRect.sizeDelta = new Vector2(100f, 26f);
+        var lText = lblObj.AddComponent<Text>();
+        lText.font = HUDTheme.PixelFont;
+        lText.fontSize = 14;
+        lText.fontStyle = FontStyle.Bold;
+        lText.color = Color.white;
+        lText.alignment = TextAnchor.MiddleLeft;
+        lText.text = label;
+
+        // Slider
+        var sliderObj = new GameObject("Slider");
+        sliderObj.transform.SetParent(rowObj.transform, false);
+        var sRect = sliderObj.AddComponent<RectTransform>();
+        sRect.anchorMin = new Vector2(0.5f, 0.5f);
+        sRect.anchorMax = new Vector2(0.5f, 0.5f);
+        sRect.pivot = new Vector2(0.5f, 0.5f);
+        sRect.anchoredPosition = new Vector2(30f, 0f);
+        sRect.sizeDelta = new Vector2(200f, 20f);
+
+        // Background
+        var bgObj = new GameObject("Background");
+        bgObj.transform.SetParent(sliderObj.transform, false);
+        var bgRect = bgObj.AddComponent<RectTransform>();
+        bgRect.anchorMin = new Vector2(0f, 0.3f);
+        bgRect.anchorMax = new Vector2(1f, 0.7f);
+        bgRect.sizeDelta = Vector2.zero;
+        var bgImg = bgObj.AddComponent<Image>();
+        bgImg.color = new Color(0.08f, 0.10f, 0.16f, 0.95f);
+
+        // Fill Area
+        var fillArea = new GameObject("Fill Area");
+        fillArea.transform.SetParent(sliderObj.transform, false);
+        var faRect = fillArea.AddComponent<RectTransform>();
+        faRect.anchorMin = new Vector2(0f, 0.3f);
+        faRect.anchorMax = new Vector2(1f, 0.7f);
+        faRect.sizeDelta = new Vector2(-10f, 0f);
+
+        var fillObj = new GameObject("Fill");
+        fillObj.transform.SetParent(fillArea.transform, false);
+        var fRect = fillObj.AddComponent<RectTransform>();
+        fRect.sizeDelta = Vector2.zero;
+        var fImg = fillObj.AddComponent<Image>();
+        fImg.color = new Color(0.25f, 0.65f, 1f, 0.95f);
+
+        // Handle Area
+        var handleArea = new GameObject("Handle Slide Area");
+        handleArea.transform.SetParent(sliderObj.transform, false);
+        var haRect = handleArea.AddComponent<RectTransform>();
+        haRect.anchorMin = Vector2.zero;
+        haRect.anchorMax = Vector2.one;
+        haRect.sizeDelta = new Vector2(-10f, 0f);
+
+        var handleObj = new GameObject("Handle");
+        handleObj.transform.SetParent(handleArea.transform, false);
+        var hRect = handleObj.AddComponent<RectTransform>();
+        hRect.sizeDelta = new Vector2(14f, 22f);
+        var hImg = handleObj.AddComponent<Image>();
+        hImg.color = new Color(0.95f, 0.85f, 0.45f, 1f);
+
+        // Value text
+        var valObj = new GameObject("ValText");
+        valObj.transform.SetParent(rowObj.transform, false);
+        var vRect = valObj.AddComponent<RectTransform>();
+        vRect.anchorMin = new Vector2(1f, 0.5f);
+        vRect.anchorMax = new Vector2(1f, 0.5f);
+        vRect.pivot = new Vector2(1f, 0.5f);
+        vRect.anchoredPosition = new Vector2(-10f, 0f);
+        vRect.sizeDelta = new Vector2(50f, 26f);
+        var vText = valObj.AddComponent<Text>();
+        vText.font = HUDTheme.PixelFont;
+        vText.fontSize = 14;
+        vText.fontStyle = FontStyle.Bold;
+        vText.color = new Color(0.95f, 0.85f, 0.45f);
+        vText.alignment = TextAnchor.MiddleRight;
+        vText.text = $"{(int)(initialVal * 100)}%";
+
+        var slider = sliderObj.AddComponent<Slider>();
+        slider.fillRect = fRect;
+        slider.handleRect = hRect;
+        slider.targetGraphic = hImg;
+        slider.direction = Slider.Direction.LeftToRight;
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.value = initialVal;
+
+        slider.onValueChanged.AddListener(v =>
+        {
+            vText.text = $"{(int)(v * 100)}%";
+            onValChanged?.Invoke(v);
+        });
+
+        return slider;
+    }
+
     #endregion
 
     #region --- Nút Bấm & Điều Hướng ---
@@ -865,7 +1074,7 @@ public class PauseMenuView
         mRect.anchorMax = new Vector2(1f, 1f);
         mRect.pivot = new Vector2(1f, 1f);
         mRect.anchoredPosition = new Vector2(-15f, -56f);
-        mRect.sizeDelta = new Vector2(180f, 96f);
+        mRect.sizeDelta = new Vector2(180f, 138f);
 
         var bg = menuObj.AddComponent<Image>();
         bg.color = new Color(0.06f, 0.08f, 0.12f, 0.98f);
@@ -873,11 +1082,28 @@ public class PauseMenuView
         outline.effectColor = new Color(0.35f, 0.45f, 0.65f, 0.9f);
         outline.effectDistance = new Vector2(2f, -2f);
 
-        // 1. Language Toggle
+        // 1. Audio & Settings Tab
+        var audioBtn = UIFactory.CreateButton(
+            menuObj.transform,
+            "Btn_Audio",
+            new Vector2(165f, 36f),
+            new Color(0.14f, 0.18f, 0.28f, 1f),
+            new Color(0.4f, 0.65f, 0.95f),
+            () =>
+            {
+                menuObj.SetActive(false);
+                SetTab(PauseMenuTab.Settings);
+            }
+        );
+        var aRect = audioBtn.GetComponent<RectTransform>();
+        aRect.anchoredPosition = new Vector2(0f, 42f);
+        UIFactory.CreateText(audioBtn.transform, "T", "🔊 ÂM LƯỢNG / AUDIO", 11, Color.white, FontStyle.Bold, TextAnchor.MiddleCenter);
+
+        // 2. Language Toggle
         var langBtn = UIFactory.CreateButton(
             menuObj.transform,
             "Btn_Lang",
-            new Vector2(165f, 38f),
+            new Vector2(165f, 36f),
             new Color(0.12f, 0.16f, 0.25f, 1f),
             new Color(0.3f, 0.5f, 0.8f),
             () =>
@@ -887,14 +1113,14 @@ public class PauseMenuView
             }
         );
         var lRect = langBtn.GetComponent<RectTransform>();
-        lRect.anchoredPosition = new Vector2(0f, 22f);
+        lRect.anchoredPosition = new Vector2(0f, 0f);
         UIFactory.CreateText(langBtn.transform, "T", "🌐 LANGUAGE / NGÔN NGỮ", 11, Color.white, FontStyle.Bold, TextAnchor.MiddleCenter);
 
-        // 2. Developer Mode
+        // 3. Developer Mode
         var devBtn = UIFactory.CreateButton(
             menuObj.transform,
             "Btn_Dev",
-            new Vector2(165f, 38f),
+            new Vector2(165f, 36f),
             new Color(0.24f, 0.12f, 0.35f, 1f),
             new Color(0.7f, 0.35f, 0.9f),
             () =>
@@ -904,7 +1130,7 @@ public class PauseMenuView
             }
         );
         var dRect = devBtn.GetComponent<RectTransform>();
-        dRect.anchoredPosition = new Vector2(0f, -22f);
+        dRect.anchoredPosition = new Vector2(0f, -42f);
         UIFactory.CreateText(devBtn.transform, "T", "🛠️ DEV PANEL [F1]", 11, Color.white, FontStyle.Bold, TextAnchor.MiddleCenter);
 
         menuObj.SetActive(false);

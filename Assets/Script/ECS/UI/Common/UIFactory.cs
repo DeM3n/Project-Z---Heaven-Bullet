@@ -134,7 +134,11 @@ public static class UIFactory
 
         if (onClick != null)
         {
-            btn.onClick.AddListener(onClick);
+            btn.onClick.AddListener(() =>
+            {
+                AudioManager.Instance.PlayUI(UIType.Click);
+                onClick();
+            });
         }
 
         return btn;

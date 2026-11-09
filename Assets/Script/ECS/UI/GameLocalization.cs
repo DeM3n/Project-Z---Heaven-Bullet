@@ -107,6 +107,9 @@ public static class GameLocalization
 
     // --- Developer Control Panel ---
     public static string DevPanelHeader => Get("🛠️ DEVELOPER CONTROL PANEL [F1]", "🛠️ BẢNG ĐIỀU KHIỂN DEVELOPER [F1]");
+    public static string DevTabSkills => Get("⚔️ SKILLS & FUSION", "⚔️ KỸ NĂNG & DUNG HỢP");
+    public static string DevTabWaves => Get("🌊 WAVES & TIMELINE", "🌊 TIẾN TRÌNH WAVE");
+    public static string DevTabCheats => Get("🛠️ CHEATS & UTILITY", "🛠️ GIAN LẬN & TIỆN ÍCH");
     public static string DevSkillSection => Get("— SKILL LEVEL EDITOR —", "— ĐIỀU CHỈNH CẤP KỸ NĂNG —");
     public static string DevCheatSection => Get("— UTILITY CHEATS —", "— CÔNG CỤ HỖ TRỢ TEST —");
     public static string DevMaxAllSkills => Get("⚡ MAX ALL SKILLS", "⚡ MAX CẤP TOÀN BỘ");
@@ -119,6 +122,16 @@ public static class GameLocalization
     public static string DevAddRegen => Get("💚 +0.5 HP/s REGEN", "💚 +0.5 HP/s HỒI MÁU");
     public static string DevJumpWave3 => Get("⚡ JUMP TO 3M WAVE", "⚡ NHẢY TỚI WAVE PHÚT 3");
     public static string DevJumpWave6 => Get("⚡ JUMP TO 6M WAVE", "⚡ NHẢY TỚI WAVE PHÚT 6");
+    public static string DevTriggerMegaWave(int min) => Get($"⚡ TRIGGER MEGA WAVE {min}:00", $"⚡ KÍCH HOẠT MEGA WAVE {min}:00");
+    public static string DevEndMegaWave => Get("🏆 END & CLAIM MEGA WAVE", "🏆 KẾT THÚC & NHẬN THƯỞNG");
+    public static string DevFastForwardWave(int min) => Get($"⏩ JUMP TO {min - 1}:57", $"⏩ NHẢY TỚI {min - 1}:57");
+    public static string DevAddMinute => Get("⏱️ +60s TIME", "⏱️ +60s THỜI GIAN");
+    public static string DevSubMinute => Get("⏱️ -60s TIME", "⏱️ -60s THỜI GIAN");
+    public static string DevResetTimeline => Get("🔄 RESET TIME (0:00)", "🔄 ĐẶT LẠI VỀ 0:00");
+    public static string DevTogglePauseTimer(bool paused) => Get(paused ? "▶️ RESUME WAVE TIMER" : "⏸️ PAUSE WAVE TIMER", paused ? "▶️ TIẾP TỤC ĐỒNG HỒ" : "⏸️ TẠM DỪNG ĐỒNG HỒ");
+    public static string DevAddSpiritStones => Get("💎 +1,000 SPIRIT STONES", "💎 +1.000 LINH THẠCH");
+    public static string DevSpawnChest => Get("📦 SPAWN ANCIENT CHEST", "📦 RƯƠNG CỔ VẬT");
+    public static string DevSpawnMagnet => Get("🧲 SPAWN EXP MAGNET", "🧲 NAM CHÂM EXP");
 
     // --- Perk Titles ---
     public static string FlyingSwordTitle => Get("FLYING SWORD", "PHI KIẾM HỘ THỂ");

@@ -136,6 +136,13 @@ public partial struct PlayerDamageResolutionSystem : ISystem
 
             // Kích hoạt i-frames (0.2s chớp đỏ giật lùi)
             invuln.CurrentTimer = invuln.Duration;
+
+            if (SystemAPI.HasComponent<PlayerAudioFeedbackData>(playerEntity))
+            {
+                var audioFeedback = SystemAPI.GetComponent<PlayerAudioFeedbackData>(playerEntity);
+                audioFeedback.TookDamage = true;
+                SystemAPI.SetComponent(playerEntity, audioFeedback);
+            }
         }
 
         SystemAPI.SetComponent(playerEntity, invuln);

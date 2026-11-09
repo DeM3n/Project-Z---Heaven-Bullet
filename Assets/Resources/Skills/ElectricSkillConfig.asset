@@ -14,17 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElectricSkillConfigSO
   Cooldowns:
   - 5.4
-  - 4.86
-  - 4.374
-  - 4.374
+  - 5
+  - 4.5
+  - 3.5
   BaseDamages:
   - 30
   - 50
   - 80
   - 100
-  ChainDamageRatio: 0.3
+  ChainDamageRatio: 0.5
   ChainCounts: 01000000020000000200000004000000i
-  PrimaryBoltCounts: 01000000010000000200000002000000i
-  DetectRange: 9.5
+  PrimaryBoltCounts: 01000000010000000200000003000000i
+  DetectRange: 10
   ChainRange: 6
   StunDuration: 0.5

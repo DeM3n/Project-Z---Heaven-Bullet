@@ -229,7 +229,11 @@ public class AncientChestModalView
         if (_relicBadgeText != null) _relicBadgeText.text = rewardData.LevelBadge;
         if (_relicDescText != null) _relicDescText.text = rewardData.Description;
 
-        if (_panelObj != null) _panelObj.SetActive(true);
+        if (_panelObj != null)
+        {
+            _panelObj.SetActive(true);
+            AudioManager.Instance.PlaySFX(SFXType.ChestOpen);
+        }
 
         // Chạy animation mở nắp rương
         if (_coroutineRunner != null)

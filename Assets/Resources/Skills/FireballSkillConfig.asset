@@ -36,4 +36,4 @@ MonoBehaviour:
   FireZoneRadius: 1.8
   FireZoneDuration: 3.5
   FireZoneTickInterval: 0.25
-  FireZoneDamagePerTick: 16
+  FireZoneDamagePerTick: 18

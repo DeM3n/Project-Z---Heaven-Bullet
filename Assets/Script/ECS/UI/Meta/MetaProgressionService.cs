@@ -272,6 +272,24 @@ public class MetaProgressionService
         return true;
     }
 
+    public bool IsNodeLocked(string nodeId)
+    {
+        var node = GetNode(nodeId);
+        if (node == null) return false;
+        if (string.IsNullOrEmpty(node.PrerequisiteNodeId)) return false;
+        var prereq = GetNode(node.PrerequisiteNodeId);
+        return prereq == null || prereq.CurrentLevel <= 0;
+    }
+
+    public string GetPrerequisiteNodeName(string nodeId, bool isVietnamese)
+    {
+        var node = GetNode(nodeId);
+        if (node == null || string.IsNullOrEmpty(node.PrerequisiteNodeId)) return string.Empty;
+        var prereq = GetNode(node.PrerequisiteNodeId);
+        if (prereq == null) return string.Empty;
+        return isVietnamese ? prereq.NameVi : prereq.NameEn;
+    }
+
     public bool UpgradeNode(string nodeId)
     {
         if (!CanUpgrade(nodeId)) return false;

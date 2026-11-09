@@ -21,6 +21,7 @@ public partial struct XPPickupSystem : ISystem
         var playerLevel = SystemAPI.GetComponent<PlayerLevelData>(playerEntity);
         var ecb = new EntityCommandBuffer(Allocator.Temp);
         bool expChanged = false;
+        int absorbedCount = 0;
 
         foreach (var (transform, orb, entity) in
                  SystemAPI.Query<RefRW<LocalTransform>, RefRW<ExpOrbData>>()
@@ -56,6 +57,7 @@ public partial struct XPPickupSystem : ISystem
             {
                 playerLevel.CurrentExp += orb.ValueRO.ExpValue;
                 expChanged = true;
+                absorbedCount++;
                 ecb.DestroyEntity(entity);
             }
             else
@@ -67,6 +69,13 @@ public partial struct XPPickupSystem : ISystem
         }
 
         if (expChanged) SystemAPI.SetComponent(playerEntity, playerLevel);
+
+        if (absorbedCount > 0 && SystemAPI.HasComponent<PlayerAudioFeedbackData>(playerEntity))
+        {
+            var audioData = SystemAPI.GetComponent<PlayerAudioFeedbackData>(playerEntity);
+            audioData.ExpOrbsAbsorbed += absorbedCount;
+            SystemAPI.SetComponent(playerEntity, audioData);
+        }
 
         ecb.Playback(state.EntityManager);
         ecb.Dispose();

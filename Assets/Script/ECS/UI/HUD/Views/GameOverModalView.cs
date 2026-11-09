@@ -168,7 +168,11 @@ public class GameOverModalView
         if (_levelValueText != null) _levelValueText.text = $"Lv.{stats.FinalLevel}";
         if (_stonesValueText != null) _stonesValueText.text = $"+{stats.StonesEarned} 💎";
 
-        if (_panelObj != null) _panelObj.SetActive(true);
+        if (_panelObj != null)
+        {
+            _panelObj.SetActive(true);
+            AudioManager.Instance.PlayBGM(BGMTrack.GameOver, 1.0f);
+        }
     }
 
     public void Hide()

@@ -68,9 +68,23 @@ public class GameSettingsBridge : MonoBehaviour
         _topBarView?.SetVisible(isGameplay);
     }
 
+    private float _devRefreshTimer = 0f;
+
     private void Update()
     {
         _inputHandler?.Update(_isDevPanelOpen);
+
+#if UNITY_EDITOR || DEBUG
+        if (_isDevPanelOpen)
+        {
+            _devRefreshTimer += Time.unscaledDeltaTime;
+            if (_devRefreshTimer >= 0.25f)
+            {
+                _devRefreshTimer = 0f;
+                RefreshDevPanel();
+            }
+        }
+#endif
     }
 
     #region --- Pause Menu Controller & 3-Second Resume Countdown ---
@@ -273,7 +287,11 @@ public class GameSettingsBridge : MonoBehaviour
     {
         if (_devView != null && _skillService != null && _cheatService != null)
         {
-            _devView.Refresh(_skillService.GetAllSkillStates(), _cheatService.GetDevActions());
+            _devView.Refresh(
+                _skillService.GetAllSkillStates(),
+                _cheatService.GetDevActions(),
+                _cheatService.GetWaveActions(),
+                _cheatService.GetWaveStatus());
         }
     }
 
@@ -350,7 +368,23 @@ public class GameSettingsBridge : MonoBehaviour
             }
         }
 
-        _devView = new DevControlPanelView(canvasObj.transform, _skillService.GetDevSkillInfos(), cheatActions);
+        // Tạo danh sách wave actions đính kèm callback làm mới UI
+        var waveActions = _cheatService.GetWaveActions();
+        foreach (var action in waveActions)
+        {
+            var origAction = action.ExecuteAction;
+            action.ExecuteAction = () =>
+            {
+                origAction();
+                RefreshDevPanel();
+            };
+        }
+
+        _devView = new DevControlPanelView(
+            canvasObj.transform,
+            _skillService.GetDevSkillInfos(),
+            cheatActions,
+            waveActions);
         _devView.OnSkillLevelDelta += (skillId, delta) =>
         {
             _skillService.SetSkillLevel(skillId, delta);
