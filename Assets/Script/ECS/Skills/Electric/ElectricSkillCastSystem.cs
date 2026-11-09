@@ -112,15 +112,15 @@ public partial struct ElectricSkillCastSystem : ISystem
 
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
-        foreach (var (runtime, owner, skill, balance) in
+        foreach (var (runtime, owner, skill, balance, skillEntity) in
                  SystemAPI.Query<RefRW<SkillRuntimeData>, RefRO<SkillOwnerData>, RefRW<ElectricSkillData>, RefRO<ElectricLevelBalanceData>>()
-                     .WithAll<ElectricSkillTag>())
+                     .WithAll<ElectricSkillTag>()
+                     .WithEntityAccess())
         {
             int level = math.clamp(runtime.ValueRO.Level, 0, 4);
             if (level <= 0) continue; // Chưa mở khóa kỹ năng
 
             // Đồng bộ thông số theo Cấp độ hiện tại
-            float currentCooldown = balance.ValueRO.CooldownLv1;
             float currentDamage = balance.ValueRO.DamageLv1;
             int primaryCount = balance.ValueRO.PrimaryCountLv1;
             int chainCount = balance.ValueRO.ChainCountLv1;
@@ -129,21 +129,18 @@ public partial struct ElectricSkillCastSystem : ISystem
 
             if (level == 2)
             {
-                currentCooldown = balance.ValueRO.CooldownLv2;
                 currentDamage = balance.ValueRO.DamageLv2;
                 primaryCount = balance.ValueRO.PrimaryCountLv2;
                 chainCount = balance.ValueRO.ChainCountLv2;
             }
             else if (level == 3)
             {
-                currentCooldown = balance.ValueRO.CooldownLv3;
                 currentDamage = balance.ValueRO.DamageLv3;
                 primaryCount = balance.ValueRO.PrimaryCountLv3;
                 chainCount = balance.ValueRO.ChainCountLv3;
             }
             else if (level >= 4)
             {
-                currentCooldown = balance.ValueRO.CooldownLv4;
                 currentDamage = balance.ValueRO.DamageLv4;
                 primaryCount = balance.ValueRO.PrimaryCountLv4;
                 chainCount = balance.ValueRO.ChainCountLv4;
@@ -160,7 +157,7 @@ public partial struct ElectricSkillCastSystem : ISystem
             if (runtime.ValueRO.Timer > 0f) continue;
 
             if (!state.EntityManager.Exists(owner.ValueRO.Owner)) continue;
-            float3 playerPos = state.EntityManager.GetComponentData<LocalTransform>(owner.ValueRO.Owner).Position;
+            float3 casterPos = state.EntityManager.GetComponentData<LocalTransform>(owner.ValueRO.Owner).Position;
 
             if (_enemyQuery.IsEmpty) continue;
 
@@ -170,7 +167,7 @@ public partial struct ElectricSkillCastSystem : ISystem
             var enemyHealths = _enemyQuery.ToComponentDataArray<HealthData>(Allocator.Temp);
 
             var primaryTargets = new NativeList<Entity>(primaryCount, Allocator.Temp);
-            CollectNearestEnemies(playerPos, skill.ValueRO.DetectRange, primaryCount,
+            CollectNearestEnemies(casterPos, skill.ValueRO.DetectRange, primaryCount,
                 enemyEntities, enemyTransforms, enemyHealths, ref primaryTargets);
 
             if (primaryTargets.IsEmpty)
@@ -183,7 +180,7 @@ public partial struct ElectricSkillCastSystem : ISystem
             }
 
             // Đặt lại Cooldown sau khi tìm thấy mục tiêu
-            runtime.ValueRW.Timer = currentCooldown;
+            runtime.ValueRW.Timer = runtime.ValueRO.Cooldown;
 
             float chainDamage = currentDamage * skill.ValueRO.ChainDamageRatio;
 
@@ -197,7 +194,7 @@ public partial struct ElectricSkillCastSystem : ISystem
                 float3 primaryPos = _transformLookup[primaryTarget].Position;
 
                 // 1. Gây sát thương tia cha vào pipeline
-                EnemyDamage.Add(ref _incomingDamageLookup, primaryTarget, SkillIds.Electric, currentDamage);
+                EnemyDamage.Add(ref _incomingDamageLookup, primaryTarget, SkillIds.Electric, currentDamage, owner.ValueRO.Owner);
 
                 // Nếu Lv4: Kích hoạt Choáng (Stun)
                 if (stunDuration > 0f && _stunLookup.HasComponent(primaryTarget))
@@ -206,11 +203,11 @@ public partial struct ElectricSkillCastSystem : ISystem
                     _stunLookup[primaryTarget] = new EnemyStunData { StunTimer = stunDuration };
                 }
 
-                // Sinh event vẽ tia sét cha từ Player -> Primary Target
+                // Sinh event vẽ tia sét cha từ Caster -> Primary Target
                 Entity primaryArcEvent = ecb.CreateEntity();
                 ecb.AddComponent(primaryArcEvent, new ElectricArcEvent
                 {
-                    StartPos = playerPos,
+                    StartPos = casterPos,
                     EndPos = primaryPos,
                     Damage = currentDamage,
                     IsPrimary = true,
@@ -237,7 +234,7 @@ public partial struct ElectricSkillCastSystem : ISystem
                     float3 nextPos = _transformLookup[nextTarget].Position;
 
                     // Gây sát thương tia lan (30% sát thương gốc)
-                    EnemyDamage.Add(ref _incomingDamageLookup, nextTarget, SkillIds.Electric, chainDamage);
+                    EnemyDamage.Add(ref _incomingDamageLookup, nextTarget, SkillIds.Electric, chainDamage, owner.ValueRO.Owner);
 
                     // Nếu Lv4: Gây Stun
                     if (stunDuration > 0f && _stunLookup.HasComponent(nextTarget))

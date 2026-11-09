@@ -43,24 +43,24 @@ public partial struct SwordFusionSystem : ISystem
             // Reset hồi chiêu
             runtime.ValueRW.Timer = runtime.ValueRO.Cooldown;
 
-            // Lấy vị trí Player
-            Entity playerEntity = owner.ValueRO.Owner;
-            if (!state.EntityManager.Exists(playerEntity) || !state.EntityManager.HasComponent<LocalTransform>(playerEntity))
+            // Lấy vị trí Caster (Player hoặc Clone)
+            Entity casterEntity = owner.ValueRO.Owner;
+            if (!state.EntityManager.Exists(casterEntity) || !state.EntityManager.HasComponent<LocalTransform>(casterEntity))
                 continue;
 
-            float3 playerPos = state.EntityManager.GetComponentData<LocalTransform>(playerEntity).Position;
+            float3 casterPos = state.EntityManager.GetComponentData<LocalTransform>(casterEntity).Position;
 
             // Tìm vị trí mục tiêu (quái gần nhất hoặc cụm quái trong tầm DetectRange)
-            float3 targetPos = playerPos + new float3(0f, 2.5f, 0f); // Fallback mặc định
+            float3 targetPos = casterPos + new float3(0f, 2.5f, 0f); // Fallback mặc định
             float closestDistSq = fusion.ValueRO.DetectRange * fusion.ValueRO.DetectRange;
 
-            int2 playerCell = SpatialGridUtility.ToCell(playerPos.xy, cellSize);
+            int2 casterCell = SpatialGridUtility.ToCell(casterPos.xy, cellSize);
             int searchRadiusCells = (int)math.ceil(fusion.ValueRO.DetectRange / cellSize);
 
             for (int dx = -searchRadiusCells; dx <= searchRadiusCells; dx++)
             for (int dy = -searchRadiusCells; dy <= searchRadiusCells; dy++)
             {
-                int hash = SpatialGridUtility.HashCell(playerCell + new int2(dx, dy));
+                int hash = SpatialGridUtility.HashCell(casterCell + new int2(dx, dy));
                 if (!grid.TryGetFirstValue(hash, out Entity enemy, out var it)) continue;
 
                 do
@@ -69,7 +69,7 @@ public partial struct SwordFusionSystem : ISystem
                         continue;
 
                     float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
-                    float distSq = math.distancesq(playerPos, enemyPos);
+                    float distSq = math.distancesq(casterPos, enemyPos);
                     if (distSq < closestDistSq)
                     {
                         closestDistSq = distSq;
@@ -94,7 +94,8 @@ public partial struct SwordFusionSystem : ISystem
                 ImpactRadius = fusion.ValueRO.ImpactRadius,
                 WaveDamage = fusion.ValueRO.WaveDamage,
                 WaveSpeed = fusion.ValueRO.WaveSpeed,
-                WaveLifetime = fusion.ValueRO.WaveLifetime
+                WaveLifetime = fusion.ValueRO.WaveLifetime,
+                Source = casterEntity
             });
         }
 
@@ -139,7 +140,7 @@ public partial struct SwordFusionSystem : ISystem
                             float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                             if (math.distancesq(sword.ValueRO.TargetPosition, enemyPos) <= impactRadiusSq)
                             {
-                                EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SwordFusion, sword.ValueRO.ImpactDamage);
+                                EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SwordFusion, sword.ValueRO.ImpactDamage, sword.ValueRO.Source);
                             }
                         } while (grid.TryGetNextValue(out enemy, ref it));
                     }
@@ -174,7 +175,8 @@ public partial struct SwordFusionSystem : ISystem
                                 Damage = sword.ValueRO.WaveDamage,
                                 Radius = 1.5f, // Bán kính quét hitbox rộng hơn tương ứng với kích thước khổng lồ
                                 Lifetime = sword.ValueRO.WaveLifetime,
-                                MaxLifetime = sword.ValueRO.WaveLifetime
+                                MaxLifetime = sword.ValueRO.WaveLifetime,
+                                Source = sword.ValueRO.Source
                             });
                         }
                     }

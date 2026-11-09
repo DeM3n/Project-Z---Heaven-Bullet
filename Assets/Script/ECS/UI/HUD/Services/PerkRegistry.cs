@@ -40,9 +40,9 @@ public static class PerkRegistry
 
         public SwordFusionPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
-            _flyingSwordQuery = em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
-            _slashSwordQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
+            _flyingSwordQuery = em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
+            _slashSwordQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "SwordFusion";
@@ -94,9 +94,9 @@ public static class PerkRegistry
 
         public ThunderBoomerangPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
-            _boomerangQuery = em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
-            _electricQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
+            _boomerangQuery = em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
+            _electricQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "ThunderBoomerang";
@@ -146,7 +146,7 @@ public static class PerkRegistry
 
         public FlyingSwordPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "FlyingSword";
@@ -191,7 +191,7 @@ public static class PerkRegistry
 
         public SlashSwordPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "SlashSword";
@@ -236,7 +236,7 @@ public static class PerkRegistry
 
         public ProjectileSkillPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ProjectileSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ProjectileSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "ProjectileSkill";
@@ -281,7 +281,7 @@ public static class PerkRegistry
 
         public FireballPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "Fireball";
@@ -326,7 +326,7 @@ public static class PerkRegistry
 
         public ShieldPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ShieldSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ShieldSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "Shield";
@@ -371,7 +371,7 @@ public static class PerkRegistry
 
         public BoomerangPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "Boomerang";
@@ -416,7 +416,7 @@ public static class PerkRegistry
 
         public ElectricPerk(EntityManager em)
         {
-            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>());
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
         }
 
         public string PerkId => "Electric";

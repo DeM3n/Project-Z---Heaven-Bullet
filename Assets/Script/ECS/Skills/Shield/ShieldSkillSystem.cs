@@ -22,6 +22,7 @@ public partial struct ShieldSkillSystem : ISystem
 
         _skillQuery = SystemAPI.QueryBuilder()
             .WithAll<ShieldSkillTag, SkillRuntimeData, ShieldSkillData>()
+            .WithNone<CloneSkillTag>()
             .Build();
     }
 

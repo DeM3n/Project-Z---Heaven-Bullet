@@ -13,7 +13,8 @@ public enum RelicType : byte
     SpiritMagnet = 1,    // +50% Pickup Range
     HeartCrystal = 2,    // +30 Max HP & Full Heal
     PowerCharm = 3,      // +15% All Damage
-    FortuneDice = 4      // +2 Rerolls
+    FortuneDice = 4,     // +2 Rerolls
+    MirrorOfIllusion = 5 // [LEGENDARY] 2 Mirror Clones mimicking movement and casting all skills (25% DMG, 150% CD)
 }
 
 public struct PickupItemTag : IComponentData {}

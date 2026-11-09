@@ -27,13 +27,13 @@ public class ChestRewardService
         _entityManager = em;
         _chestEventQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ChestOpenEvent>());
 
-        _projectileSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ProjectileSkillTag>(), ComponentType.ReadWrite<ProjectileSkillData>());
-        _flyingSwordSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadWrite<FlyingSwordSkillData>());
-        _slashSwordSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadWrite<SlashSwordSkillData>());
-        _fireballSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadWrite<FireballSkillData>());
-        _boomerangSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<BoomerangSkillData>());
-        _electricSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<ElectricSkillData>());
-        _swordFusionSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SwordFusionSkillData>());
+        _projectileSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ProjectileSkillTag>(), ComponentType.ReadWrite<ProjectileSkillData>(), ComponentType.Exclude<CloneSkillTag>());
+        _flyingSwordSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadWrite<FlyingSwordSkillData>(), ComponentType.Exclude<CloneSkillTag>());
+        _slashSwordSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadWrite<SlashSwordSkillData>(), ComponentType.Exclude<CloneSkillTag>());
+        _fireballSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadWrite<FireballSkillData>(), ComponentType.Exclude<CloneSkillTag>());
+        _boomerangSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<BoomerangSkillData>(), ComponentType.Exclude<CloneSkillTag>());
+        _electricSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<ElectricSkillData>(), ComponentType.Exclude<CloneSkillTag>());
+        _swordFusionSkillQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SwordFusionSkillData>(), ComponentType.Exclude<CloneSkillTag>());
 
         _relicDefinitions = new List<IRelicDefinition>
         {
@@ -41,7 +41,8 @@ public class ChestRewardService
             new SpiritMagnetRelic(),
             new HeartCrystalRelic(),
             new PowerCharmRelic(this),
-            new FortuneDiceRelic()
+            new FortuneDiceRelic(),
+            new MirrorOfIllusionRelic()
         };
     }
 
@@ -64,12 +65,37 @@ public class ChestRewardService
     }
 
     /// <summary>
-    /// Chọn ngẫu nhiên 1 Cổ Vật trong danh sách
+    /// Chọn ngẫu nhiên 1 Cổ Vật trong danh sách theo trọng số (Weight).
+    /// Mirror of Illusion là Cực Phẩm (Legendary Tier ~5%), chỉ nhận được 1 lần duy nhất trong ván đấu.
     /// </summary>
     public IRelicDefinition SelectRandomRelic()
     {
-        int index = UnityEngine.Random.Range(0, _relicDefinitions.Count);
-        return _relicDefinitions[index];
+        bool hasMirror = false;
+        var pQuery = _entityManager.CreateEntityQuery(ComponentType.ReadOnly<PlayerTag>(), ComponentType.ReadOnly<PlayerRelicData>());
+        if (!pQuery.IsEmpty)
+        {
+            hasMirror = pQuery.GetSingleton<PlayerRelicData>().MirrorLevel > 0;
+        }
+
+        float totalWeight = 0f;
+        for (int i = 0; i < _relicDefinitions.Count; i++)
+        {
+            if (_relicDefinitions[i].Type == RelicType.MirrorOfIllusion && hasMirror) continue;
+            totalWeight += _relicDefinitions[i].Weight;
+        }
+
+        float roll = UnityEngine.Random.Range(0f, totalWeight);
+        float current = 0f;
+        for (int i = 0; i < _relicDefinitions.Count; i++)
+        {
+            if (_relicDefinitions[i].Type == RelicType.MirrorOfIllusion && hasMirror) continue;
+            current += _relicDefinitions[i].Weight;
+            if (roll <= current)
+            {
+                return _relicDefinitions[i];
+            }
+        }
+        return _relicDefinitions[0];
     }
 
     public IRelicDefinition GetRelicByType(RelicType type)
@@ -356,6 +382,36 @@ public class ChestRewardService
             var relic = GetOrCreateRelicData(em, player);
             relic.FortuneDiceLevel++;
             em.SetComponentData(player, relic);
+        }
+    }
+
+    // 6. Gương Ảo Ảnh (Mirror of Illusion) - [LEGENDARY TIER]
+    private class MirrorOfIllusionRelic : IRelicDefinition
+    {
+        public RelicType Type => RelicType.MirrorOfIllusion;
+        public string RelicId => "MirrorOfIllusion";
+        public float Weight => 0.06f; // Cực kỳ hiếm (~5-6% xuất hiện khi mở Rương)
+
+        public RelicRewardData GetRewardData(EntityManager em, Entity player)
+        {
+            return new RelicRewardData
+            {
+                Type = Type,
+                IconEmoji = "🪞",
+                Title = GameLocalization.RelicMirrorTitle,
+                LevelBadge = GameLocalization.LegendaryBadge,
+                Description = GameLocalization.RelicMirrorDesc
+            };
+        }
+
+        public void Apply(EntityManager em, Entity player)
+        {
+            var relic = GetOrCreateRelicData(em, player);
+            if (relic.MirrorLevel <= 0)
+            {
+                relic.MirrorLevel = 1;
+                em.SetComponentData(player, relic);
+            }
         }
     }
 

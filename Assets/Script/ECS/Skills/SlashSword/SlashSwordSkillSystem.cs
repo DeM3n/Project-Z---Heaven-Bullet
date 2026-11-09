@@ -172,6 +172,13 @@ public partial struct SlashSwordSkillSystem : ISystem
                 currentWaveDamage = skillData.WaveDamage;
             }
 
+            Entity casterEntity = state.EntityManager.HasComponent<SkillOwnerData>(sword.ValueRO.SkillEntity)
+                ? state.EntityManager.GetComponentData<SkillOwnerData>(sword.ValueRO.SkillEntity).Owner
+                : playerEntity;
+            if (!state.EntityManager.Exists(casterEntity) || !state.EntityManager.HasComponent<LocalTransform>(casterEntity))
+                continue;
+            float3 casterPos = state.EntityManager.GetComponentData<LocalTransform>(casterEntity).Position;
+
             // Góc bù thị giác để sprite luôn chỉ đúng mũi kiếm
             float rotOffset = visualOffsetLookup.HasComponent(swordEntity)
                 ? visualOffsetLookup[swordEntity].RadianOffset
@@ -188,7 +195,7 @@ public partial struct SlashSwordSkillSystem : ISystem
                     float finalAngle = globalAngle + angleOffset;
                     sword.ValueRW.OrbitAngle = finalAngle;
 
-                    float3 desiredPos = playerPos + new float3(
+                    float3 desiredPos = casterPos + new float3(
                         math.cos(finalAngle) * 1.6f,
                         math.sin(finalAngle) * 1.6f,
                         0f);
@@ -206,8 +213,8 @@ public partial struct SlashSwordSkillSystem : ISystem
                     }
                     else
                     {
-                        // Khi hết hồi chiêu, tìm quái trong tầm DetectRange quanh Player
-                        if (TryFindTargetEnemy(ref state, grid, cellSize, playerPos, skillData.DetectRange, sword.ValueRO.SwordIndex, out Entity targetEnemy, out float3 targetEnemyPos))
+                        // Khi hết hồi chiêu, tìm quái trong tầm DetectRange quanh Caster
+                        if (TryFindTargetEnemy(ref state, grid, cellSize, casterPos, skillData.DetectRange, sword.ValueRO.SwordIndex, out Entity targetEnemy, out float3 targetEnemyPos))
                         {
                             sword.ValueRW.State = 1; // Approaching
                             sword.ValueRW.TargetEnemy = targetEnemy;
@@ -271,7 +278,7 @@ public partial struct SlashSwordSkillSystem : ISystem
                                 float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                                 if (math.distancesq(slashCenter, enemyPos) <= slashRadiusSq)
                                 {
-                                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SlashSword, currentDamage);
+                                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SlashSword, currentDamage, casterEntity);
                                 }
                             } while (grid.TryGetNextValue(out enemy, ref it));
                         }
@@ -304,7 +311,8 @@ public partial struct SlashSwordSkillSystem : ISystem
                                 Damage = currentWaveDamage > 0f ? currentWaveDamage : skillData.WaveDamage,
                                 Radius = skillData.WaveRadius,
                                 Lifetime = skillData.WaveDuration,
-                                MaxLifetime = skillData.WaveDuration
+                                MaxLifetime = skillData.WaveDuration,
+                                Source = casterEntity
                             });
                         }
                     }
@@ -333,22 +341,22 @@ public partial struct SlashSwordSkillSystem : ISystem
                 {
                     sword.ValueRW.StateTimer -= dt;
 
-                    float3 toPlayer = playerPos - transform.ValueRO.Position;
-                    float distToPlayer = math.length(toPlayer);
-                    float3 dir = distToPlayer > 0.001f ? (toPlayer / distToPlayer) : float3.zero;
+                    float3 toCaster = casterPos - transform.ValueRO.Position;
+                    float distToCaster = math.length(toCaster);
+                    float3 dir = distToCaster > 0.001f ? (toCaster / distToCaster) : float3.zero;
 
-                    transform.ValueRW.Position += dir * math.min(skillData.ReturnSpeed * dt, distToPlayer);
+                    transform.ValueRW.Position += dir * math.min(skillData.ReturnSpeed * dt, distToCaster);
 
-                    if (distToPlayer > 0.01f)
+                    if (distToCaster > 0.01f)
                     {
                         transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f + rotOffset);
                     }
 
-                    // Khi đã quay về gần Player hoặc timeout
-                    if (distToPlayer <= 1.8f || sword.ValueRO.StateTimer <= 0f)
+                    // Khi đã quay về gần Caster hoặc timeout
+                    if (distToCaster <= 1.8f || sword.ValueRO.StateTimer <= 0f)
                     {
                         sword.ValueRW.State = 0; // IdleOrbit
-                        sword.ValueRW.CooldownTimer = currentCooldown; // Bắt đầu chu kỳ hồi chiêu mới
+                        sword.ValueRW.CooldownTimer = runtime.Cooldown; // Bắt đầu chu kỳ hồi chiêu mới
                     }
                     break;
                 }

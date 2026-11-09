@@ -32,6 +32,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
 
         _fusionQuery = SystemAPI.QueryBuilder()
             .WithAll<ThunderBoomerangFusionTag, SkillRuntimeData>()
+            .WithNone<CloneSkillTag>()
             .Build();
 
         _incomingDamageLookup = state.GetBufferLookup<EnemyIncomingDamage>(false);
@@ -75,7 +76,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                 projData.ValueRW.DistanceTraveled += math.length(moveStep);
 
                 // Quét va chạm gây sát thương xuyên thấu qua Spatial Grid
-                CheckPiercingCollision(ref state, ref ecb, ref _incomingDamageLookup, grid, cellSize, transform.ValueRO.Position.xy, projData.ValueRO.HitRadius, projData.ValueRO.Damage, hitBuffer);
+                CheckPiercingCollision(ref state, ref ecb, ref _incomingDamageLookup, grid, cellSize, transform.ValueRO.Position.xy, projData.ValueRO.HitRadius, projData.ValueRO.Damage, hitBuffer, projData.ValueRO.Owner);
 
                 // Khi bay đủ cự ly tối đa -> Đổi chiều quay về
                 if (projData.ValueRO.DistanceTraveled >= projData.ValueRO.MaxDistance)
@@ -83,13 +84,23 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                     projData.ValueRW.State = BoomerangFlightState.Returning;
                     hitBuffer.Clear(); // Xóa danh sách trúng đòn để có thể chém lại quái trên đường bay về!
 
-                    // --- TÍNH TOÁN HƯỚNG BAY VỀ THEO HƯỚNG DI CHUYỂN CỦA PLAYER (KHÔNG HOMING) ---
-                    float distToPlayer = math.distance(transform.ValueRO.Position.xy, playerPos);
-                    float flightTime = distToPlayer / math.max(1f, projData.ValueRO.Speed);
-                    float2 playerVelocity = playerMove.Direction * playerMove.MoveSpeed;
+                    // --- TÍNH TOÁN HƯỚNG BAY VỀ THEO HƯỚNG DI CHUYỂN CỦA ĐÚNG CHỦ SỞ HỮU (PLAYER HOẶC CLONE) ---
+                    Entity ownerEntity = projData.ValueRO.Owner;
+                    if (!state.EntityManager.Exists(ownerEntity) || !state.EntityManager.HasComponent<LocalTransform>(ownerEntity))
+                    {
+                        ownerEntity = player;
+                    }
+
+                    LocalTransform ownerTransform = state.EntityManager.GetComponentData<LocalTransform>(ownerEntity);
+                    float2 ownerPos = ownerTransform.Position.xy;
+
+                    // Vận tốc đón đầu của chủ nhân (cả Player và Clone đều di chuyển theo vận tốc playerMove)
+                    float distToOwner = math.distance(transform.ValueRO.Position.xy, ownerPos);
+                    float flightTime = distToOwner / math.max(1f, projData.ValueRO.Speed);
+                    float2 ownerVelocity = playerMove.Direction * playerMove.MoveSpeed;
                     
-                    // Điểm đón đầu dự kiến dựa trên vận tốc hiện tại của Player
-                    float2 leadTargetPos = playerPos + playerVelocity * (flightTime * 0.7f);
+                    // Điểm đón đầu dự kiến dựa trên vận tốc hiện tại của Chủ nhân
+                    float2 leadTargetPos = ownerPos + ownerVelocity * (flightTime * 0.7f);
                     float2 returnDir = leadTargetPos - transform.ValueRO.Position.xy;
 
                     if (math.lengthsq(returnDir) < 0.001f)
@@ -115,22 +126,33 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                 projData.ValueRW.ReturnDistanceTraveled += math.length(moveStep);
 
                 // Tiếp tục xuyên thấu và chém quái trên đường quay về
-                CheckPiercingCollision(ref state, ref ecb, ref _incomingDamageLookup, grid, cellSize, transform.ValueRO.Position.xy, projData.ValueRO.HitRadius, projData.ValueRO.Damage, hitBuffer);
+                CheckPiercingCollision(ref state, ref ecb, ref _incomingDamageLookup, grid, cellSize, transform.ValueRO.Position.xy, projData.ValueRO.HitRadius, projData.ValueRO.Damage, hitBuffer, projData.ValueRO.Owner);
 
-                // --- KIỂM TRA NGƯỜI CHƠI BẮT DÍNH (CATCH) PHI TIÊU ---
-                float distToPlayerSq = math.distancesq(transform.ValueRO.Position.xy, playerPos);
+                // --- KIỂM TRA CHỦ SỞ HỮU BẮT DÍNH (CATCH) PHI TIÊU ---
+                // Boomerang của ai thì chỉ người đó mới có thể bắt dính!
+                // Player và Clones tuyệt đối KHÔNG ĐƯỢC chụp lấy Boomerang của nhau.
+                Entity ownerEntity = projData.ValueRO.Owner;
+                if (!state.EntityManager.Exists(ownerEntity) || !state.EntityManager.HasComponent<LocalTransform>(ownerEntity))
+                {
+                    ownerEntity = player;
+                }
+
+                LocalTransform ownerTransform = state.EntityManager.GetComponentData<LocalTransform>(ownerEntity);
+                float2 ownerPos = ownerTransform.Position.xy;
+
+                float distToOwnerSq = math.distancesq(transform.ValueRO.Position.xy, ownerPos);
                 float catchRadius = projData.ValueRO.CatchRadius;
 
-                if (distToPlayerSq <= catchRadius * catchRadius)
+                if (distToOwnerSq <= catchRadius * catchRadius)
                 {
-                    // >>> BẮT DÍNH THÀNH CÔNG! <<<
+                    // >>> BẮT DÍNH THÀNH CÔNG BỞI ĐÚNG CHỦ NHÂN! <<<
                     Entity skillEntity = projData.ValueRO.SkillEntity;
 
-                    // Sinh Event cho Visual Bridge (hiệu ứng bùng nổ vòng hào quang quanh Player)
+                    // Sinh Event cho Visual Bridge (hiệu ứng bùng nổ vòng hào quang quanh đúng chủ nhân)
                     Entity catchEventEntity = ecb.CreateEntity();
                     ecb.AddComponent(catchEventEntity, new BoomerangCatchEvent
                     {
-                        Position = playerTransform.Position,
+                        Position = ownerTransform.Position,
                         IsEmpowered = (projData.ValueRO.SkillLevel >= 4)
                     });
 
@@ -152,11 +174,11 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                             runtime.Timer = math.min(runtime.Cooldown, runtime.Timer + runtime.Cooldown * 0.25f);
                             ecb.SetComponent(skillEntity, runtime);
 
-                            // Lập tức bắn lại 1 chiếc Boomerang Cường Hóa (Empowered Boomerang) với +60% Sát Thương
+                            // Lập tức bắn lại 1 chiếc Boomerang Cường Hóa (Empowered Boomerang) với +60% Sát Thương từ đúng chủ nhân
                             float empoweredDamage = skillData.BaseDamage * skillData.EmpoweredMultiplier;
                             
-                            // Hướng bắn: Tìm quái gần nhất hoặc bắn theo hướng di chuyển hiện tại của Player
-                            float2 reboundDir = FindNearestEnemyDirection(ref state, grid, cellSize, playerPos, skillData.DetectRange);
+                            // Hướng bắn: Tìm quái gần nhất tính từ vị trí chủ nhân hoặc bắn theo hướng di chuyển hiện tại
+                            float2 reboundDir = FindNearestEnemyDirection(ref state, grid, cellSize, ownerPos, skillData.DetectRange);
                             if (math.lengthsq(reboundDir) < 0.001f)
                             {
                                 reboundDir = math.lengthsq(playerMove.Direction) > 0.01f ? math.normalize(playerMove.Direction) : new float2(1f, 0f);
@@ -164,9 +186,9 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
 
                             BoomerangSkillCastSystem.SpawnBoomerang(
                                 ref ecb,
-                                player,
+                                ownerEntity, // Bắn từ đúng chủ nhân (Player hoặc Clone)!
                                 skillEntity,
-                                playerTransform.Position,
+                                ownerTransform.Position,
                                 reboundDir,
                                 skillData,
                                 empoweredDamage,
@@ -204,7 +226,8 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
         float2 currentPos,
         float hitRadius,
         float damage,
-        DynamicBuffer<BoomerangHitBuffer> hitBuffer)
+        DynamicBuffer<BoomerangHitBuffer> hitBuffer,
+        Entity source = default)
     {
         int2 cell = SpatialGridUtility.ToCell(currentPos, cellSize);
         float hitDistSq = hitRadius * hitRadius;
@@ -240,7 +263,7 @@ public partial struct BoomerangMovementAndCollisionSystem : ISystem
                     hitBuffer.Add(new BoomerangHitBuffer { Target = enemy });
 
                     // Gây sát thương quái qua Pipeline
-                    EnemyDamage.Add(ref incomingDamageLookup, enemy, SkillIds.Boomerang, damage);
+                    EnemyDamage.Add(ref incomingDamageLookup, enemy, SkillIds.Boomerang, damage, source);
                 }
             } while (grid.TryGetNextValue(out enemy, ref it));
         }

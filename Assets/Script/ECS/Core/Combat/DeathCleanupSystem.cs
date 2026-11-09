@@ -95,9 +95,10 @@ public partial struct DeathCleanupSystem : ISystem
                         }
                     }
 
-                    // Tỉ lệ rơi Trái Tim Hồi Máu (Health Heart): cơ bản 3.5% * (1 + dropBonus)
-                    float heartChance = 0.035f * (1f + dropBonus);
-                    float magnetChance = 0.012f * (1f + dropBonus);
+                    // Tỉ lệ rơi Trái Tim Hồi Máu (Health Heart): cơ bản 0.8% * (1 + dropBonus)
+                    float heartChance = 0.008f * (1f + dropBonus);
+                    // Tỉ lệ rơi Nam Châm Hút EXP (Exp Magnet): cơ bản 0.2% * (1 + dropBonus)
+                    float magnetChance = 0.002f * (1f + dropBonus);
                     float rollLoot = _random.NextFloat(0f, 1f);
                     if (rollLoot <= heartChance)
                     {

@@ -45,6 +45,7 @@ public class FlyingSwordTrailBridge : MonoBehaviour
         public bool IsUltimateMode;
     }
 
+    private readonly Dictionary<Entity, SwordVisualItem> _activeVisuals = new Dictionary<Entity, SwordVisualItem>();
     private readonly List<SwordVisualItem> _visualPool = new List<SwordVisualItem>();
     private readonly List<SwordShockwaveEffect> _shockwavePool = new List<SwordShockwaveEffect>();
 
@@ -79,7 +80,8 @@ public class FlyingSwordTrailBridge : MonoBehaviour
 
         _skillQuery = _entityManager.CreateEntityQuery(
             ComponentType.ReadOnly<FlyingSwordSkillTag>(),
-            ComponentType.ReadOnly<SkillRuntimeData>());
+            ComponentType.ReadOnly<SkillRuntimeData>(),
+            ComponentType.Exclude<CloneSkillTag>());
 
         _blastQuery = _entityManager.CreateEntityQuery(
             ComponentType.ReadOnly<FlyingSwordAoeBlastEvent>());
@@ -102,112 +104,145 @@ public class FlyingSwordTrailBridge : MonoBehaviour
             skillLevel = _skillQuery.GetSingleton<SkillRuntimeData>().Level;
         }
 
-        // 3. Đồng bộ Trail và Aura trạng thái của từng thanh kiếm
+        // 3. Đồng bộ Trail và Aura trạng thái của từng thanh kiếm (khớp theo Entity ID để độc lập tuyệt đối giữa Player và Clones)
         if (_swordQuery.IsEmpty)
         {
-            for (int i = 0; i < _visualPool.Count; i++)
+            if (_activeVisuals.Count > 0)
             {
-                if (_visualPool[i] != null && _visualPool[i].Root.activeSelf)
+                foreach (var kvp in _activeVisuals)
                 {
-                    _visualPool[i].Trail.emitting = false;
-                    _visualPool[i].Root.SetActive(false);
+                    if (kvp.Value != null && kvp.Value.Root.activeSelf)
+                    {
+                        kvp.Value.Trail.Clear();
+                        kvp.Value.Trail.emitting = false;
+                        kvp.Value.Root.SetActive(false);
+                        _visualPool.Add(kvp.Value);
+                    }
                 }
+                _activeVisuals.Clear();
             }
             return;
         }
 
+        var swordEntities = _swordQuery.ToEntityArray(Allocator.Temp);
         var transforms = _swordQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
         var swordDataArray = _swordQuery.ToComponentDataArray<FlyingSwordData>(Allocator.Temp);
-        int swordCount = transforms.Length;
+        int swordCount = swordEntities.Length;
 
-        // Đảm bảo pool đủ số lượng item cho từng kiếm
-        while (_visualPool.Count < swordCount)
-        {
-            _visualPool.Add(CreateNewSwordVisual());
-        }
+        var currentActiveEntities = new HashSet<Entity>();
 
-        for (int i = 0; i < _visualPool.Count; i++)
+        for (int i = 0; i < swordCount; i++)
         {
-            var item = _visualPool[i];
-            if (i < swordCount)
+            Entity entity = swordEntities[i];
+            currentActiveEntities.Add(entity);
+
+            Vector3 targetPos = new Vector3(
+                transforms[i].Position.x,
+                transforms[i].Position.y,
+                transforms[i].Position.z);
+
+            // Dời điểm phát Trail về đúng vị trí Chuôi Kiếm (Hilt) phía sau
+            Vector3 hiltDirection = ((Quaternion)transforms[i].Rotation) * (invertHiltDirection ? Vector3.down : Vector3.up);
+            Vector3 trailEmitPos = targetPos + hiltDirection * hiltOffset;
+
+            if (!_activeVisuals.TryGetValue(entity, out var item))
             {
-                if (!item.Root.activeSelf)
+                if (_visualPool.Count > 0)
                 {
-                    item.Root.SetActive(true);
-                    item.Trail.Clear();
+                    int last = _visualPool.Count - 1;
+                    item = _visualPool[last];
+                    _visualPool.RemoveAt(last);
                 }
-
-                Vector3 targetPos = new Vector3(
-                    transforms[i].Position.x,
-                    transforms[i].Position.y,
-                    transforms[i].Position.z);
-
-                // Dời điểm phát Trail về đúng vị trí Chuôi Kiếm (Hilt) phía sau
-                Vector3 hiltDirection = ((Quaternion)transforms[i].Rotation) * (invertHiltDirection ? Vector3.down : Vector3.up);
-                Vector3 trailEmitPos = targetPos + hiltDirection * hiltOffset;
-
-                // Dịch chuyển tức thời quá xa (> 4m) -> Clear trail để tránh vạch cắt màn hình
-                if (Vector3.Distance(item.Root.transform.position, trailEmitPos) > 4f)
+                else
                 {
-                    item.Trail.Clear();
+                    item = CreateNewSwordVisual();
                 }
 
                 item.Root.transform.position = trailEmitPos;
                 item.Root.transform.rotation = transforms[i].Rotation;
-                item.Trail.emitting = true;
+                item.Trail.Clear();
+                item.Root.SetActive(true);
+                _activeVisuals[entity] = item;
+            }
 
-                // --- Hiệu ứng Ultimate Ready & Ultimate Active ---
-                bool isUltimateStrike = swordDataArray[i].IsUltimate;
-                bool isUltimateReady = (skillLevel >= 4 && swordDataArray[i].UltimateTimer <= 0f);
+            // Dịch chuyển tức thời quá xa (> 4m) -> Clear trail để tránh vạch cắt màn hình
+            if (Vector3.Distance(item.Root.transform.position, trailEmitPos) > 4f)
+            {
+                item.Trail.Clear();
+            }
 
-                if (isUltimateStrike)
+            item.Root.transform.position = trailEmitPos;
+            item.Root.transform.rotation = transforms[i].Rotation;
+            item.Trail.emitting = true;
+
+            // --- Hiệu ứng Ultimate Ready & Ultimate Active ---
+            bool isUltimateStrike = swordDataArray[i].IsUltimate;
+            bool isUltimateReady = (skillLevel >= 4 && swordDataArray[i].UltimateTimer <= 0f);
+
+            if (isUltimateStrike)
+            {
+                // Đang trong cú lướt Ultimate: Vệt đuôi đỏ cam rực lửa cực đại (width 0.28f)
+                if (!item.IsUltimateMode)
                 {
-                    // Đang trong cú lướt Ultimate: Vệt đuôi đỏ cam rực lửa cực đại (width 0.28f)
-                    if (!item.IsUltimateMode)
-                    {
-                        item.IsUltimateMode = true;
-                        ApplyTrailGradient(item.Trail, ultimateColor, new Color(0.85f, 0.05f, 0.05f, 0f), 0.28f, 0.02f);
-                    }
-                    item.AuraObj.SetActive(true);
-                    item.AuraObj.transform.Rotate(0f, 0f, 720f * Time.deltaTime);
-                    item.AuraRenderer.color = new Color(1f, 0.35f, 0.15f, 0.95f);
-                    item.AuraObj.transform.localScale = Vector3.one * (1.6f + Mathf.PingPong(Time.time * 6f, 0.4f));
+                    item.IsUltimateMode = true;
+                    ApplyTrailGradient(item.Trail, ultimateColor, new Color(0.85f, 0.05f, 0.05f, 0f), 0.28f, 0.02f);
                 }
-                else if (isUltimateReady)
+                item.AuraObj.SetActive(true);
+                item.AuraObj.transform.Rotate(0f, 0f, 720f * Time.deltaTime);
+                item.AuraRenderer.color = new Color(1f, 0.35f, 0.15f, 0.95f);
+                item.AuraObj.transform.localScale = Vector3.one * (1.6f + Mathf.PingPong(Time.time * 6f, 0.4f));
+            }
+            else if (isUltimateReady)
+            {
+                // Ultimate đã tích tụ xong: Aura đỏ cam xoay quanh chuôi kiếm, báo hiệu sẵn sàng
+                if (!item.IsUltimateMode)
                 {
-                    // Ultimate đã tích tụ xong: Aura đỏ cam xoay quanh chuôi kiếm, báo hiệu sẵn sàng
-                    if (!item.IsUltimateMode)
-                    {
-                        item.IsUltimateMode = true;
-                        ApplyTrailGradient(item.Trail, new Color(1f, 0.45f, 0.15f, 0.95f), normalColor, 0.16f, 0.01f);
-                    }
-                    item.AuraObj.SetActive(true);
-                    item.AuraObj.transform.Rotate(0f, 0f, 360f * Time.deltaTime);
-                    float pulse = 1f + Mathf.Sin(Time.time * 8f) * 0.2f;
-                    item.AuraRenderer.color = new Color(1f, 0.25f, 0.15f, 0.85f + Mathf.Sin(Time.time * 8f) * 0.15f);
-                    item.AuraObj.transform.localScale = Vector3.one * pulse;
+                    item.IsUltimateMode = true;
+                    ApplyTrailGradient(item.Trail, new Color(1f, 0.45f, 0.15f, 0.95f), normalColor, 0.16f, 0.01f);
                 }
-                else
-                {
-                    // Trạng thái bình thường: Vệt đỏ thon gọn xuất phát từ chuôi kiếm, tắt Aura
-                    if (item.IsUltimateMode)
-                    {
-                        item.IsUltimateMode = false;
-                        ApplyTrailGradient(item.Trail, normalColor, new Color(0.7f, 0.02f, 0.05f, 0f), startWidth, endWidth);
-                    }
-                    item.AuraObj.SetActive(false);
-                }
+                item.AuraObj.SetActive(true);
+                item.AuraObj.transform.Rotate(0f, 0f, 360f * Time.deltaTime);
+                float pulse = 1f + Mathf.Sin(Time.time * 8f) * 0.2f;
+                item.AuraRenderer.color = new Color(1f, 0.25f, 0.15f, 0.85f + Mathf.Sin(Time.time * 8f) * 0.15f);
+                item.AuraObj.transform.localScale = Vector3.one * pulse;
             }
             else
             {
-                if (item.Root.activeSelf)
+                // Trạng thái bình thường: Vệt đỏ thon gọn xuất phát từ chuôi kiếm, tắt Aura
+                if (item.IsUltimateMode)
                 {
-                    item.Trail.emitting = false;
-                    item.Root.SetActive(false);
+                    item.IsUltimateMode = false;
+                    ApplyTrailGradient(item.Trail, normalColor, new Color(0.7f, 0.02f, 0.05f, 0f), startWidth, endWidth);
                 }
+                item.AuraObj.SetActive(false);
             }
         }
 
+        // Tắt và thu hồi visual của các entity kiếm đã bị hủy
+        if (_activeVisuals.Count > swordCount)
+        {
+            var deadEntities = new List<Entity>();
+            foreach (var kvp in _activeVisuals)
+            {
+                if (!currentActiveEntities.Contains(kvp.Key))
+                {
+                    deadEntities.Add(kvp.Key);
+                }
+            }
+
+            for (int i = 0; i < deadEntities.Count; i++)
+            {
+                Entity dead = deadEntities[i];
+                var deadItem = _activeVisuals[dead];
+                deadItem.Trail.Clear();
+                deadItem.Trail.emitting = false;
+                deadItem.Root.SetActive(false);
+                _visualPool.Add(deadItem);
+                _activeVisuals.Remove(dead);
+            }
+        }
+
+        swordEntities.Dispose();
         transforms.Dispose();
         swordDataArray.Dispose();
     }

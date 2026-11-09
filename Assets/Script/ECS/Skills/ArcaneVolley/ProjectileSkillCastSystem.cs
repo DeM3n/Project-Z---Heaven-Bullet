@@ -28,9 +28,10 @@ public partial struct ProjectileSkillCastSystem : ISystem
         var grid = SystemAPI.GetSingleton<SpatialGridSingleton>().Grid;
         float cellSize = SystemAPI.GetSingleton<SpatialGridSingleton>().CellSize;
 
-        foreach (var (runtime, owner, skill) in
+        foreach (var (runtime, owner, skill, skillEntity) in
                  SystemAPI.Query<RefRW<SkillRuntimeData>, RefRO<SkillOwnerData>, RefRO<ProjectileSkillData>>()
-                     .WithAll<ProjectileSkillTag>())
+                     .WithAll<ProjectileSkillTag>()
+                     .WithEntityAccess())
         {
             runtime.ValueRW.Timer -= dt;
             if (runtime.ValueRO.Timer > 0f) continue;
@@ -60,7 +61,13 @@ public partial struct ProjectileSkillCastSystem : ISystem
                 ecb.SetComponent(projectile, LocalTransform.FromPosition(casterPos));
                 ecb.SetComponent(projectile, new MovementData { Direction = dir, MoveSpeed = skill.ValueRO.ProjectileSpeed });
                 ecb.SetComponent(projectile, new ProjectileLifetimeData { TimeRemaining = skill.ValueRO.ProjectileLifetime });
-                ecb.SetComponent(projectile, new DamageOnContactData { Damage = scaledDamage, HitRadius = skill.ValueRO.ProjectileHitRadius, SkillId = SkillIds.ProjectileSkill });
+                ecb.SetComponent(projectile, new DamageOnContactData
+                {
+                    Damage = scaledDamage,
+                    HitRadius = skill.ValueRO.ProjectileHitRadius,
+                    SkillId = SkillIds.ProjectileSkill,
+                    Source = owner.ValueRO.Owner
+                });
             }
         }
 

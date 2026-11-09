@@ -40,6 +40,8 @@ public partial struct EnemyDamageResolutionSystem : ISystem
             globalDamageMultiplier = math.max(0.01f, SystemAPI.GetComponent<PlayerRelicData>(playerEntity).DamageMultiplier);
         }
 
+        ComponentLookup<PlayerCloneTag> cloneLookup = SystemAPI.GetComponentLookup<PlayerCloneTag>(true);
+
         foreach (var (damageBuffer, health, entity) in
                  SystemAPI.Query<DynamicBuffer<EnemyIncomingDamage>, RefRW<HealthData>>()
                      .WithAll<EnemyTag>()
@@ -58,9 +60,16 @@ public partial struct EnemyDamageResolutionSystem : ISystem
                     if (packet.Amount <= 0f) continue;
                     if (currentHP <= 0f) break; // Quái đã gục bởi hit trước trong cùng frame
 
-                    // Áp dụng hệ số ATK tổng thể cho các đòn đánh kỹ năng
+                    // Hệ số nguồn: nếu sát thương đến từ Phân Thân (PlayerCloneTag) -> tự động giảm còn 25% (0.25x)
+                    float sourceMultiplier = 1.0f;
+                    if (packet.Source != Entity.Null && cloneLookup.HasComponent(packet.Source))
+                    {
+                        sourceMultiplier = 0.25f;
+                    }
+
+                    // Áp dụng hệ số ATK tổng thể và hệ số nguồn cho các đòn đánh kỹ năng
                     float scaledAmount = packet.SkillId != SkillIds.Unattributed
-                        ? packet.Amount * globalDamageMultiplier
+                        ? packet.Amount * globalDamageMultiplier * sourceMultiplier
                         : packet.Amount;
 
                     // Sát thương hiệu dụng = max(0, min(Amount đã scale, HP trước đòn))

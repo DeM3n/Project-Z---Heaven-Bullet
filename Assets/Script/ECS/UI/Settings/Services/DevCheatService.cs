@@ -225,6 +225,21 @@ public class DevCheatService
         });
     }
 
+    public void SpawnMirrorRelic()
+    {
+        WasCheatedThisRun = true;
+        var em = EntityManager;
+        if (em == default) return;
+
+        using var pQuery = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerTag>(), ComponentType.ReadWrite<PlayerRelicData>());
+        if (pQuery.IsEmpty) return;
+
+        Entity player = pQuery.GetSingletonEntity();
+        var relic = em.GetComponentData<PlayerRelicData>(player);
+        relic.MirrorLevel = 1;
+        em.SetComponentData(player, relic);
+    }
+
     #endregion
 
     #region --- Wave & Timeline Controller ---
@@ -656,6 +671,15 @@ public class DevCheatService
                 NormalColor = new Color(0.28f, 0.12f, 0.32f, 1f),
                 BorderColor = new Color(0.85f, 0.45f, 1f),
                 ExecuteAction = SpawnExpMagnet
+            },
+            new DevAction
+            {
+                ActionId = "SpawnMirror",
+                LabelGetter = () => GameLocalization.Get("🪞 MIRROR CLONES", "🪞 GƯƠNG ẢO ẢNH"),
+                IsToggle = false,
+                NormalColor = new Color(0.28f, 0.1f, 0.35f, 1f),
+                BorderColor = new Color(0.95f, 0.5f, 1f),
+                ExecuteAction = SpawnMirrorRelic
             }
         };
     }

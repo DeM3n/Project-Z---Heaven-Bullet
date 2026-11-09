@@ -27,7 +27,7 @@ MonoBehaviour:
   - 1.8
   - 2.1
   - 2.4
-  - 2.8
+  - 3
   FireballSpeed: 9.5
   SubFireballSpeed: 11
   SubFireballLifetime: 0.45
@@ -36,4 +36,4 @@ MonoBehaviour:
   FireZoneRadius: 1.8
   FireZoneDuration: 3.5
   FireZoneTickInterval: 0.25
-  FireZoneDamagePerTick: 18
+  FireZoneDamagePerTick: 20

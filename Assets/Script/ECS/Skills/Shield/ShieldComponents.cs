@@ -46,6 +46,7 @@ public struct ShieldBreakEvent : IComponentData
     public float Damage;
     public float KnockbackForce;
     public bool IsExplosion;                 // true = Level 4 (nổ AOE + đẩy lùi quái + diệt đạn), false = vỡ thường
+    public Entity Source;                    // Entity sở hữu khiên (Player hoặc Clone)
 }
 
 /// <summary>

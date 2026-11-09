@@ -52,7 +52,8 @@ public class SlashSwordVisualBridge : MonoBehaviour
         public TrailRenderer Trail;
     }
 
-    private readonly List<SwordVisual> _swordVisuals = new List<SwordVisual>();
+    private readonly Dictionary<Entity, SwordVisual> _activeSwordVisuals = new Dictionary<Entity, SwordVisual>();
+    private readonly List<SwordVisual> _freeSwordPool = new List<SwordVisual>();
     private readonly List<SlashArcEffect> _slashArcPool = new List<SlashArcEffect>();
     private readonly List<WaveVisual> _waveVisualPool = new List<WaveVisual>();
     private readonly Dictionary<Entity, WaveVisual> _activeWaveVisuals = new Dictionary<Entity, WaveVisual>();
@@ -151,56 +152,71 @@ public class SlashSwordVisualBridge : MonoBehaviour
         effect.Setup(position, direction, radius, 0.22f);
     }
 
+    private SwordVisual GetOrCreateSwordVisual()
+    {
+        if (_freeSwordPool.Count > 0)
+        {
+            int last = _freeSwordPool.Count - 1;
+            var item = _freeSwordPool[last];
+            _freeSwordPool.RemoveAt(last);
+            return item;
+        }
+        return CreateSwordVisual();
+    }
+
     private void SyncSwordVisuals()
     {
         if (_swordQuery.IsEmpty)
         {
-            for (int i = 0; i < _swordVisuals.Count; i++)
+            if (_activeSwordVisuals.Count > 0)
             {
-                if (_swordVisuals[i].Root.activeSelf)
+                foreach (var kvp in _activeSwordVisuals)
                 {
-                    _swordVisuals[i].Trail.Clear();
-                    _swordVisuals[i].Root.SetActive(false);
+                    kvp.Value.Trail.Clear();
+                    kvp.Value.Root.SetActive(false);
+                    _freeSwordPool.Add(kvp.Value);
                 }
+                _activeSwordVisuals.Clear();
             }
             return;
         }
 
+        var swordEntities = _swordQuery.ToEntityArray(Allocator.Temp);
         var transforms = _swordQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
         var swords = _swordQuery.ToComponentDataArray<SlashSwordData>(Allocator.Temp);
 
-        while (_swordVisuals.Count < Mathf.Max(6, swords.Length))
-        {
-            _swordVisuals.Add(CreateSwordVisual());
-        }
+        var currentActiveEntities = new HashSet<Entity>();
 
-        bool[] used = new bool[_swordVisuals.Count];
-
-        for (int i = 0; i < swords.Length; i++)
+        for (int i = 0; i < swordEntities.Length; i++)
         {
-            int idx = Mathf.Clamp(swords[i].SwordIndex, 0, _swordVisuals.Count - 1);
-            used[idx] = true;
-            var vis = _swordVisuals[idx];
+            Entity entity = swordEntities[i];
+            currentActiveEntities.Add(entity);
 
             Vector3 targetPos = new Vector3(transforms[i].Position.x, transforms[i].Position.y, 0f);
             Vector3 hiltDirection = ((Quaternion)transforms[i].Rotation) * (invertHiltDirection ? Vector3.down : Vector3.up);
             Vector3 trailEmitPos = targetPos + hiltDirection * hiltOffset;
 
-            if (!vis.Root.activeSelf)
+            if (_activeSwordVisuals.TryGetValue(entity, out SwordVisual vis))
             {
+                if (Vector3.Distance(vis.Root.transform.position, trailEmitPos) > 3.0f)
+                {
+                    // Nhảy cự ly lớn -> Clear trail ngay lập tức để không tạo vạch cắt ngang màn hình
+                    vis.Trail.Clear();
+                }
+                vis.Root.transform.position = trailEmitPos;
+                vis.Root.transform.rotation = transforms[i].Rotation;
+            }
+            else
+            {
+                // Kiếm mới xuất hiện: Lấy từ pool hoặc tạo mới gắn riêng biệt cho Entity này
+                vis = GetOrCreateSwordVisual();
                 vis.Root.transform.position = trailEmitPos;
                 vis.Root.transform.rotation = transforms[i].Rotation;
                 vis.Trail.Clear();
                 vis.Root.SetActive(true);
+                vis.Trail.emitting = true;
+                _activeSwordVisuals[entity] = vis;
             }
-            else if (Vector3.Distance(vis.Root.transform.position, trailEmitPos) > 3.0f)
-            {
-                // Nhảy cự ly lớn -> Clear trail ngay lập tức để không tạo vạch cắt ngang màn hình
-                vis.Trail.Clear();
-            }
-
-            vis.Root.transform.position = trailEmitPos;
-            vis.Root.transform.rotation = transforms[i].Rotation;
 
             // Khi đang lướt áp sát hoặc chém, vệt trail sáng rực và kéo dài hơn
             bool inCombat = (swords[i].State == 1 || swords[i].State == 2);
@@ -209,15 +225,30 @@ public class SlashSwordVisualBridge : MonoBehaviour
             ApplyTrailGradient(vis.Trail, trailHeadColor, trailTailColor, currentStartWidth, endWidth);
         }
 
-        for (int i = 0; i < _swordVisuals.Count; i++)
+        // Tắt và thu hồi visual của các entity kiếm đã bị hủy
+        if (_activeSwordVisuals.Count > swordEntities.Length)
         {
-            if (!used[i] && _swordVisuals[i].Root.activeSelf)
+            var deadEntities = new List<Entity>();
+            foreach (var kvp in _activeSwordVisuals)
             {
-                _swordVisuals[i].Trail.Clear();
-                _swordVisuals[i].Root.SetActive(false);
+                if (!currentActiveEntities.Contains(kvp.Key))
+                {
+                    deadEntities.Add(kvp.Key);
+                }
+            }
+
+            for (int i = 0; i < deadEntities.Count; i++)
+            {
+                Entity dead = deadEntities[i];
+                var vis = _activeSwordVisuals[dead];
+                vis.Trail.Clear();
+                vis.Root.SetActive(false);
+                _freeSwordPool.Add(vis);
+                _activeSwordVisuals.Remove(dead);
             }
         }
 
+        swordEntities.Dispose();
         transforms.Dispose();
         swords.Dispose();
     }
@@ -331,7 +362,7 @@ public class SlashSwordVisualBridge : MonoBehaviour
 
     private SwordVisual CreateSwordVisual()
     {
-        var root = new GameObject($"SlashSwordVisual_{_swordVisuals.Count}");
+        var root = new GameObject($"SlashSwordVisual_{_activeSwordVisuals.Count + _freeSwordPool.Count}");
         root.transform.SetParent(transform);
 
         var trail = root.AddComponent<TrailRenderer>();

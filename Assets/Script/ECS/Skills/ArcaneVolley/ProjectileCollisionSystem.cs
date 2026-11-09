@@ -49,7 +49,7 @@ public partial struct ProjectileCollisionSystem : ISystem
                     if (distSq > hitDistSq) continue;
 
                     ushort skillId = dmg.ValueRO.SkillId != 0 ? dmg.ValueRO.SkillId : SkillIds.ProjectileSkill;
-                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, skillId, dmg.ValueRO.Damage);
+                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, skillId, dmg.ValueRO.Damage, dmg.ValueRO.Source);
 
                     ecb.DestroyEntity(entity);
                     hit = true;

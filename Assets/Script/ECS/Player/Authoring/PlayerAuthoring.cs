@@ -50,6 +50,7 @@ public class PlayerAuthoring : MonoBehaviour
                 VitalityLevel = 0,
                 PowerLevel = 0,
                 FortuneDiceLevel = 0,
+                MirrorLevel = 0,
                 DamageMultiplier = 1.0f
             });
             AddBuffer<IncomingDamage>(entity);

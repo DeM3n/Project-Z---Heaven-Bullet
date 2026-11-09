@@ -36,6 +36,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
 
         _fusionQuery = SystemAPI.QueryBuilder()
             .WithAll<ThunderBoomerangFusionTag, SkillRuntimeData>()
+            .WithNone<CloneSkillTag>()
             .Build();
     }
 
@@ -157,10 +158,22 @@ public partial struct BoomerangSkillCastSystem : ISystem
                 _ => balance.ValueRO.CountLv4
             };
 
-            runtime.ValueRW.Cooldown = currentCooldown;
             skillData.ValueRW.BaseDamage = currentDamage;
             skillData.ValueRW.HitRadius = currentHitRadius;
             skillData.ValueRW.BoomerangCount = currentCount;
+
+            Entity caster = player;
+            float3 casterPos3 = playerPos3;
+            if (SystemAPI.HasComponent<SkillOwnerData>(skillEntity))
+            {
+                Entity o = SystemAPI.GetComponent<SkillOwnerData>(skillEntity).Owner;
+                if (state.EntityManager.Exists(o) && state.EntityManager.HasComponent<LocalTransform>(o))
+                {
+                    caster = o;
+                    casterPos3 = state.EntityManager.GetComponentData<LocalTransform>(o).Position;
+                }
+            }
+            float2 casterPos = casterPos3.xy;
 
             // 1. Kiểm tra số lượng Boomerang hiện đang còn sống trên chiến trường của Skill này
             int activeBoomerangCount = 0;
@@ -190,7 +203,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
             // Tìm quái vật trong bán kính DetectRange qua Spatial Grid
             float detectRange = skillData.ValueRO.DetectRange;
             float detectRangeSq = detectRange * detectRange;
-            int2 centerCell = SpatialGridUtility.ToCell(playerPos, cellSize);
+            int2 centerCell = SpatialGridUtility.ToCell(casterPos, cellSize);
             int cellRadius = (int)math.ceil(detectRange / cellSize);
 
             // Tìm tối đa 2 mục tiêu kẻ địch khác nhau
@@ -213,7 +226,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
                         continue;
 
                     float2 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position.xy;
-                    float dSq = math.distancesq(playerPos, enemyPos);
+                    float dSq = math.distancesq(casterPos, enemyPos);
                     if (dSq > detectRangeSq) continue;
 
                     if (dSq < bestDistSq1)
@@ -242,8 +255,8 @@ public partial struct BoomerangSkillCastSystem : ISystem
             if (spawnNeeded == 1)
             {
                 // Bắn 1 Boomerang (hoặc triệu hồi bổ sung 1 chiếc bị mất)
-                float2 shootDir = targetEnemy1 != Entity.Null ? math.normalize(targetPos1 - playerPos) : defaultDir;
-                SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, shootDir, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                float2 shootDir = targetEnemy1 != Entity.Null ? math.normalize(targetPos1 - casterPos) : defaultDir;
+                SpawnBoomerang(ref ecb, caster, skillEntity, casterPos3, shootDir, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
             }
             else
             {
@@ -251,27 +264,27 @@ public partial struct BoomerangSkillCastSystem : ISystem
                 if (targetEnemy1 != Entity.Null && targetEnemy2 != Entity.Null)
                 {
                     // Có 2 quái riêng biệt -> Bắn thẳng vào 2 quái đó!
-                    float2 dir1 = math.normalize(targetPos1 - playerPos);
-                    float2 dir2 = math.normalize(targetPos2 - playerPos);
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    float2 dir1 = math.normalize(targetPos1 - casterPos);
+                    float2 dir2 = math.normalize(targetPos2 - casterPos);
+                    SpawnBoomerang(ref ecb, caster, skillEntity, casterPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    SpawnBoomerang(ref ecb, caster, skillEntity, casterPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
                 }
                 else if (targetEnemy1 != Entity.Null)
                 {
                     // Chỉ có 1 quái -> Bắn hơi lệch góc 25 độ (+12.5° và -12.5°)
-                    float2 baseDir = math.normalize(targetPos1 - playerPos);
+                    float2 baseDir = math.normalize(targetPos1 - casterPos);
                     float2 dir1 = RotateVector(baseDir, math.radians(-12.5f));
                     float2 dir2 = RotateVector(baseDir, math.radians(12.5f));
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    SpawnBoomerang(ref ecb, caster, skillEntity, casterPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    SpawnBoomerang(ref ecb, caster, skillEntity, casterPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
                 }
                 else
                 {
                     // Không có quái -> Bắn lệch góc 30 độ theo hướng di chuyển (+15° và -15°)
                     float2 dir1 = RotateVector(defaultDir, math.radians(-15f));
                     float2 dir2 = RotateVector(defaultDir, math.radians(15f));
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
-                    SpawnBoomerang(ref ecb, player, skillEntity, playerPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    SpawnBoomerang(ref ecb, caster, skillEntity, casterPos3, dir1, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
+                    SpawnBoomerang(ref ecb, caster, skillEntity, casterPos3, dir2, skillData.ValueRO, currentDamage, currentHitRadius, level, false, isThunderFusion);
                 }
             }
         }
@@ -282,7 +295,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
 
     public static void SpawnBoomerang(
         ref EntityCommandBuffer ecb,
-        Entity player,
+        Entity owner,
         Entity skillEntity,
         float3 spawnPos,
         float2 direction,
@@ -312,7 +325,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
                 CatchRadius = skillData.CatchRadius,
                 IsEmpowered = isEmpowered,
                 SkillLevel = skillLevel,
-                Owner = player,
+                Owner = owner,
                 SkillEntity = skillEntity,
                 RotationAngle = 0f
             });
@@ -336,7 +349,7 @@ public partial struct BoomerangSkillCastSystem : ISystem
                 CatchRadius = skillData.CatchRadius,
                 IsEmpowered = isEmpowered,
                 SkillLevel = skillLevel,
-                Owner = player,
+                Owner = owner,
                 SkillEntity = skillEntity,
                 RotationAngle = 0f
             });

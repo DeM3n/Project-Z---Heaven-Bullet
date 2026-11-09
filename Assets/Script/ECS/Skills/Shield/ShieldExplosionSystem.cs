@@ -76,7 +76,7 @@ public partial struct ShieldExplosionSystem : ISystem
                     if (distSq <= radiusSq)
                     {
                         // Gây sát thương nổ AOE qua Pipeline
-                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.Shield, damage);
+                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.Shield, damage, breakEvent.ValueRO.Source);
                     }
                 } while (grid.TryGetNextValue(out enemy, ref it));
             }

@@ -171,6 +171,14 @@ public partial struct FlyingSwordSkillSystem : ISystem
                 currentDamage = skillData.BaseDamage * (1f + (level - 1) * 0.35f);
                 currentRushSpeed = skillData.RushSpeed * (1f + (level - 1) * 0.2f);
             }
+
+            Entity casterEntity = state.EntityManager.HasComponent<SkillOwnerData>(sword.ValueRO.SkillEntity)
+                ? state.EntityManager.GetComponentData<SkillOwnerData>(sword.ValueRO.SkillEntity).Owner
+                : playerEntity;
+            if (!state.EntityManager.Exists(casterEntity) || !state.EntityManager.HasComponent<LocalTransform>(casterEntity))
+                continue;
+            float3 casterPos = state.EntityManager.GetComponentData<LocalTransform>(casterEntity).Position;
+
             float maxLeashSq = skillData.MaxLeashRange * skillData.MaxLeashRange;
             float detectRangeSq = skillData.DetectRange * skillData.DetectRange;
 
@@ -210,7 +218,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                     float finalAngle = globalAngle + angleOffset;
                     sword.ValueRW.CurrentAngle = finalAngle;
 
-                    float3 desiredPos = playerPos + new float3(
+                    float3 desiredPos = casterPos + new float3(
                         math.cos(finalAngle) * skillData.OrbitRadius,
                         math.sin(finalAngle) * skillData.OrbitRadius,
                         0f);
@@ -220,7 +228,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                     float tangentAngle = finalAngle + math.PI * 0.5f;
                     transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, tangentAngle - math.PI * 0.5f + rotOffset);
 
-                    // Quét tìm quái trong tầm camera (DetectRange) quanh Player
+                    // Quét tìm quái trong tầm camera (DetectRange) quanh Caster
                     sword.ValueRW.Timer -= dt;
                     if (sword.ValueRW.Timer <= 0f)
                     {
@@ -233,14 +241,14 @@ public partial struct FlyingSwordSkillSystem : ISystem
 
                         if (canUseUltimate)
                         {
-                            foundTarget = TryFindDensestCluster(ref state, grid, cellSize, playerPos, skillData.DetectRange, out targetPos);
+                            foundTarget = TryFindDensestCluster(ref state, grid, cellSize, casterPos, skillData.DetectRange, out targetPos);
                             if (foundTarget) isUltimatePass = true;
                         }
 
                         Entity targetEnemy = Entity.Null;
                         if (!foundTarget)
                         {
-                            foundTarget = TryFindEnemyInCamera(ref state, grid, cellSize, transform.ValueRO.Position, playerPos, skillData.DetectRange, Entity.Null, out targetEnemy, out targetPos);
+                            foundTarget = TryFindEnemyInCamera(ref state, grid, cellSize, transform.ValueRO.Position, casterPos, skillData.DetectRange, Entity.Null, out targetEnemy, out targetPos);
                         }
 
                         if (foundTarget)
@@ -304,7 +312,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                             float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                             if (math.distancesq(transform.ValueRO.Position, enemyPos) <= hitDistSq)
                             {
-                                EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.FlyingSword, currentDamage);
+                                EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.FlyingSword, currentDamage, casterEntity);
 
                                 hitBuffer.Add(new SwordHitTargetBuffer { Target = enemy });
                                 sword.ValueRW.LastTarget = enemy; // Ghi nhận mục tiêu vừa đâm trúng
@@ -318,16 +326,16 @@ public partial struct FlyingSwordSkillSystem : ISystem
                         // 1. Kích hoạt vụ nổ AOE & phá đạn nếu đây là đòn Ultimate
                         if (sword.ValueRO.IsUltimate)
                         {
-                            TriggerLevel4Aoe(ref state, ecb, grid, cellSize, transform.ValueRO.Position, skillData.AoeRadius, skillData.AoeDamage);
+                            TriggerLevel4Aoe(ref state, ecb, grid, cellSize, transform.ValueRO.Position, skillData.AoeRadius, skillData.AoeDamage, casterEntity);
                             sword.ValueRW.UltimateTimer = skillData.UltimateCooldown; // Bắt đầu tính cooldown riêng cho Ultimate
                             sword.ValueRW.IsUltimate = false;
                         }
 
-                        // 2. Kiểm tra khoảng cách kiếm với Player (Tránh bay ra khỏi tầm màn hình/map)
-                        float distToPlayerSq = math.distancesq(transform.ValueRO.Position, playerPos);
-                        if (distToPlayerSq > maxLeashSq)
+                        // 2. Kiểm tra khoảng cách kiếm với Caster (Tránh bay ra khỏi tầm màn hình/map)
+                        float distToCasterSq = math.distancesq(transform.ValueRO.Position, casterPos);
+                        if (distToCasterSq > maxLeashSq)
                         {
-                            // Quá xa Player -> Thu hồi kiếm về
+                            // Quá xa Caster -> Thu hồi kiếm về
                             sword.ValueRW.State = 2; // Returning
                             sword.ValueRW.Timer = 1.5f;
                             break;
@@ -341,7 +349,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
 
                         if (canUseUltimate)
                         {
-                            foundUltimate = TryFindDensestCluster(ref state, grid, cellSize, playerPos, skillData.DetectRange, out ultimatePos);
+                            foundUltimate = TryFindDensestCluster(ref state, grid, cellSize, casterPos, skillData.DetectRange, out ultimatePos);
                         }
 
                         if (foundUltimate)
@@ -355,9 +363,9 @@ public partial struct FlyingSwordSkillSystem : ISystem
                             break;
                         }
 
-                        // Ưu tiên 2: Tìm MỤC TIÊU MỚI (khác LastTarget vừa chém) trong tầm camera quanh Player
+                        // Ưu tiên 2: Tìm MỤC TIÊU MỚI (khác LastTarget vừa chém) trong tầm camera quanh Caster
                         bool foundNewTarget = TryFindEnemyInCamera(
-                            ref state, grid, cellSize, transform.ValueRO.Position, playerPos, skillData.DetectRange,
+                            ref state, grid, cellSize, transform.ValueRO.Position, casterPos, skillData.DetectRange,
                             sword.ValueRO.LastTarget, out Entity newEnemy, out float3 nextTargetPos);
 
                         if (foundNewTarget)
@@ -374,7 +382,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                         else
                         {
                             // Không có quái mới nào khác. Kiểm tra xem LastTarget có còn sống và trong tầm camera không
-                            if (IsEnemyValidInCamera(ref state, sword.ValueRO.LastTarget, playerPos, skillData.DetectRange, out float3 lastEnemyPos))
+                            if (IsEnemyValidInCamera(ref state, sword.ValueRO.LastTarget, casterPos, skillData.DetectRange, out float3 lastEnemyPos))
                             {
                                 // CHỈ CÒN 1 MỤC TIÊU DUY NHẤT:
                                 // Hạn chế ping-pong giật lùi -> Chuyển sang bay vòng cung (State 3: Looping) lấy góc tấn công mới
@@ -397,7 +405,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                             }
                             else
                             {
-                                // Không còn quái nào trong camera -> Quay về Player vào IDLE
+                                // Không còn quái nào trong camera -> Quay về Caster vào IDLE
                                 sword.ValueRW.State = 2; // Returning
                                 sword.ValueRW.Timer = 1.5f;
                                 sword.ValueRW.LastTarget = Entity.Null;
@@ -407,27 +415,27 @@ public partial struct FlyingSwordSkillSystem : ISystem
                     break;
                 }
 
-                case 2: // ================== PHA 3: RETURNING (Bay về Player) ==================
+                case 2: // ================== PHA 3: RETURNING (Bay về Caster) ==================
                 {
                     sword.ValueRW.Timer -= dt;
-                    float3 toPlayer = playerPos - transform.ValueRO.Position;
-                    float distToPlayer = math.length(toPlayer);
+                    float3 toCaster = casterPos - transform.ValueRO.Position;
+                    float distToCaster = math.length(toCaster);
 
-                    if (distToPlayer > skillData.OrbitRadius)
+                    if (distToCaster > skillData.OrbitRadius)
                     {
-                        float3 dir = toPlayer / distToPlayer;
+                        float3 dir = toCaster / distToCaster;
                         transform.ValueRW.Position += dir * skillData.ReturnSpeed * dt;
                         transform.ValueRW.Rotation = quaternion.Euler(0f, 0f, math.atan2(dir.y, dir.x) - math.PI * 0.5f + rotOffset);
                     }
 
                     // Nếu trên đường bay về có quái xuất hiện trong camera -> có thể quay lại tấn công ngay
-                    bool foundEnemyOnReturn = TryFindEnemyInCamera(ref state, grid, cellSize, transform.ValueRO.Position, playerPos, skillData.DetectRange, sword.ValueRO.LastTarget, out Entity enemyOnReturn, out float3 targetPosOnReturn);
+                    bool foundEnemyOnReturn = TryFindEnemyInCamera(ref state, grid, cellSize, transform.ValueRO.Position, casterPos, skillData.DetectRange, sword.ValueRO.LastTarget, out Entity enemyOnReturn, out float3 targetPosOnReturn);
                     if (!foundEnemyOnReturn)
                     {
-                        foundEnemyOnReturn = TryFindEnemyInCamera(ref state, grid, cellSize, transform.ValueRO.Position, playerPos, skillData.DetectRange, Entity.Null, out enemyOnReturn, out targetPosOnReturn);
+                        foundEnemyOnReturn = TryFindEnemyInCamera(ref state, grid, cellSize, transform.ValueRO.Position, casterPos, skillData.DetectRange, Entity.Null, out enemyOnReturn, out targetPosOnReturn);
                     }
 
-                    if (foundEnemyOnReturn && distToPlayer <= skillData.MaxLeashRange)
+                    if (foundEnemyOnReturn && distToCaster <= skillData.MaxLeashRange)
                     {
                         float3 dir = math.normalizesafe(targetPosOnReturn - transform.ValueRO.Position);
                         sword.ValueRW.TargetPosition = targetPosOnReturn + dir * 1.2f;
@@ -440,7 +448,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                     }
 
                     // Khi đã về đến bán kính hộ thể -> Trở về trạng thái IDLE
-                    if (distToPlayer <= skillData.OrbitRadius || sword.ValueRO.Timer <= 0f)
+                    if (distToCaster <= skillData.OrbitRadius || sword.ValueRO.Timer <= 0f)
                     {
                         sword.ValueRW.State = 0; // Orbiting (IDLE)
                         sword.ValueRW.Timer = 0.1f;
@@ -486,7 +494,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                     if (dist <= 0.35f || sword.ValueRO.Timer <= 0f)
                     {
                         // Quái mục tiêu còn sống và còn trong camera không?
-                        if (IsEnemyValidInCamera(ref state, sword.ValueRO.LastTarget, playerPos, skillData.DetectRange, out float3 targetEnemyPos))
+                        if (IsEnemyValidInCamera(ref state, sword.ValueRO.LastTarget, casterPos, skillData.DetectRange, out float3 targetEnemyPos))
                         {
                             // Lao vào chém từ góc mới!
                             float3 attackDir = math.normalizesafe(targetEnemyPos - transform.ValueRO.Position);
@@ -498,7 +506,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                         }
                         else
                         {
-                            // Quái đã chết -> Quay về Player
+                            // Quái đã chết -> Quay về Caster
                             sword.ValueRW.State = 2; // Returning
                             sword.ValueRW.Timer = 1.5f;
                             sword.ValueRW.LastTarget = Entity.Null;
@@ -521,7 +529,8 @@ public partial struct FlyingSwordSkillSystem : ISystem
         float cellSize,
         float3 centerPos,
         float aoeRadius,
-        float aoeDamage)
+        float aoeDamage,
+        Entity source = default)
     {
         float aoeRadiusSq = aoeRadius * aoeRadius;
         int aoeCellRadius = (int)math.ceil(aoeRadius / cellSize);
@@ -541,7 +550,7 @@ public partial struct FlyingSwordSkillSystem : ISystem
                 float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                 if (math.distancesq(centerPos, enemyPos) <= aoeRadiusSq)
                 {
-                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.FlyingSword, aoeDamage);
+                    EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.FlyingSword, aoeDamage, source);
                 }
             } while (grid.TryGetNextValue(out enemy, ref it));
         }

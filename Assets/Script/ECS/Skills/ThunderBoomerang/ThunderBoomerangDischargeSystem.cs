@@ -108,6 +108,9 @@ public partial struct ThunderBoomerangDischargeSystem : ISystem
                 continue;
 
             float3 boomerangPos = transform.ValueRO.Position;
+            Entity source = SystemAPI.HasComponent<BoomerangProjectileData>(entity)
+                ? SystemAPI.GetComponent<BoomerangProjectileData>(entity).Owner
+                : Entity.Null;
 
             var enemyEntities = _enemyQuery.ToEntityArray(Allocator.Temp);
             var enemyTransforms = _enemyQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
@@ -136,7 +139,7 @@ public partial struct ThunderBoomerangDischargeSystem : ISystem
                 float3 primaryPos = _transformLookup[primaryTarget].Position;
 
                 // Gây sát thương tia sét cha từ Boomerang
-                EnemyDamage.Add(ref _incomingDamageLookup, primaryTarget, SkillIds.ThunderBoomerang, boltDamage);
+                EnemyDamage.Add(ref _incomingDamageLookup, primaryTarget, SkillIds.ThunderBoomerang, boltDamage, source);
 
                 // Gây Stun 0.5s
                 if (stunDuration > 0f && _stunLookup.HasComponent(primaryTarget))
@@ -176,7 +179,7 @@ public partial struct ThunderBoomerangDischargeSystem : ISystem
                     float3 nextPos = _transformLookup[nextTarget].Position;
 
                     // Gây sát thương lan
-                    EnemyDamage.Add(ref _incomingDamageLookup, nextTarget, SkillIds.ThunderBoomerang, chainDamage);
+                    EnemyDamage.Add(ref _incomingDamageLookup, nextTarget, SkillIds.ThunderBoomerang, chainDamage, source);
 
                     // Gây Stun
                     if (stunDuration > 0f && _stunLookup.HasComponent(nextTarget))

@@ -56,6 +56,7 @@ public struct FireballProjectileData : IComponentData
     public int SubFireballCount;           // Số lượng cầu lửa con nổ chùm văng ra (1 ở Lv1, 2 ở Lv2, 3 ở Lv3, 4 ở Lv4)
     public int SkillLevel;                 // Cấp độ kỹ năng khi bắn
     public bool IsSubFireball;             // true = cầu lửa con (bay vòng cung lên trời rồi rớt), false = cầu lửa mẹ
+    public Entity Source;                  // Entity người gây sát thương (Player hoặc Clone)
 
     // --- Quỹ đạo hình Parabol (Mortar Lob / Bay lên trời rồi rơi xuống) ---
     public float2 StartPosition;           // Tọa độ mặt đất xuất phát
@@ -76,6 +77,7 @@ public struct FireZoneData : IComponentData
     public float TickInterval;             // Khoảng cách giữa các đợt gây sát thương (0.25s)
     public float TickTimer;                // Đếm ngược đến đợt gây sát thương tiếp theo
     public float DamagePerTick;            // Sát thương trừ máu mỗi nhịp
+    public Entity Source;                  // Entity người gây sát thương (Player hoặc Clone)
 }
 
 /// <summary>

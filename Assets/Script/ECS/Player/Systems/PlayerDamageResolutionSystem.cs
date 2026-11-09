@@ -90,7 +90,8 @@ public partial struct PlayerDamageResolutionSystem : ISystem
                         Radius = isLvl4 ? 4.5f : 0f,
                         Damage = isLvl4 ? 100f : 0f,
                         KnockbackForce = 0f,
-                        IsExplosion = isLvl4
+                        IsExplosion = isLvl4,
+                        Source = playerEntity
                     });
 
                     // Nếu còn lớp khiên dự phòng, mở ngay lớp khiên tiếp theo

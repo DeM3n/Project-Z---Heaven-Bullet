@@ -398,6 +398,13 @@ public static class GameLocalization
         $"Nhận thêm +2 Lượt đổi thẻ kỹ năng khi lên cấp (Cấp {lvl})!"
     );
 
+    public static string LegendaryBadge => Get("👑 LEGENDARY", "👑 CỰC PHẨM");
+    public static string RelicMirrorTitle => Get("MIRROR OF ILLUSION", "GƯƠNG ẢO ẢNH");
+    public static string RelicMirrorDesc => Get(
+        "Summons 2 ethereal Mirror Clones that flank and mimic your movement. Clones possess all your skills (including Fusions), dealing 25% damage with 150% cooldown. Clones are invulnerable, cannot pick up items, but their Aegis Shield defends and detonates normally.",
+        "Triệu hồi 2 Phân Thân Ảo Ảnh hộ tống hai bên sườn. Phân thân bắt chước chuyển động và thi triển toàn bộ kỹ năng (kể cả Hợp Thể), gây 25% sát thương với 150% hồi chiêu. Phân thân bất tử, không thể nhặt đồ, nhưng Khiên Hộ Thể vẫn chống đỡ và phát nổ bình thường."
+    );
+
     // --- Game Over / Run Summary ---
     public static string GameOverHeader => Get("✦ FATE'S RETREAT ✦", "✦ THIÊN MỆNH CHƯA TẬN ✦");
     public static string GameOverSubtitle => Get("Your spirit returns to gather power for the next reincarnation.", "Chân linh hồi quy, tích lũy tu vi chuẩn bị cho lần luân hồi tiếp theo.");

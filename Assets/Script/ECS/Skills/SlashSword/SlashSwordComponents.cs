@@ -52,6 +52,7 @@ public struct SwordWaveData : IComponentData
     public float Radius;
     public float Lifetime;
     public float MaxLifetime;
+    public Entity Source; // Entity người gây sát thương (Player hoặc Clone)
 }
 
 // Lưu danh sách các mục tiêu đã bị Kiếm Khí chém trúng để không gây sát thương lặp (Piercing)

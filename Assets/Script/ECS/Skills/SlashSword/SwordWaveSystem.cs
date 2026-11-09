@@ -84,7 +84,7 @@ public partial struct SwordWaveSystem : ISystem
                         hitBuffer.Add(new SwordWaveHitTargetBuffer { Target = enemy });
 
                         // Gây sát thương
-                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SlashSword, wave.ValueRO.Damage);
+                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.SlashSword, wave.ValueRO.Damage, wave.ValueRO.Source);
 
                         // Lưu ý: KHÔNG hủy entity kiếm khí ở đây vì có thuộc tính Piercing (xuyên thấu)!
                     }

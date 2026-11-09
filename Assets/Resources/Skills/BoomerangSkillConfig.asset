@@ -29,7 +29,7 @@ MonoBehaviour:
   - 0.75
   BoomerangCounts: 01000000010000000200000002000000i
   FlySpeed: 14
-  MaxDistance: 12
+  MaxDistance: 13
   CatchRadius: 1.3
-  DetectRange: 10
-  EmpoweredMultiplier: 1.6
+  DetectRange: 11
+  EmpoweredMultiplier: 2

@@ -8,7 +8,7 @@ using Unity.Entities;
 public static class EnemyDamage
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Add(ref BufferLookup<EnemyIncomingDamage> lookup, Entity target, ushort skillId, float amount)
+    public static void Add(ref BufferLookup<EnemyIncomingDamage> lookup, Entity target, ushort skillId, float amount, Entity source = default)
     {
         if (amount <= 0f) return;
 
@@ -17,7 +17,8 @@ public static class EnemyDamage
             lookup[target].Add(new EnemyIncomingDamage
             {
                 SkillId = skillId,
-                Amount = amount
+                Amount = amount,
+                Source = source
             });
         }
 #if UNITY_EDITOR

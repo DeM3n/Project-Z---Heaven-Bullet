@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: FlyingSwordSkillConfig
   m_EditorClassIdentifier: Assembly-CSharp::FlyingSwordSkillConfigSO
   BaseDamages:
-  - 13.5
-  - 18.2
-  - 23
-  - 27.7
+  - 11
+  - 18
+  - 26
+  - 30
   RushSpeeds:
   - 9.45
   - 11.34

@@ -224,12 +224,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdac13ef8a3fd6e4c90b3a843f00cf8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAuthoring
-  MoveSpeed: 5
+  MoveSpeed: 4.5
   StartingExpToNextLevel: 25
   PickupRange: 2
   MaxHP: 100
-  InvulnerabilityDuration: 0.2
-  BaseHPRegen: 0.5
+  InvulnerabilityDuration: 0.1
+  BaseHPRegen: 0.25
 --- !u!1 &764216964
 GameObject:
   m_ObjectHideFlags: 0
@@ -365,8 +365,8 @@ MonoBehaviour:
   MediumExpOrbPrefab: {fileID: 4710301940314887447, guid: f78179dbce5b40c8a62f1dc065d0fc7b, type: 3}
   AmbientSpawnInterval: 3.5
   MaxAmbientOrbs: 15
-  AmbientMinRadius: 4.5
-  AmbientMaxRadius: 11.5
+  AmbientMinRadius: 6
+  AmbientMaxRadius: 13
 --- !u!1 &964216964
 GameObject:
   m_ObjectHideFlags: 0

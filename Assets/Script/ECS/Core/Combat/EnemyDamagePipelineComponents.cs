@@ -32,6 +32,7 @@ public struct EnemyIncomingDamage : IBufferElementData
 {
     public ushort SkillId;
     public float Amount;
+    public Entity Source; // Entity người gây sát thương (Player hoặc Clone), mặc định Entity.Null
 }
 
 /// <summary>

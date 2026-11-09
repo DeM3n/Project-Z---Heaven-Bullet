@@ -225,8 +225,20 @@ public class AncientChestModalView
         _coroutineRunner = runner;
 
         if (_relicIconText != null) _relicIconText.text = rewardData.IconEmoji;
-        if (_relicNameText != null) _relicNameText.text = rewardData.Title;
-        if (_relicBadgeText != null) _relicBadgeText.text = rewardData.LevelBadge;
+        if (_relicNameText != null)
+        {
+            _relicNameText.text = rewardData.Title;
+            _relicNameText.color = (rewardData.Type == RelicType.MirrorOfIllusion)
+                ? new Color(1f, 0.85f, 0.25f)
+                : HUDTheme.GoldAccent;
+        }
+        if (_relicBadgeText != null)
+        {
+            _relicBadgeText.text = rewardData.LevelBadge;
+            _relicBadgeText.color = (rewardData.Type == RelicType.MirrorOfIllusion)
+                ? new Color(1f, 0.45f, 0.95f)
+                : new Color(0.35f, 0.85f, 1f);
+        }
         if (_relicDescText != null) _relicDescText.text = rewardData.Description;
 
         if (_panelObj != null)

@@ -75,7 +75,7 @@ public partial struct FireZoneSystem : ISystem
                     float3 enemyPos = state.EntityManager.GetComponentData<LocalTransform>(enemy).Position;
                     if (math.distancesq(center, enemyPos.xy) <= radiusSq)
                     {
-                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.Fireball, damage);
+                        EnemyDamage.Add(ref _incomingDamageLookup, enemy, SkillIds.Fireball, damage, zone.ValueRO.Source);
                     }
                 } while (grid.TryGetNextValue(out enemy, ref it));
             }

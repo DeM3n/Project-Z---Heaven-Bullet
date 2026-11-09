@@ -33,6 +33,7 @@ public struct GiantSwordData : IComponentData
     public float WaveDamage;
     public float WaveSpeed;
     public float WaveLifetime;
+    public Entity Source; // Entity người gây sát thương (Player hoặc Clone)
 }
 
 /// <summary>

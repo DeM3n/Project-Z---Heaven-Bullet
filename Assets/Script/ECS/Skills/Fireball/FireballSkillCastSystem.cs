@@ -150,27 +150,27 @@ public partial struct FireballSkillCastSystem : ISystem
                 subFireballCount = level;
             }
 
-            runtime.ValueRW.Timer = scaledCooldown;
+            runtime.ValueRW.Timer = runtime.ValueRO.Cooldown;
 
-            // Lấy vị trí Player
-            Entity playerEntity = owner.ValueRO.Owner;
-            if (!state.EntityManager.Exists(playerEntity) || !state.EntityManager.HasComponent<LocalTransform>(playerEntity))
+            // Lấy vị trí Caster (Player hoặc Clone)
+            Entity casterEntity = owner.ValueRO.Owner;
+            if (!state.EntityManager.Exists(casterEntity) || !state.EntityManager.HasComponent<LocalTransform>(casterEntity))
                 continue;
 
-            float3 playerPos = state.EntityManager.GetComponentData<LocalTransform>(playerEntity).Position;
+            float3 casterPos = state.EntityManager.GetComponentData<LocalTransform>(casterEntity).Position;
 
             // Tìm tối đa 2 mục tiêu quái độc lập gần nhất qua Spatial Grid
             float detectRange = skill.ValueRO.DetectRange;
             float2 targetDir1, targetDir2;
-            int foundTargetCount = TryFindTwoTargets(ref state, grid, cellSize, playerPos, detectRange, out targetDir1, out targetDir2);
+            int foundTargetCount = TryFindTwoTargets(ref state, grid, cellSize, casterPos, detectRange, out targetDir1, out targetDir2);
 
             if (foundTargetCount == 0)
             {
-                // Nếu không có quái trong tầm, lấy hướng di chuyển của Player làm hướng ngắm mặc định
+                // Nếu không có quái trong tầm, lấy hướng di chuyển của Caster làm hướng ngắm mặc định
                 float2 defaultDir = new float2(1f, 0f);
-                if (state.EntityManager.HasComponent<MovementData>(playerEntity))
+                if (state.EntityManager.HasComponent<MovementData>(casterEntity))
                 {
-                    float2 moveDir = state.EntityManager.GetComponentData<MovementData>(playerEntity).Direction;
+                    float2 moveDir = state.EntityManager.GetComponentData<MovementData>(casterEntity).Direction;
                     if (math.lengthsq(moveDir) > 0.01f)
                     {
                         defaultDir = math.normalizesafe(moveDir);
@@ -196,7 +196,7 @@ public partial struct FireballSkillCastSystem : ISystem
                     // Nếu chỉ có 1 mục tiêu duy nhất và bắn 2 quả, quả 1 lệch nhẹ song song sang trái (-0.2m)
                     float2 perp = new float2(-shootDir.y, shootDir.x);
                     float lateral = (mainFireballCount > 1 && foundTargetCount < 2) ? -0.2f : 0f;
-                    spawnPos = playerPos + new float3(perp.x * lateral, perp.y * lateral, 0f);
+                    spawnPos = casterPos + new float3(perp.x * lateral, perp.y * lateral, 0f);
                 }
                 else
                 {
@@ -204,14 +204,14 @@ public partial struct FireballSkillCastSystem : ISystem
                     {
                         // ĐÃ TÌM THẤY KẺ ĐỊCH THỨ 2: Quả thứ 2 ngắm thẳng 100% vào kẻ địch thứ 2!
                         shootDir = targetDir2;
-                        spawnPos = playerPos;
+                        spawnPos = casterPos;
                     }
                     else
                     {
                         // Chỉ có 1 mục tiêu duy nhất: Bắn thẳng vào cùng mục tiêu (lệch nhẹ song song sang phải +0.2m)
                         shootDir = targetDir1;
                         float2 perp = new float2(-shootDir.y, shootDir.x);
-                        spawnPos = playerPos + new float3(perp.x * 0.2f, perp.y * 0.2f, 0f);
+                        spawnPos = casterPos + new float3(perp.x * 0.2f, perp.y * 0.2f, 0f);
                     }
                 }
 
@@ -244,7 +244,8 @@ public partial struct FireballSkillCastSystem : ISystem
                     HitRadius = 0.45f,
                     SubFireballCount = subFireballCount,
                     SkillLevel = level,
-                    IsSubFireball = false
+                    IsSubFireball = false,
+                    Source = casterEntity
                 });
             }
         }
