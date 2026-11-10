@@ -67,3 +67,13 @@ public struct BomberRushData : IComponentData
     public float SpeedMultiplier;
     public bool IsRushing;
 }
+
+/// <summary>
+/// Sự kiện vụ nổ cảm tử của Bomber khi áp sát người chơi (gửi từ ECS sang BomberVisualBridge).
+/// </summary>
+public struct BomberExplosionEvent : IComponentData
+{
+    public float3 Position;
+    public float Radius;
+    public bool IsSuicide;
+}

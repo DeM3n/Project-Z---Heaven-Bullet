@@ -26,7 +26,8 @@ public enum SFXType
     ChestOpen = 3,
     MegaWaveHorn = 4,
     PlayerHurt = 5,
-    Heartbeat = 6
+    Heartbeat = 6,
+    Explosion = 7
 }
 
 /// <summary>
@@ -91,6 +92,7 @@ public class AudioManager : MonoBehaviour
     public AudioClip CustomSFX_MegaWaveHorn;
     public AudioClip CustomSFX_PlayerHurt;
     public AudioClip CustomSFX_Heartbeat;
+    public AudioClip CustomSFX_Explosion;
 
     [Header("Custom UI Clips (Tùy chọn)")]
     public AudioClip CustomUI_Click;
@@ -407,6 +409,15 @@ public class AudioManager : MonoBehaviour
         PlayPooledSound(clip, 0.9f, pitch);
     }
 
+    /// <summary>
+    /// Phát âm thanh vụ nổ oanh tạc (Explosion SFX) với độ lệch pitch nhẹ tự nhiên.
+    /// </summary>
+    public void PlayExplosion(float volume = 0.85f)
+    {
+        float pitch = UnityEngine.Random.Range(0.92f, 1.08f);
+        PlaySFX(SFXType.Explosion, volume, pitch);
+    }
+
     private void PlayPooledSound(AudioClip clip, float volumeMultiplier, float pitch)
     {
         if (clip == null || IsMuted) return;
@@ -502,6 +513,10 @@ public class AudioManager : MonoBehaviour
             case SFXType.Heartbeat:
                 if (CustomSFX_Heartbeat != null) return CustomSFX_Heartbeat;
                 return GetOrCreateCachedClip("Proc_SFX_Heartbeat", ProceduralAudioClips.CreateHeartbeat);
+
+            case SFXType.Explosion:
+                if (CustomSFX_Explosion != null) return CustomSFX_Explosion;
+                return GetOrCreateCachedClip("Proc_SFX_Explosion", ProceduralAudioClips.CreateExplosion);
 
             default:
                 return null;

@@ -36,6 +36,18 @@ public class DevCheatService
     public bool IsSpeedBoosted { get; private set; }
     public bool WasCheatedThisRun { get; private set; }
 
+    public bool IsRepositionEnabled
+    {
+        get
+        {
+            var em = EntityManager;
+            if (em == default) return true;
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<EnemyRepositionConfigData>());
+            if (query.IsEmpty) return true;
+            return query.GetSingleton<EnemyRepositionConfigData>().Enabled;
+        }
+    }
+
     private EntityManager EntityManager
     {
         get
@@ -97,6 +109,20 @@ public class DevCheatService
         }
 
         em.SetComponentData(player, move);
+    }
+
+    public void ToggleReposition()
+    {
+        var em = EntityManager;
+        if (em == default) return;
+
+        using var query = em.CreateEntityQuery(ComponentType.ReadWrite<EnemyRepositionConfigData>());
+        if (query.IsEmpty) return;
+
+        Entity configEntity = query.GetSingletonEntity();
+        var config = em.GetComponentData<EnemyRepositionConfigData>(configEntity);
+        config.Enabled = !config.Enabled;
+        em.SetComponentData(configEntity, config);
     }
 
     public void HealFull()
@@ -680,6 +706,19 @@ public class DevCheatService
                 NormalColor = new Color(0.28f, 0.1f, 0.35f, 1f),
                 BorderColor = new Color(0.95f, 0.5f, 1f),
                 ExecuteAction = SpawnMirrorRelic
+            },
+            new DevAction
+            {
+                ActionId = "ToggleReposition",
+                LabelGetter = () => GameLocalization.Get(
+                    "🔄 Reposition: " + (IsRepositionEnabled ? "ON" : "OFF"),
+                    "🔄 Tái Định Vị: " + (IsRepositionEnabled ? "BẬT" : "TẮT")
+                ),
+                IsToggle = true,
+                NormalColor = new Color(0.12f, 0.22f, 0.32f, 1f),
+                BorderColor = new Color(0.35f, 0.75f, 0.95f),
+                ExecuteAction = ToggleReposition,
+                StateGetter = () => IsRepositionEnabled ? "[ ON ]" : "[ OFF ]"
             }
         };
     }

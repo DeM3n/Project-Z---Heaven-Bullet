@@ -58,19 +58,26 @@ public class MainMenuUI : MonoBehaviour
     private Button _quitBtn;
     private Text _quitBtnText;
 
-    // --- Codex State & UI ---
+    // --- Codex State & UI 2.0 ---
     private CodexDatabase.EntryCategory _codexCategory = CodexDatabase.EntryCategory.Enemies;
     private string _selectedEntryId;
     private Transform _codexListContainer;
     private Text _codexEntryTitle;
     private Text _codexEntrySubtitle;
+    private Text _codexEntryBadge;
     private Text _codexEntryDesc;
-    private Text _codexEntryStats;
+    private Text[] _statCardLabels = new Text[4];
+    private Text[] _statCardValues = new Text[4];
+    private Text _codexParamsHeader;
+    private Text _codexProgressionHeader;
+    private Text _codexProgressionText;
     private Text _codexEntryMechanics;
     private Text _codexEntryTips;
     private Button _tabEnemiesBtn;
     private Button _tabSkillsBtn;
     private Button _tabRelicsBtn;
+    private readonly List<Image> _codexItemBgs = new List<Image>();
+    private readonly List<GameObject> _codexItemAccents = new List<GameObject>();
 
     // --- Talent Tree UI ---
     private Transform _healthNodesContainer;
@@ -287,7 +294,8 @@ public class MainMenuUI : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
         scaler.matchWidthOrHeight = 0.5f;
-        scaler.dynamicPixelsPerUnit = 2.5f;
+        scaler.dynamicPixelsPerUnit = 3.0f;
+        scaler.referencePixelsPerUnit = 100f;
 
         _raycaster = canvasObj.AddComponent<GraphicRaycaster>();
 
@@ -440,60 +448,77 @@ public class MainMenuUI : MonoBehaviour
     }
 
     // =========================================================================
-    // CODEX PANEL (SÁCH / BÁCH KHOA TOÀN THƯ TRA CỨU)
+    // CODEX PANEL 2.0 (MODULAR SHOWCASE & SSOT ARCHIVE)
     // =========================================================================
     private void BuildCodexPanel(Transform parent)
     {
         _codexPanel = CreateUIObject("CodexPanel", parent);
-        SetFullStretch(_codexPanel.GetComponent<RectTransform>(), 0f, 90f);
+        SetFullStretch(_codexPanel.GetComponent<RectTransform>(), 0f, 75f);
 
-        // Top Navigation Sub-Tabs
-        var topTabsObj = CreateUIObject("TopTabs", _codexPanel.transform);
+        // 1. Sub-Header Bar: Nút Quay Lại + 3 Tab Danh Mục Trung Tâm (Chuẩn 16:9, không bị đè hay tràn)
+        var subHeader = CreateUIObject("SubHeader", _codexPanel.transform);
+        var subHeaderRt = subHeader.GetComponent<RectTransform>();
+        subHeaderRt.anchorMin = new Vector2(0.04f, 1f);
+        subHeaderRt.anchorMax = new Vector2(0.96f, 1f);
+        subHeaderRt.pivot = new Vector2(0.5f, 1f);
+        subHeaderRt.anchoredPosition = new Vector2(0f, -10f);
+        subHeaderRt.sizeDelta = new Vector2(0f, 44f);
+
+        // Nút Trở Về (Back Button) cố định góc trái của SubHeader
+        var backBtn = CreateSimpleButton("BackBtn", subHeader.transform, "◀ QUAY LẠI [ESC]", 14, new Vector2(150f, 40f), () => SwitchState(MenuState.Home));
+        var backRt = backBtn.GetComponent<RectTransform>();
+        backRt.anchorMin = new Vector2(0f, 0.5f);
+        backRt.anchorMax = new Vector2(0f, 0.5f);
+        backRt.pivot = new Vector2(0f, 0.5f);
+        backRt.anchoredPosition = Vector2.zero;
+        backBtn.image.color = new Color(0.18f, 0.24f, 0.35f, 0.95f);
+
+        // Top Navigation Tabs (Căn giữa tuyệt đối trong thanh SubHeader, rộng 760px)
+        var topTabsObj = CreateUIObject("TopTabs", subHeader.transform);
         var tabsRt = topTabsObj.GetComponent<RectTransform>();
-        tabsRt.anchorMin = new Vector2(0f, 1f);
-        tabsRt.anchorMax = new Vector2(1f, 1f);
-        tabsRt.pivot = new Vector2(0.5f, 1f);
-        tabsRt.anchoredPosition = new Vector2(0f, -20f);
-        tabsRt.sizeDelta = new Vector2(1200f, 54f);
+        tabsRt.anchorMin = new Vector2(0.5f, 0.5f);
+        tabsRt.anchorMax = new Vector2(0.5f, 0.5f);
+        tabsRt.pivot = new Vector2(0.5f, 0.5f);
+        tabsRt.anchoredPosition = Vector2.zero;
+        tabsRt.sizeDelta = new Vector2(760f, 40f);
 
         var tabsLayout = topTabsObj.AddComponent<HorizontalLayoutGroup>();
-        tabsLayout.spacing = 20f;
+        tabsLayout.spacing = 14f;
         tabsLayout.childAlignment = TextAnchor.MiddleCenter;
         tabsLayout.childControlWidth = true;
         tabsLayout.childControlHeight = true;
 
-        _tabEnemiesBtn = CreateSimpleButton("TabEnemies", topTabsObj.transform, "👾 QUÁI VẬT (ENEMIES)", 18, Vector2.zero, () => SelectCodexCategory(CodexDatabase.EntryCategory.Enemies));
-        _tabSkillsBtn = CreateSimpleButton("TabSkills", topTabsObj.transform, "⚔️ VŨ KHÍ & ĐẠN (WEAPONS)", 18, Vector2.zero, () => SelectCodexCategory(CodexDatabase.EntryCategory.Skills));
-        _tabRelicsBtn = CreateSimpleButton("TabRelics", topTabsObj.transform, "💎 CỔ VẬT (RELICS)", 18, Vector2.zero, () => SelectCodexCategory(CodexDatabase.EntryCategory.Relics));
+        _tabEnemiesBtn = CreateSimpleButton("TabEnemies", topTabsObj.transform, "QUÁI VẬT (BESTIARY)", 15, Vector2.zero, () => SelectCodexCategory(CodexDatabase.EntryCategory.Enemies));
+        _tabSkillsBtn = CreateSimpleButton("TabSkills", topTabsObj.transform, "VŨ KHÍ & ĐẠN (WEAPONS)", 15, Vector2.zero, () => SelectCodexCategory(CodexDatabase.EntryCategory.Skills));
+        _tabRelicsBtn = CreateSimpleButton("TabRelics", topTabsObj.transform, "CỔ VẬT (RELICS)", 15, Vector2.zero, () => SelectCodexCategory(CodexDatabase.EntryCategory.Relics));
 
-        // Nút Trở Về (Back)
-        var backBtn = CreateSimpleButton("BackBtn", _codexPanel.transform, "◀ QUAY LẠI [ESC]", 16, new Vector2(140f, 44f), () => SwitchState(MenuState.Home));
-        var backRt = backBtn.GetComponent<RectTransform>();
-        backRt.anchorMin = new Vector2(0f, 1f);
-        backRt.anchorMax = new Vector2(0f, 1f);
-        backRt.anchoredPosition = new Vector2(90f, -47f);
-
-        // Content Area: Split 2 cột (Trái: Danh sách chọn, Phải: Thẻ thông tin chi tiết)
+        // 2. Content Area: Split 2 Cột (Trái: Danh Sách Thẻ 28%, Phải: Hero Inspection Card 70.5%)
         var contentObj = CreateUIObject("CodexContent", _codexPanel.transform);
         var contentRt = contentObj.GetComponent<RectTransform>();
-        contentRt.anchorMin = new Vector2(0.05f, 0.05f);
-        contentRt.anchorMax = new Vector2(0.95f, 0.88f);
-        contentRt.offsetMin = contentRt.offsetMax = Vector2.zero;
+        contentRt.anchorMin = new Vector2(0.04f, 0.04f);
+        contentRt.anchorMax = new Vector2(0.96f, 1f);
+        contentRt.offsetMin = new Vector2(0f, 14f);
+        contentRt.offsetMax = new Vector2(0f, -66f); // chừa khoảng trống cho SubHeader
 
-        // Cột Trái (List)
+        // --- CỘT TRÁI (CATALOG LIST) ---
         var leftCol = CreateUIObject("LeftList", contentObj.transform);
         var leftRt = leftCol.GetComponent<RectTransform>();
         leftRt.anchorMin = new Vector2(0f, 0f);
-        leftRt.anchorMax = new Vector2(0.32f, 1f);
+        leftRt.anchorMax = new Vector2(0.28f, 1f);
         leftRt.offsetMin = leftRt.offsetMax = Vector2.zero;
+
+        var leftBg = leftCol.AddComponent<Image>();
+        leftBg.sprite = _cardBgSprite;
+        leftBg.type = Image.Type.Sliced;
+        leftBg.color = new Color(0.08f, 0.11f, 0.18f, 0.95f);
 
         var scroll = leftCol.AddComponent<ScrollRect>();
         scroll.horizontal = false;
         scroll.vertical = true;
 
         var viewport = CreateUIObject("Viewport", leftCol.transform);
-        SetFullStretch(viewport.GetComponent<RectTransform>());
-        viewport.AddComponent<Image>().color = new Color(0.08f, 0.1f, 0.16f, 0.8f);
+        SetFullStretch(viewport.GetComponent<RectTransform>(), 4f, 4f);
+        viewport.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.01f);
         viewport.AddComponent<Mask>().showMaskGraphic = false;
         scroll.viewport = viewport.GetComponent<RectTransform>();
 
@@ -505,7 +530,7 @@ public class MainMenuUI : MonoBehaviour
         cRt.sizeDelta = new Vector2(0f, 600f);
         var vLayout = container.AddComponent<VerticalLayoutGroup>();
         vLayout.spacing = 8f;
-        vLayout.padding = new RectOffset(10, 10, 10, 10);
+        vLayout.padding = new RectOffset(6, 6, 8, 8);
         vLayout.childControlWidth = true;
         vLayout.childControlHeight = false;
         var fitter = container.AddComponent<ContentSizeFitter>();
@@ -513,46 +538,216 @@ public class MainMenuUI : MonoBehaviour
         scroll.content = cRt;
         _codexListContainer = container.transform;
 
-        // Cột Phải (Detail Inspection Card)
+        // --- CỘT PHẢI (HERO DETAIL INSPECTION CARD) ---
         var rightCol = CreateUIObject("RightDetail", contentObj.transform);
         var rightRt = rightCol.GetComponent<RectTransform>();
-        rightRt.anchorMin = new Vector2(0.34f, 0f);
+        rightRt.anchorMin = new Vector2(0.295f, 0f);
         rightRt.anchorMax = new Vector2(1f, 1f);
         rightRt.offsetMin = rightRt.offsetMax = Vector2.zero;
 
         var cardImg = rightCol.AddComponent<Image>();
         cardImg.sprite = _cardBgSprite;
         cardImg.type = Image.Type.Sliced;
-        cardImg.color = new Color(0.12f, 0.16f, 0.24f, 0.95f);
+        cardImg.color = new Color(0.10f, 0.14f, 0.22f, 0.96f);
 
         // Layout bên trong Card chi tiết
         var detailPad = CreateUIObject("DetailPadding", rightCol.transform);
-        SetFullStretch(detailPad.GetComponent<RectTransform>(), 30f, 30f);
+        SetFullStretch(detailPad.GetComponent<RectTransform>(), 20f, 20f);
         var dLayout = detailPad.AddComponent<VerticalLayoutGroup>();
-        dLayout.spacing = 14f;
+        dLayout.spacing = 16f;
         dLayout.childControlWidth = true;
         dLayout.childControlHeight = false;
 
-        _codexEntryTitle = CreateLabel("EntryTitle", detailPad.transform, "Tên Mục", 28, FontStyle.Bold, new Color(1f, 0.85f, 0.4f, 1f));
-        _codexEntrySubtitle = CreateLabel("EntrySubtitle", detailPad.transform, "Phân loại", 18, FontStyle.Italic, new Color(0.55f, 0.85f, 1f, 1f));
-        _codexEntryDesc = CreateLabel("EntryDesc", detailPad.transform, "Mô tả truyền thuyết...", 16, FontStyle.Normal, Color.white);
+        // BLOCK 1: HEADER BANNER (Title, Badge, Subtitle, Lore)
+        var bannerBox = CreateUIObject("HeaderBanner", detailPad.transform);
+        var bImg = bannerBox.AddComponent<Image>();
+        bImg.sprite = _cardBgSprite;
+        bImg.type = Image.Type.Sliced;
+        bImg.color = new Color(0.14f, 0.18f, 0.28f, 0.92f);
+        var bLayout = bannerBox.AddComponent<VerticalLayoutGroup>();
+        bLayout.padding = new RectOffset(22, 22, 18, 18);
+        bLayout.spacing = 10f;
+        bLayout.childControlWidth = true;
+        bLayout.childControlHeight = true;
+        bLayout.childForceExpandHeight = false;
 
-        // Divider
-        CreateDivider(detailPad.transform);
+        var bFitter = bannerBox.AddComponent<ContentSizeFitter>();
+        bFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        _codexEntryStats = CreateLabel("EntryStats", detailPad.transform, "Bảng thông số chiến đấu...", 16, FontStyle.Normal, new Color(0.9f, 0.95f, 0.8f, 1f));
-        _codexEntryMechanics = CreateLabel("EntryMechanics", detailPad.transform, "Cơ chế đặc biệt...", 15, FontStyle.Normal, new Color(0.85f, 0.85f, 0.9f, 0.95f));
-        _codexEntryTips = CreateLabel("EntryTips", detailPad.transform, "Lời khuyên chiến thuật...", 15, FontStyle.Italic, new Color(1f, 0.65f, 0.45f, 1f));
+        var titleRow = CreateUIObject("TitleRow", bannerBox.transform);
+        var trLayout = titleRow.AddComponent<HorizontalLayoutGroup>();
+        trLayout.spacing = 16f;
+        trLayout.childAlignment = TextAnchor.MiddleLeft;
+        trLayout.childControlWidth = true;
+        trLayout.childControlHeight = true;
+        trLayout.childForceExpandWidth = false;
+        trLayout.childForceExpandHeight = false;
+        var trLe = titleRow.AddComponent<LayoutElement>();
+        trLe.preferredHeight = 48f;
+        trLe.minHeight = 48f;
+
+        _codexEntryTitle = CreateLabel("EntryTitle", titleRow.transform, "Tên Mục", 34, FontStyle.Bold, new Color(1f, 0.90f, 0.45f, 1f));
+        _codexEntryTitle.horizontalOverflow = HorizontalWrapMode.Overflow;
+        var titleLe = _codexEntryTitle.gameObject.AddComponent<LayoutElement>();
+        titleLe.flexibleWidth = 1f;
+
+        _codexEntryBadge = CreateLabel("EntryBadge", titleRow.transform, "[ PHÂN LOẠI ]", 16, FontStyle.Bold, new Color(0.35f, 0.85f, 1f, 1f));
+        _codexEntryBadge.horizontalOverflow = HorizontalWrapMode.Overflow;
+        _codexEntryBadge.alignment = TextAnchor.MiddleRight;
+        var badgeLe = _codexEntryBadge.gameObject.AddComponent<LayoutElement>();
+        badgeLe.preferredWidth = 320f;
+
+        _codexEntrySubtitle = CreateLabel("EntrySubtitle", bannerBox.transform, "Phân Loại Phụ", 18, FontStyle.Italic, new Color(0.60f, 0.88f, 1f, 1f));
+        _codexEntrySubtitle.horizontalOverflow = HorizontalWrapMode.Overflow;
+        var subLe = _codexEntrySubtitle.gameObject.AddComponent<LayoutElement>();
+        subLe.preferredHeight = 28f;
+        subLe.minHeight = 28f;
+
+        _codexEntryDesc = CreateLabel("EntryDesc", bannerBox.transform, "Mô tả truyền thuyết...", 19, FontStyle.Normal, new Color(0.92f, 0.95f, 0.98f, 1f));
+        _codexEntryDesc.lineSpacing = 1.35f;
+        var descLe = _codexEntryDesc.gameObject.AddComponent<LayoutElement>();
+        descLe.minHeight = 52f;
+
+        // BLOCK 2: CORE PARAMETERS MATRIX (2x2 Stat Cards + Progression Bar)
+        var paramsBox = CreateUIObject("ParamsCard", detailPad.transform);
+        var pImg = paramsBox.AddComponent<Image>();
+        pImg.sprite = _cardBgSprite;
+        pImg.type = Image.Type.Sliced;
+        pImg.color = new Color(0.12f, 0.16f, 0.25f, 0.90f);
+        var pLayout = paramsBox.AddComponent<VerticalLayoutGroup>();
+        pLayout.padding = new RectOffset(22, 22, 18, 18);
+        pLayout.spacing = 14f;
+        pLayout.childControlWidth = true;
+        pLayout.childControlHeight = true;
+        pLayout.childForceExpandHeight = false;
+
+        var pFitter = paramsBox.AddComponent<ContentSizeFitter>();
+        pFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        _codexParamsHeader = CreateLabel("ParamsHeader", paramsBox.transform, "[ BẢNG THÔNG SỐ CỐT LÕI (CORE SPECIFICATIONS) ]", 17, FontStyle.Bold, new Color(0.55f, 0.85f, 1f, 1f));
+        var phLe = _codexParamsHeader.gameObject.AddComponent<LayoutElement>();
+        phLe.preferredHeight = 28f;
+
+        // 2x2 Grid cho 4 Chỉ Số Cốt Lõi
+        for (int row = 0; row < 2; row++)
+        {
+            var rowObj = CreateUIObject($"Row_{row}", paramsBox.transform);
+            var rLayout = rowObj.AddComponent<HorizontalLayoutGroup>();
+            rLayout.spacing = 14f;
+            rLayout.childControlWidth = true;
+            rLayout.childControlHeight = true;
+            var rLe = rowObj.AddComponent<LayoutElement>();
+            rLe.preferredHeight = 58f;
+            rLe.minHeight = 58f;
+
+            for (int col = 0; col < 2; col++)
+            {
+                int cardIdx = row * 2 + col;
+                var cellObj = CreateUIObject($"StatBox_{cardIdx}", rowObj.transform);
+                var cImg = cellObj.AddComponent<Image>();
+                cImg.sprite = _cardBgSprite;
+                cImg.type = Image.Type.Sliced;
+                cImg.color = new Color(0.08f, 0.11f, 0.18f, 0.85f);
+
+                var cellLayout = cellObj.AddComponent<HorizontalLayoutGroup>();
+                cellLayout.padding = new RectOffset(16, 16, 6, 6);
+                cellLayout.spacing = 12f;
+                cellLayout.childAlignment = TextAnchor.MiddleLeft;
+                cellLayout.childControlWidth = true;
+                cellLayout.childControlHeight = true;
+                cellLayout.childForceExpandWidth = false;
+
+                _statCardLabels[cardIdx] = CreateLabel("Label", cellObj.transform, "LABEL", 16, FontStyle.Bold, new Color(0.72f, 0.84f, 0.96f, 1f));
+                _statCardLabels[cardIdx].horizontalOverflow = HorizontalWrapMode.Overflow;
+                var lblLe = _statCardLabels[cardIdx].gameObject.AddComponent<LayoutElement>();
+                lblLe.preferredWidth = 240f;
+                lblLe.minWidth = 200f;
+
+                _statCardValues[cardIdx] = CreateLabel("Value", cellObj.transform, "VALUE", 22, FontStyle.Bold, new Color(0.35f, 0.92f, 1f, 1f));
+                _statCardValues[cardIdx].horizontalOverflow = HorizontalWrapMode.Overflow;
+                var valLe = _statCardValues[cardIdx].gameObject.AddComponent<LayoutElement>();
+                valLe.flexibleWidth = 1f;
+            }
+        }
+
+        // Thanh Tiến Trình / Thăng Hoa Cấp Độ
+        var progObj = CreateUIObject("ProgressionSection", paramsBox.transform);
+        var progLayout = progObj.AddComponent<VerticalLayoutGroup>();
+        progLayout.spacing = 6f;
+        progLayout.childControlWidth = true;
+        progLayout.childControlHeight = true;
+        progLayout.childForceExpandHeight = false;
+
+        _codexProgressionHeader = CreateLabel("ProgHeader", progObj.transform, "[ TIẾN TRÌNH CẤP ĐỘ & THĂNG HOA (PROGRESSION) ]", 17, FontStyle.Bold, new Color(1f, 0.92f, 0.55f, 1f));
+        var prghLe = _codexProgressionHeader.gameObject.AddComponent<LayoutElement>();
+        prghLe.preferredHeight = 28f;
+
+        _codexProgressionText = CreateLabel("ProgText", progObj.transform, "Lv1 -> Lv4...", 18, FontStyle.Normal, new Color(0.92f, 0.95f, 0.98f, 1f));
+        _codexProgressionText.lineSpacing = 1.35f;
+        var prgtLe = _codexProgressionText.gameObject.AddComponent<LayoutElement>();
+        prgtLe.minHeight = 44f;
+
+        // BLOCK 3: ADVISORY (Mechanics & Tactical Advisory)
+        var advBox = CreateUIObject("AdvisoryCard", detailPad.transform);
+        var aImg = advBox.AddComponent<Image>();
+        aImg.sprite = _cardBgSprite;
+        aImg.type = Image.Type.Sliced;
+        aImg.color = new Color(0.12f, 0.16f, 0.25f, 0.90f);
+        var aLayout = advBox.AddComponent<VerticalLayoutGroup>();
+        aLayout.padding = new RectOffset(22, 22, 18, 18);
+        aLayout.spacing = 14f;
+        aLayout.childControlWidth = true;
+        aLayout.childControlHeight = true;
+        aLayout.childForceExpandHeight = false;
+
+        var aFitter = advBox.AddComponent<ContentSizeFitter>();
+        aFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        _codexEntryMechanics = CreateLabel("EntryMechanics", advBox.transform, "Cơ Chế...", 18, FontStyle.Normal, new Color(0.92f, 0.95f, 0.98f, 1f));
+        _codexEntryMechanics.lineSpacing = 1.35f;
+        var mechLe = _codexEntryMechanics.gameObject.AddComponent<LayoutElement>();
+        mechLe.minHeight = 48f;
+
+        // Tactical Tip Sub-Box (Amber highlight)
+        var tipBox = CreateUIObject("TipBox", advBox.transform);
+        var tipImg = tipBox.AddComponent<Image>();
+        tipImg.sprite = _cardBgSprite;
+        tipImg.type = Image.Type.Sliced;
+        tipImg.color = new Color(0.24f, 0.16f, 0.08f, 0.85f);
+        var tLayout = tipBox.AddComponent<VerticalLayoutGroup>();
+        tLayout.padding = new RectOffset(16, 16, 12, 12);
+        tLayout.childControlWidth = true;
+        tLayout.childControlHeight = true;
+        tLayout.childForceExpandHeight = false;
+
+        _codexEntryTips = CreateLabel("EntryTips", tipBox.transform, "Mẹo Chiến Thuật...", 18, FontStyle.Italic, new Color(1f, 0.85f, 0.5f, 1f));
+        _codexEntryTips.lineSpacing = 1.35f;
+        var tipLe = _codexEntryTips.gameObject.AddComponent<LayoutElement>();
+        tipLe.minHeight = 40f;
+
+        SelectCodexCategory(CodexDatabase.EntryCategory.Enemies);
     }
 
     private void SelectCodexCategory(CodexDatabase.EntryCategory category)
     {
         _codexCategory = category;
+
+        // Cập nhật màu sắc làm nổi bật Tab đang chọn
+        Color activeTabColor = new Color(0.22f, 0.50f, 0.85f, 1f);
+        Color inactiveTabColor = new Color(0.12f, 0.16f, 0.25f, 0.85f);
+
+        if (_tabEnemiesBtn != null) _tabEnemiesBtn.image.color = (_codexCategory == CodexDatabase.EntryCategory.Enemies) ? activeTabColor : inactiveTabColor;
+        if (_tabSkillsBtn != null) _tabSkillsBtn.image.color = (_codexCategory == CodexDatabase.EntryCategory.Skills) ? activeTabColor : inactiveTabColor;
+        if (_tabRelicsBtn != null) _tabRelicsBtn.image.color = (_codexCategory == CodexDatabase.EntryCategory.Relics) ? activeTabColor : inactiveTabColor;
+
         RebuildCodexList();
     }
 
     private void RebuildCodexList()
     {
+        _codexItemBgs.Clear();
+        _codexItemAccents.Clear();
+
         // Xóa các item cũ
         for (int i = _codexListContainer.childCount - 1; i >= 0; i--)
         {
@@ -567,17 +762,126 @@ public class MainMenuUI : MonoBehaviour
         for (int i = 0; i < entries.Count; i++)
         {
             var entry = entries[i];
-            var btn = CreateSimpleButton($"Item_{entry.Id}", _codexListContainer, isVi ? entry.TitleVi : entry.TitleEn, 16, new Vector2(0f, 48f), () =>
+
+            var itemObj = CreateUIObject($"Item_{entry.Id}", _codexListContainer);
+            var itemRt = itemObj.GetComponent<RectTransform>();
+            itemRt.sizeDelta = new Vector2(0f, 68f);
+            var le = itemObj.AddComponent<LayoutElement>();
+            le.preferredHeight = 68f;
+            le.minHeight = 68f;
+            le.flexibleWidth = 1f;
+
+            var bgImg = itemObj.AddComponent<Image>();
+            bgImg.sprite = _btnBgSprite;
+            bgImg.type = Image.Type.Sliced;
+            bgImg.color = (entry.Id == _selectedEntryId)
+                ? new Color(0.20f, 0.36f, 0.58f, 1f)
+                : new Color(0.11f, 0.15f, 0.23f, 0.85f);
+            _codexItemBgs.Add(bgImg);
+
+            var btn = itemObj.AddComponent<Button>();
+            btn.targetGraphic = bgImg;
+
+            // Thanh vạch sáng bên trái khi được chọn (Left Accent Bar)
+            var accentBar = CreateUIObject("AccentBar", itemObj.transform);
+            var aRt = accentBar.GetComponent<RectTransform>();
+            aRt.anchorMin = new Vector2(0f, 0.1f);
+            aRt.anchorMax = new Vector2(0f, 0.9f);
+            aRt.pivot = new Vector2(0f, 0.5f);
+            aRt.anchoredPosition = new Vector2(2f, 0f);
+            aRt.sizeDelta = new Vector2(4f, 0f);
+            var aImg = accentBar.AddComponent<Image>();
+            aImg.color = new Color(0.35f, 0.85f, 1f, 1f);
+            accentBar.SetActive(entry.Id == _selectedEntryId);
+            _codexItemAccents.Add(accentBar);
+
+            // Icon Badge hình vuông bên trái (44x44)
+            var iconBox = CreateUIObject("IconBox", itemObj.transform);
+            var iRt = iconBox.GetComponent<RectTransform>();
+            iRt.anchorMin = new Vector2(0f, 0.5f);
+            iRt.anchorMax = new Vector2(0f, 0.5f);
+            iRt.pivot = new Vector2(0f, 0.5f);
+            iRt.anchoredPosition = new Vector2(10f, 0f);
+            iRt.sizeDelta = new Vector2(44f, 44f);
+            var iImg = iconBox.AddComponent<Image>();
+            iImg.sprite = _cardBgSprite;
+            iImg.type = Image.Type.Sliced;
+            iImg.color = entry.ThemeColor * 0.28f + new Color(0.08f, 0.12f, 0.18f, 0.8f);
+
+            var iconTxt = CreateLabel("IconCode", iconBox.transform, entry.IconCode ?? "HB", 16, FontStyle.Bold, entry.ThemeColor);
+            SetFullStretch(iconTxt.GetComponent<RectTransform>());
+            iconTxt.alignment = TextAnchor.MiddleCenter;
+
+            // Container chứa 2 dòng Text bên phải (Chuẩn LayoutGroup để không bao giờ bị lệch vị trí sang item khác)
+            var textContainer = CreateUIObject("TextContainer", itemObj.transform);
+            var tRt = textContainer.GetComponent<RectTransform>();
+            tRt.anchorMin = new Vector2(0f, 0f);
+            tRt.anchorMax = new Vector2(1f, 1f);
+            tRt.offsetMin = new Vector2(64f, 6f);
+            tRt.offsetMax = new Vector2(-10f, -6f);
+            var tcLayout = textContainer.AddComponent<VerticalLayoutGroup>();
+            tcLayout.spacing = 3f;
+            tcLayout.childAlignment = TextAnchor.MiddleLeft;
+            tcLayout.childControlWidth = true;
+            tcLayout.childControlHeight = true;
+            tcLayout.childForceExpandHeight = false;
+
+            var titleLbl = CreateLabel("Title", textContainer.transform, isVi ? entry.TitleVi : entry.TitleEn, 17, FontStyle.Bold, Color.white);
+            titleLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var tLe = titleLbl.gameObject.AddComponent<LayoutElement>();
+            tLe.preferredHeight = 24f;
+            tLe.minHeight = 24f;
+
+            var subLbl = CreateLabel("Sub", textContainer.transform, isVi ? entry.SubtitleVi : entry.SubtitleEn, 14, FontStyle.Normal, new Color(0.60f, 0.85f, 1f, 1f));
+            subLbl.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var sLe = subLbl.gameObject.AddComponent<LayoutElement>();
+            sLe.preferredHeight = 20f;
+            sLe.minHeight = 20f;
+
+            int capturedIdx = i;
+            var capturedEntry = entry;
+            btn.onClick.AddListener(() =>
             {
-                DisplayCodexDetail(entry);
+                AudioManager.Instance.PlayUI(UIType.Click);
+                SelectCodexEntry(capturedIdx, capturedEntry);
             });
-            var txt = btn.GetComponentInChildren<Text>();
-            txt.alignment = TextAnchor.MiddleLeft;
-            btn.image.color = new Color(0.15f, 0.2f, 0.3f, 0.9f);
         }
 
-        // Chọn item đầu tiên mặc định
-        DisplayCodexDetail(entries[0]);
+        // Chọn item đầu tiên nếu chưa có item nào được chọn hoặc item cũ không thuộc category này
+        int selectIndex = 0;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            if (entries[i].Id == _selectedEntryId)
+            {
+                selectIndex = i;
+                break;
+            }
+        }
+        SelectCodexEntry(selectIndex, entries[selectIndex]);
+    }
+
+    private void SelectCodexEntry(int index, CodexDatabase.CodexEntry entry)
+    {
+        if (entry == null) return;
+        _selectedEntryId = entry.Id;
+
+        // Cập nhật trạng thái visual cho toàn bộ list items
+        for (int i = 0; i < _codexItemBgs.Count; i++)
+        {
+            bool isSel = (i == index);
+            if (_codexItemBgs[i] != null)
+            {
+                _codexItemBgs[i].color = isSel
+                    ? new Color(0.20f, 0.36f, 0.58f, 1f)
+                    : new Color(0.11f, 0.15f, 0.23f, 0.85f);
+            }
+            if (i < _codexItemAccents.Count && _codexItemAccents[i] != null)
+            {
+                _codexItemAccents[i].SetActive(isSel);
+            }
+        }
+
+        DisplayCodexDetail(entry);
     }
 
     private void DisplayCodexDetail(CodexDatabase.CodexEntry entry)
@@ -586,26 +890,71 @@ public class MainMenuUI : MonoBehaviour
         _selectedEntryId = entry.Id;
         bool isVi = GameLocalization.CurrentLanguage == GameLanguage.Vietnamese;
 
-        _codexEntryTitle.text = isVi ? entry.TitleVi : entry.TitleEn;
-        _codexEntrySubtitle.text = isVi ? entry.SubtitleVi : entry.SubtitleEn;
-        _codexEntryDesc.text = isVi ? entry.DescriptionVi : entry.DescriptionEn;
-
-        // Ghép chuỗi stats
-        var statsDict = isVi ? entry.StatsVi : entry.StatsEn;
-        string statsStr = isVi ? "<b>[ THÔNG SỐ CỐT LÕI ]</b>\n" : "<b>[ CORE SPECIFICATIONS ]</b>\n";
-        foreach (var kvp in statsDict)
+        if (_codexEntryTitle != null) _codexEntryTitle.text = isVi ? entry.TitleVi : entry.TitleEn;
+        if (_codexEntrySubtitle != null) _codexEntrySubtitle.text = isVi ? entry.SubtitleVi : entry.SubtitleEn;
+        if (_codexEntryBadge != null)
         {
-            statsStr += $"• {kvp.Key}: <b>{kvp.Value}</b>\n";
+            _codexEntryBadge.text = $"[ {(isVi ? entry.BadgeVi : entry.BadgeEn)} ]";
+            _codexEntryBadge.color = entry.ThemeColor;
         }
-        _codexEntryStats.text = statsStr.TrimEnd();
+        if (_codexEntryDesc != null) _codexEntryDesc.text = isVi ? entry.DescriptionVi : entry.DescriptionEn;
 
-        _codexEntryMechanics.text = isVi
-            ? $"<b>Cơ Chế:</b> {entry.MechanicsVi}"
-            : $"<b>Mechanics:</b> {entry.MechanicsEn}";
+        // 4 Thẻ Chỉ Số Cốt Lõi
+        var pLabels = isVi ? entry.ParamLabelsVi : entry.ParamLabelsEn;
+        var pValues = isVi ? entry.ParamValuesVi : entry.ParamValuesEn;
 
-        _codexEntryTips.text = isVi
-            ? $"💡 <b>Mẹo Chiến Thuật:</b> {entry.TipsVi}"
-            : $"💡 <b>Tactical Tip:</b> {entry.TipsEn}";
+        if (_codexParamsHeader != null)
+        {
+            _codexParamsHeader.text = isVi ? "[ BẢNG THÔNG SỐ CỐT LÕI (CORE SPECIFICATIONS) ]" : "[ CORE SPECIFICATIONS ]";
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (_statCardLabels[i] != null && _statCardValues[i] != null && _statCardLabels[i].transform.parent != null)
+            {
+                if (pLabels != null && pValues != null && i < pLabels.Length && !string.IsNullOrEmpty(pLabels[i]))
+                {
+                    _statCardLabels[i].text = pLabels[i];
+                    _statCardValues[i].text = pValues[i];
+                    _statCardLabels[i].transform.parent.gameObject.SetActive(true);
+                }
+                else
+                {
+                    _statCardLabels[i].transform.parent.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        // Tiến trình cấp độ / công thức hợp thể / đặc tính
+        string prog = isVi ? entry.ProgressionSummaryVi : entry.ProgressionSummaryEn;
+        if (_codexProgressionHeader != null)
+        {
+            if (_codexCategory == CodexDatabase.EntryCategory.Enemies)
+                _codexProgressionHeader.text = isVi ? "[ ĐẶC TÍNH CHIẾN TRƯỜNG ]" : "[ BATTLEFIELD TRAITS ]";
+            else if (_codexCategory == CodexDatabase.EntryCategory.Relics)
+                _codexProgressionHeader.text = isVi ? "[ NÂNG CẤP & CỘNG DỒN HIỆU ỨNG ]" : "[ UPGRADE & STACKING EFFECTS ]";
+            else
+                _codexProgressionHeader.text = isVi ? "[ TIẾN TRÌNH CẤP ĐỘ & THĂNG HOA ]" : "[ LEVEL PROGRESSION & EVOLUTION ]";
+        }
+        if (_codexProgressionText != null)
+        {
+            _codexProgressionText.text = !string.IsNullOrEmpty(prog) ? prog : (isVi ? "Không có dữ liệu tiến trình." : "No progression data.");
+        }
+
+        // Cơ chế & Lời khuyên chiến thuật
+        if (_codexEntryMechanics != null)
+        {
+            _codexEntryMechanics.text = isVi
+                ? $"<b>[ CƠ CHẾ HOẠT ĐỘNG ]</b>  {entry.MechanicsVi}"
+                : $"<b>[ CORE MECHANICS ]</b>  {entry.MechanicsEn}";
+        }
+
+        if (_codexEntryTips != null)
+        {
+            _codexEntryTips.text = isVi
+                ? $"<b>[ LỜI KHUYÊN CHIẾN THUẬT ]</b>  {entry.TipsVi}"
+                : $"<b>[ TACTICAL ADVISORY ]</b>  {entry.TipsEn}";
+        }
     }
 
     // =========================================================================
@@ -1522,9 +1871,9 @@ public class MainMenuUI : MonoBehaviour
         _settingsBtnText.text = isVi ? "⚙️  CÀI ĐẶT (SETTINGS)" : "⚙️  SETTINGS";
         _quitBtnText.text = isVi ? "🚪  THOÁT (QUIT)" : "🚪  QUIT GAME";
 
-        _tabEnemiesBtn.GetComponentInChildren<Text>().text = isVi ? "👾 QUÁI VẬT (ENEMIES)" : "👾 DEMONIC BEASTS";
-        _tabSkillsBtn.GetComponentInChildren<Text>().text = isVi ? "⚔️ VŨ KHÍ & ĐẠN (WEAPONS)" : "⚔️ BLADES & SPELLS";
-        _tabRelicsBtn.GetComponentInChildren<Text>().text = isVi ? "💎 CỔ VẬT (RELICS)" : "💎 ANCIENT RELICS";
+        _tabEnemiesBtn.GetComponentInChildren<Text>().text = isVi ? "QUÁI VẬT (BESTIARY)" : "DEMONIC BEASTS";
+        _tabSkillsBtn.GetComponentInChildren<Text>().text = isVi ? "VŨ KHÍ & ĐẠN (WEAPONS)" : "WEAPONS & SKILLS";
+        _tabRelicsBtn.GetComponentInChildren<Text>().text = isVi ? "CỔ VẬT (RELICS)" : "ANCIENT RELICS";
 
         RefreshAllUI();
     }

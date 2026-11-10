@@ -270,6 +270,47 @@ public static class ProceduralAudioClips
     }
 
     /// <summary>
+    /// Tiếng nổ oanh tạc uy lực (Explosion):
+    /// - Low bass drop (140Hz -> 35Hz) tạo độ rung nén sub-bass.
+    /// - White noise / distortion crackle với envelope suy giảm phi tuyến (0.55s).
+    /// </summary>
+    public static AudioClip CreateExplosion()
+    {
+        int length = (int)(SampleRate * 0.55f);
+        float[] samples = new float[length];
+        var rng = new System.Random(42);
+
+        for (int i = 0; i < length; i++)
+        {
+            float t = (float)i / SampleRate;
+            float progress = (float)i / length;
+
+            // Attack siêu nhanh (0.01s) rồi suy hao hàm mũ
+            float env = progress < 0.02f
+                ? (progress / 0.02f)
+                : Mathf.Exp(-(progress - 0.02f) * 6.5f);
+
+            // Tần số bass giảm dần theo thời gian (Pitch Drop 140Hz -> 35Hz)
+            float freq = Mathf.Lerp(140f, 35f, Mathf.Pow(progress, 0.4f));
+            float bass = Mathf.Sin(2f * Mathf.PI * freq * t);
+
+            // Tiếng rền gầm gào (Noise / Distortion)
+            float noise = (float)(rng.NextDouble() * 2.0 - 1.0);
+
+            // Lớp hòa âm trung (Mid-crunch 70Hz)
+            float mid = Mathf.Sin(2f * Mathf.PI * 70f * t) * 0.4f;
+
+            float combined = (bass * 0.65f + mid * 0.25f + noise * 0.55f) * env;
+            // Soft clipping để tiếng nổ dày dặn, ấm và có uy lực
+            samples[i] = Mathf.Clamp(Mathf.Tan(combined * 0.9f), -1f, 1f);
+        }
+
+        AudioClip clip = AudioClip.Create("Proc_SFX_Explosion", length, 1, SampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    /// <summary>
     /// Tiếng Tù Và Báo Động Mega Wave: Trầm hùng, cổ xưa, cảnh báo nguy hiểm (1.8s).
     /// </summary>
     public static AudioClip CreateMegaWaveHorn()

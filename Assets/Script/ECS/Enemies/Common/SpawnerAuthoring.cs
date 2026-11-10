@@ -30,6 +30,13 @@ public class SpawnerAuthoring : MonoBehaviour
     public float AmbientMinRadius = 4.5f;
     public float AmbientMaxRadius = 11.5f;
 
+    [Header("Cấu hình Tái định vị quái tụt lại (Enemy Repositioning)")]
+    public bool EnableReposition = true;
+    public float SafetyMargin = 2.0f; // Khoảng cách đệm an toàn tuyệt đối ngoài mép camera (m)
+    public float OutOfRangeOffset = 5.5f; // Khoảng cách bổ sung ngoài tầm nhìn camera để kích hoạt reposition (m)
+    [Range(0f, 1f)] public float ForwardBiasChance = 0.75f; // Tỉ lệ xuất hiện phía trước mặt (75%)
+    [Range(30f, 90f)] public float ForwardConeAngle = 55f; // Góc mở nón chặn đầu (+/- 55 độ)
+
     class Baker : Baker<SpawnerAuthoring>
     {
         public override void Bake(SpawnerAuthoring authoring)
@@ -61,6 +68,18 @@ public class SpawnerAuthoring : MonoBehaviour
                 Triggered3Min = 0,
                 Triggered6Min = 0,
                 Triggered9Min = 0
+            });
+
+            AddComponent(entity, new EnemyRepositionConfigData
+            {
+                Enabled = authoring.EnableReposition,
+                CheckInterval = 0.2f,
+                Timer = 0.2f,
+                SafetyMargin = math.max(1.5f, authoring.SafetyMargin),
+                OutOfRangeOffset = math.max(3f, authoring.OutOfRangeOffset),
+                ForwardConeHalfAngleRad = math.radians(authoring.ForwardConeAngle),
+                ForwardBiasChance = math.clamp(authoring.ForwardBiasChance, 0f, 1f),
+                Rng = new Unity.Mathematics.Random(54321)
             });
 
             Entity smallOrbEntity = authoring.SmallExpOrbPrefab != null

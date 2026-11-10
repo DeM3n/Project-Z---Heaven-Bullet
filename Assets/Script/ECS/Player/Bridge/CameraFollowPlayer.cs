@@ -21,13 +21,26 @@ public class CameraFollowPlayer : MonoBehaviour
     private Camera _camera;
     private EntityManager _entityManager;
     private EntityQuery _playerQuery;
+    private EntityQuery _cameraViewQuery;
     private bool _initialized;
     private bool _hasSnappedToPlayer;
 
     private int _lastScreenWidth = -1;
     private int _lastScreenHeight = -1;
 
+    private float _shakeTimer;
+    private float _shakeIntensity;
+
     public static CameraFollowPlayer Instance { get; private set; }
+
+    /// <summary>
+    /// Kích hoạt rung lắc Camera (Screen Shake) khi có vụ nổ hoặc cú đánh mạnh.
+    /// </summary>
+    public void TriggerShake(float intensity = 0.22f, float duration = 0.18f)
+    {
+        _shakeIntensity = Mathf.Max(_shakeIntensity, intensity);
+        _shakeTimer = Mathf.Max(_shakeTimer, duration);
+    }
 
     public float OrthographicSize
     {
@@ -139,6 +152,8 @@ public class CameraFollowPlayer : MonoBehaviour
             _playerQuery = _entityManager.CreateEntityQuery(
                 ComponentType.ReadOnly<PlayerTag>(),
                 ComponentType.ReadOnly<LocalTransform>());
+            _cameraViewQuery = _entityManager.CreateEntityQuery(
+                ComponentType.ReadWrite<CameraViewData>());
             _initialized = true;
         }
         return true;
@@ -164,6 +179,59 @@ public class CameraFollowPlayer : MonoBehaviour
         else
         {
             transform.position = Vector3.Lerp(transform.position, targetPosition, smoothSpeed * Time.deltaTime);
+        }
+
+        // Áp dụng rung lắc màn hình (Screen Shake Trauma)
+        if (_shakeTimer > 0f)
+        {
+            _shakeTimer -= Time.deltaTime;
+            float trauma = Mathf.Clamp01(_shakeTimer);
+            Vector3 shakeOffset = new Vector3(
+                (UnityEngine.Random.value * 2f - 1f) * _shakeIntensity * trauma,
+                (UnityEngine.Random.value * 2f - 1f) * _shakeIntensity * trauma,
+                0f);
+            transform.position += shakeOffset;
+        }
+        else
+        {
+            _shakeIntensity = 0f;
+        }
+
+        UpdateCameraViewData();
+    }
+
+    /// <summary>
+    /// Đồng bộ kích thước và vị trí khung nhìn Camera vào singleton CameraViewData trong ECS.
+    /// Giúp các hệ thống Pure ECS (như EnemyRepositionSystem) luôn nắm bắt chính xác 100% hình chữ nhật
+    /// hiển thị của người chơi trên màn hình.
+    /// </summary>
+    private void UpdateCameraViewData()
+    {
+        if (_camera == null) return;
+        if (_entityManager == default || !_entityManager.World.IsCreated) return;
+
+        float halfHeight = _camera.orthographicSize;
+        float halfWidth = halfHeight * _camera.aspect;
+        Vector3 camPos = transform.position;
+
+        var viewData = new CameraViewData
+        {
+            Position = new Unity.Mathematics.float3(camPos.x, camPos.y, camPos.z),
+            HalfWidth = halfWidth,
+            HalfHeight = halfHeight,
+            OrthographicSize = halfHeight,
+            AspectRatio = _camera.aspect
+        };
+
+        if (_cameraViewQuery.IsEmpty)
+        {
+            Entity entity = _entityManager.CreateEntity();
+            _entityManager.AddComponentData(entity, viewData);
+        }
+        else
+        {
+            Entity entity = _cameraViewQuery.GetSingletonEntity();
+            _entityManager.SetComponentData(entity, viewData);
         }
     }
 }
