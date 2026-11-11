@@ -66,11 +66,11 @@ public partial struct PetalBurstSkillCastSystem : ISystem
                     MaxSpeedMultiplier = 1.35f,
                     DragDeceleration = 7.0f,
                     AngleSpreadJitter = 0.65f,
-                    HitRadius = 0.35f,
-                    ExplosionRadius = 0.85f,
+                    HitRadius = 0.38f,
+                    ExplosionRadius = 0.92f,
                     Duration = 0.85f,
                     PetalCount = 6,
-                    VortexPullRadius = 2.4f,
+                    VortexPullRadius = 2.6f,
                     VortexPullForce = 8.5f
                 });
 
@@ -96,10 +96,10 @@ public partial struct PetalBurstSkillCastSystem : ISystem
                     DurationLv3 = 1.10f,
                     DurationLv4 = 1.25f,
 
-                    ExplosionRadiusLv1 = 0.85f,
-                    ExplosionRadiusLv2 = 0.95f,
-                    ExplosionRadiusLv3 = 1.10f,
-                    ExplosionRadiusLv4 = 1.35f
+                    ExplosionRadiusLv1 = 0.92f,
+                    ExplosionRadiusLv2 = 1.03f,
+                    ExplosionRadiusLv3 = 1.19f,
+                    ExplosionRadiusLv4 = 1.46f
                 });
             }
             return;

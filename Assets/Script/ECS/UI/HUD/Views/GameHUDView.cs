@@ -2,17 +2,20 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Quản lý giao diện HUD in-game ở góc trên bên trái (HP, Shield, EXP, Level Badge),
+/// Quản lý giao diện HUD in-game ở góc trên bên trái (HP, Ghost Damage Bar, EXP, Level Badge),
 /// đồng hồ sinh tồn ở giữa phía trên và nút chuyển đổi ngôn ngữ ở góc trên bên phải.
+/// Tích hợp hiệu ứng hoạt ảnh Fill mượt mà (Ghost Lag Bar, EXP Surge Lerp, Level-Up Wraparound).
 /// Hoàn toàn độc lập với ECS, chỉ render dữ liệu thông qua PlayerHudSnapshot.
 /// </summary>
 public class GameHUDView
 {
     private readonly GameObject _hudRoot;
     private readonly Image _hpFillImage;
+    private readonly Image _hpGhostFillImage;
+    private readonly Outline _hpOutline;
     private readonly Text _hpText;
     private readonly Image _expFillImage;
-    private readonly Text _expText;
+    private readonly RectTransform _levelBadgeRect;
     private readonly Text _levelBadgeText;
     private readonly Text _survivalTimerText;
     private readonly GameObject _siegeObjectiveObj;
@@ -21,13 +24,32 @@ public class GameHUDView
     private readonly Text _langButtonText;
     private readonly Text _langHintText;
 
+    // --- Fill Animation States ---
+    private float _currentHpPercent = -1f;
+    private float _ghostHpPercent = -1f;
+    private float _hpGhostDelayTimer = 0f;
+
+    private float _currentExpPercent = -1f;
+    private int _lastObservedLevel = 1;
+    private bool _isLevelingUpWrap = false;
+    private float _expFlashTimer = 0f;
+
     public GameHUDView(Transform canvasParent)
     {
         // 1. Đồng hồ sinh tồn (Survival Timer: mm:ss) ở giữa phía trên & Thanh mục tiêu phòng thủ Siege
         _survivalTimerText = BuildSurvivalTimer(canvasParent, out _siegeObjectiveObj, out _siegeObjectiveText);
 
-        // 2. HUD Panel góc trên bên trái (Level Badge, HP Bar, EXP Bar)
-        _hudRoot = BuildHUDPanel(canvasParent, out _hpFillImage, out _hpText, out _expFillImage, out _expText, out _levelBadgeText);
+        // 2. HUD Panel góc trên bên trái (Level Badge, HP Bar + Ghost Damage Bar, EXP Bar thanh mảnh)
+        _hudRoot = BuildHUDPanel(
+            canvasParent,
+            out _hpFillImage,
+            out _hpGhostFillImage,
+            out _hpOutline,
+            out _hpText,
+            out _expFillImage,
+            out _levelBadgeRect,
+            out _levelBadgeText
+        );
 
         // 3. Nút chuyển đổi ngôn ngữ ở góc trên bên phải
         BuildLanguageButton(canvasParent, out _langButtonText, out _langHintText);
@@ -39,18 +61,153 @@ public class GameHUDView
     }
 
     /// <summary>
-    /// Cập nhật hiển thị HUD từ Snapshot dữ liệu người chơi
+    /// Đặt lại trạng thái hoạt ảnh fill khi bắt đầu ván đấu mới.
     /// </summary>
-    public void UpdateSnapshot(in PlayerHudSnapshot snapshot)
+    public void ResetAnimationState()
     {
-        if (_hpFillImage != null) _hpFillImage.fillAmount = snapshot.HpPercent;
+        _currentHpPercent = -1f;
+        _ghostHpPercent = -1f;
+        _hpGhostDelayTimer = 0f;
+
+        _currentExpPercent = -1f;
+        _lastObservedLevel = 1;
+        _isLevelingUpWrap = false;
+        _expFlashTimer = 0f;
+
+        if (_levelBadgeRect != null) _levelBadgeRect.localScale = Vector3.one;
+    }
+
+    /// <summary>
+    /// Cập nhật hiển thị HUD từ Snapshot dữ liệu người chơi kèm hoạt ảnh fill mượt mà
+    /// </summary>
+    public void UpdateSnapshot(PlayerHudSnapshot snapshot)
+    {
+        float dt = Time.unscaledDeltaTime;
+
+        // =========================================================================
+        // 1. HOẠT ẢNH FILL THANH MÁU (HP BAR + GHOST DAMAGE LAG BAR)
+        // =========================================================================
+        float targetHp = Mathf.Clamp01(snapshot.HpPercent);
+
+        if (_currentHpPercent < 0f)
+        {
+            _currentHpPercent = targetHp;
+            _ghostHpPercent = targetHp;
+        }
+
+        if (targetHp < _currentHpPercent)
+        {
+            // Bị đánh mất máu: Thanh máu chính tụt ngay lập tức để người chơi cảm nhận cú đánh
+            _currentHpPercent = targetHp;
+            _hpGhostDelayTimer = 0.55f; // Giữ lại vệt bóng mờ trắng tinh khôi 0.55s (rất rõ ràng, không thể bỏ lỡ)
+        }
+        else if (targetHp > _currentHpPercent)
+        {
+            // Được hồi máu: Thanh bóng mờ bắt kịp ngay, thanh chính nở mượt mà lên
+            _ghostHpPercent = targetHp;
+            _currentHpPercent = Mathf.MoveTowards(_currentHpPercent, targetHp, dt * 1.5f);
+        }
+
+        // Thoát thời gian delay và trượt thanh bóng mờ sát thương về mức máu hiện tại
+        if (_hpGhostDelayTimer > 0f)
+        {
+            _hpGhostDelayTimer -= dt;
+        }
+        else if (_ghostHpPercent > _currentHpPercent)
+        {
+            // Rút từ tốn và êm ái
+            _ghostHpPercent = Mathf.MoveTowards(_ghostHpPercent, _currentHpPercent, dt * 0.65f);
+        }
+        else
+        {
+            _ghostHpPercent = _currentHpPercent;
+        }
+
+        if (_hpFillImage != null) _hpFillImage.fillAmount = _currentHpPercent;
+        if (_hpGhostFillImage != null) _hpGhostFillImage.fillAmount = _ghostHpPercent;
         if (_hpText != null) _hpText.text = snapshot.FormattedHpText;
 
-        if (_expFillImage != null) _expFillImage.fillAmount = snapshot.ExpPercent;
-        if (_expText != null) _expText.text = snapshot.FormattedExpText;
+        // Nhấp nháy cảnh báo nguy cấp khi máu dưới 25%
+        if (_hpOutline != null)
+        {
+            if (snapshot.HpPercent <= 0.25f && snapshot.HpPercent > 0f)
+            {
+                float ping = Mathf.PingPong(Time.unscaledTime * 4.5f, 1f);
+                _hpOutline.effectColor = Color.Lerp(HUDTheme.HpBarOutline, new Color(1f, 0.2f, 0.25f, 1f), ping);
+            }
+            else
+            {
+                _hpOutline.effectColor = HUDTheme.HpBarOutline;
+            }
+        }
+
+        // =========================================================================
+        // 2. HOẠT ẢNH FILL THANH EXP (EXP BAR + SURGE LERP + LEVEL-UP WRAPAROUND)
+        // =========================================================================
+        float targetExp = Mathf.Clamp01(snapshot.ExpPercent);
+
+        if (_currentExpPercent < 0f)
+        {
+            _currentExpPercent = targetExp;
+            _lastObservedLevel = snapshot.Level;
+        }
+
+        // Kiểm tra biến cố Lên Cấp (Level Up)
+        if (snapshot.Level > _lastObservedLevel)
+        {
+            _lastObservedLevel = snapshot.Level;
+            _isLevelingUpWrap = true;
+
+            // Hiệu ứng nảy bung huy hiệu cấp độ (Badge Pop Bounce)
+            if (_levelBadgeRect != null)
+            {
+                _levelBadgeRect.localScale = Vector3.one * 1.35f;
+            }
+        }
+
+        if (_isLevelingUpWrap)
+        {
+            // Khi lên cấp: Thanh EXP trượt đầy đến 100% trước khi cuộn về 0
+            _currentExpPercent = Mathf.MoveTowards(_currentExpPercent, 1.0f, dt * 2.8f);
+            if (_currentExpPercent >= 1.0f)
+            {
+                _currentExpPercent = 0f;
+                _isLevelingUpWrap = false;
+            }
+        }
+        else
+        {
+            // Nhặt ngọc EXP: Trượt êm ái dạng dòng chảy linh khí (tốc độ nhìn rõ mắt thường)
+            if (targetExp > _currentExpPercent)
+            {
+                float diff = targetExp - _currentExpPercent;
+                float speed = Mathf.Clamp(diff * 3.5f, 0.45f, 1.8f);
+                _currentExpPercent = Mathf.MoveTowards(_currentExpPercent, targetExp, dt * speed);
+                _expFlashTimer = 0.3f; // Giữ vệt sáng neon trong 0.3s
+            }
+            else
+            {
+                _currentExpPercent = Mathf.MoveTowards(_currentExpPercent, targetExp, dt * 1.5f);
+            }
+        }
+
+        if (_expFillImage != null)
+        {
+            _expFillImage.fillAmount = _currentExpPercent;
+            _expFillImage.color = HUDTheme.CyanAccent;
+        }
+
+        // Phục hồi kích thước huy hiệu Level Badge
+        if (_levelBadgeRect != null && _levelBadgeRect.localScale.x > 1f)
+        {
+            _levelBadgeRect.localScale = Vector3.MoveTowards(_levelBadgeRect.localScale, Vector3.one, dt * 2.5f);
+        }
 
         if (_levelBadgeText != null) _levelBadgeText.text = snapshot.FormattedLevelBadge;
 
+        // =========================================================================
+        // 3. ĐỒNG HỒ SINH TỒN & MỤC TIÊU MEGA WAVE
+        // =========================================================================
         if (_survivalTimerText != null)
         {
             if (snapshot.IsMegaWaveActive)
@@ -149,15 +306,17 @@ public class GameHUDView
     private GameObject BuildHUDPanel(
         Transform parent,
         out Image hpFill,
+        out Image hpGhostFill,
+        out Outline hpOutline,
         out Text hpTxt,
         out Image expFill,
-        out Text expTxt,
+        out RectTransform badgeRect,
         out Text levelBadgeTxt)
     {
         var hudObj = UIFactory.CreatePanel(
             parent,
             "HUD_TopLeft",
-            new Vector2(350f, 78f),
+            new Vector2(350f, 74f),
             HUDTheme.PanelBgDark,
             HUDTheme.MetalBorder,
             new Vector2(2f, -2f)
@@ -173,16 +332,16 @@ public class GameHUDView
         var badgeObj = UIFactory.CreatePanel(
             hudObj.transform,
             "LevelBadge",
-            new Vector2(58f, 58f),
+            new Vector2(56f, 56f),
             HUDTheme.LevelBadgeBg,
             HUDTheme.GoldAccent,
             new Vector2(2f, -2f)
         );
-        var bRect = badgeObj.GetComponent<RectTransform>();
-        bRect.anchorMin = new Vector2(0f, 0.5f);
-        bRect.anchorMax = new Vector2(0f, 0.5f);
-        bRect.pivot = new Vector2(0.5f, 0.5f);
-        bRect.anchoredPosition = new Vector2(38f, 0f);
+        badgeRect = badgeObj.GetComponent<RectTransform>();
+        badgeRect.anchorMin = new Vector2(0f, 0.5f);
+        badgeRect.anchorMax = new Vector2(0f, 0.5f);
+        badgeRect.pivot = new Vector2(0.5f, 0.5f);
+        badgeRect.anchoredPosition = new Vector2(38f, 0f);
 
         levelBadgeTxt = UIFactory.CreateText(
             badgeObj.transform,
@@ -201,24 +360,41 @@ public class GameHUDView
         var barsRect = barsContainer.AddComponent<RectTransform>();
         barsRect.anchorMin = Vector2.zero;
         barsRect.anchorMax = Vector2.one;
-        barsRect.offsetMin = new Vector2(76f, 10f);
+        barsRect.offsetMin = new Vector2(74f, 10f);
         barsRect.offsetMax = new Vector2(-12f, -10f);
 
-        // HP Bar
+        // HP Bar (chiếm phần lớn không gian phía trên, nổi bật, cao ~37px)
         var hpBarObj = new GameObject("HP_Bar");
         hpBarObj.transform.SetParent(barsContainer.transform, false);
         var hpRect = hpBarObj.AddComponent<RectTransform>();
-        hpRect.anchorMin = new Vector2(0f, 0.46f);
+        hpRect.anchorMin = new Vector2(0f, 0.28f);
         hpRect.anchorMax = new Vector2(1f, 1f);
         hpRect.offsetMin = Vector2.zero;
         hpRect.offsetMax = Vector2.zero;
 
         var hpBg = hpBarObj.AddComponent<Image>();
         hpBg.color = HUDTheme.HpBarBg;
-        var hpOutline = hpBarObj.AddComponent<Outline>();
+        hpOutline = hpBarObj.AddComponent<Outline>();
         hpOutline.effectColor = HUDTheme.HpBarOutline;
         hpOutline.effectDistance = new Vector2(1f, -1f);
 
+        // HP Ghost Bar (vệt bóng mờ sát thương trắng tinh khôi nằm ngay dưới thanh máu đỏ)
+        var hpGhostObj = new GameObject("HP_GhostFill");
+        hpGhostObj.transform.SetParent(hpBarObj.transform, false);
+        var hpGhostRect = hpGhostObj.AddComponent<RectTransform>();
+        hpGhostRect.anchorMin = Vector2.zero;
+        hpGhostRect.anchorMax = Vector2.one;
+        hpGhostRect.offsetMin = new Vector2(2f, 2f);
+        hpGhostRect.offsetMax = new Vector2(-2f, -2f);
+
+        hpGhostFill = hpGhostObj.AddComponent<Image>();
+        hpGhostFill.sprite = UIFactory.WhiteSprite;
+        hpGhostFill.type = Image.Type.Filled;
+        hpGhostFill.fillMethod = Image.FillMethod.Horizontal;
+        hpGhostFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+        hpGhostFill.color = new Color(1f, 1f, 1f, 0.95f); // Trắng sáng tinh khôi (Stark White) tạo độ tương phản cực đại khi mất máu
+
+        // HP Main Bar (màu đỏ ruby)
         var hpFillObj = new GameObject("HP_Fill");
         hpFillObj.transform.SetParent(hpBarObj.transform, false);
         var hpFillRect = hpFillObj.AddComponent<RectTransform>();
@@ -228,8 +404,10 @@ public class GameHUDView
         hpFillRect.offsetMax = new Vector2(-2f, -2f);
 
         hpFill = hpFillObj.AddComponent<Image>();
+        hpFill.sprite = UIFactory.WhiteSprite;
         hpFill.type = Image.Type.Filled;
         hpFill.fillMethod = Image.FillMethod.Horizontal;
+        hpFill.fillOrigin = (int)Image.OriginHorizontal.Left;
         hpFill.color = HUDTheme.RubyAccent;
 
         hpTxt = UIFactory.CreateText(
@@ -243,12 +421,12 @@ public class GameHUDView
             Color.black
         );
 
-        // EXP Bar
+        // EXP Bar (Thanh kinh nghiệm thanh mảnh, gọn gàng, không số)
         var expBarObj = new GameObject("EXP_Bar");
         expBarObj.transform.SetParent(barsContainer.transform, false);
         var expRect = expBarObj.AddComponent<RectTransform>();
         expRect.anchorMin = Vector2.zero;
-        expRect.anchorMax = new Vector2(1f, 0.38f);
+        expRect.anchorMax = new Vector2(1f, 0.16f);
         expRect.offsetMin = Vector2.zero;
         expRect.offsetMax = Vector2.zero;
 
@@ -258,29 +436,21 @@ public class GameHUDView
         expOutline.effectColor = HUDTheme.ExpBarOutline;
         expOutline.effectDistance = new Vector2(1f, -1f);
 
+        // EXP Main Bar (màu xanh ngọc lam Cyan sắc nét, lấp đầy từ trái sang phải, không hiệu ứng mờ)
         var expFillObj = new GameObject("EXP_Fill");
         expFillObj.transform.SetParent(expBarObj.transform, false);
         var expFillRect = expFillObj.AddComponent<RectTransform>();
         expFillRect.anchorMin = Vector2.zero;
         expFillRect.anchorMax = Vector2.one;
-        expFillRect.offsetMin = new Vector2(1.5f, 1.5f);
-        expFillRect.offsetMax = new Vector2(-1.5f, -1.5f);
+        expFillRect.offsetMin = new Vector2(1f, 1f);
+        expFillRect.offsetMax = new Vector2(-1f, -1f);
 
         expFill = expFillObj.AddComponent<Image>();
+        expFill.sprite = UIFactory.WhiteSprite;
         expFill.type = Image.Type.Filled;
         expFill.fillMethod = Image.FillMethod.Horizontal;
+        expFill.fillOrigin = (int)Image.OriginHorizontal.Left;
         expFill.color = HUDTheme.CyanAccent;
-
-        expTxt = UIFactory.CreateText(
-            expBarObj.transform,
-            "EXP_Text",
-            "0 / 10 (0%)",
-            11,
-            new Color(0.9f, 0.98f, 1f),
-            FontStyle.Bold,
-            TextAnchor.MiddleCenter,
-            Color.black
-        );
 
         return hudObj;
     }
@@ -346,4 +516,3 @@ public class GameHUDView
         hintTxt.text = GameLocalization.LangHintText;
     }
 }
-

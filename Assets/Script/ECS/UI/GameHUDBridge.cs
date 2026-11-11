@@ -18,6 +18,12 @@ using UnityEngine.SceneManagement;
 public class GameHUDBridge : MonoBehaviour
 {
     private static GameHUDBridge _instance;
+    public static GameHUDBridge Instance => _instance;
+
+    public void SetHUDVisible(bool visible)
+    {
+        if (_canvas != null) _canvas.gameObject.SetActive(visible);
+    }
 
     // --- ECS ---
     private EntityManager _entityManager;
@@ -97,7 +103,7 @@ public class GameHUDBridge : MonoBehaviour
         InitECS();
         UpdateLanguageUI();
         bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene" && SceneManager.GetActiveScene().name != "LoadingScene";
-        if (_canvas != null) _canvas.gameObject.SetActive(isGameplay);
+        if (_canvas != null) _canvas.gameObject.SetActive(isGameplay && !LoadingController.IsLoading);
     }
 
     private void Update()
@@ -400,7 +406,7 @@ public class GameHUDBridge : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         bool isGameplay = scene.name != "MainMenuScene" && scene.name != "LoadingScene";
-        if (_canvas != null) _canvas.gameObject.SetActive(isGameplay);
+        if (_canvas != null) _canvas.gameObject.SetActive(isGameplay && !LoadingController.IsLoading);
 
         if (isGameplay)
         {
@@ -417,6 +423,7 @@ public class GameHUDBridge : MonoBehaviour
             _modalStateMachine?.CloseModal();
             _runLifecycleService?.ResetRunState();
             _runLifecycleService?.CleanupOldRunEntities();
+            _hudView?.ResetAnimationState();
             InitECS();
         }
         else

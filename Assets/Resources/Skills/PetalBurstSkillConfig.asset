@@ -29,15 +29,15 @@ MonoBehaviour:
   - 1.1
   - 1.25
   ExplosionRadii:
-  - 0.85
-  - 0.95
-  - 1.1
-  - 1.35
+  - 0.92
+  - 1.03
+  - 1.19
+  - 1.46
   FlySpeed: 8.5
   MinSpeedMultiplier: 0.65
   MaxSpeedMultiplier: 1.35
   DragDeceleration: 7
   AngleSpreadJitter: 0.65
-  HitRadius: 0.35
-  VortexPullRadius: 2.4
+  HitRadius: 0.38
+  VortexPullRadius: 2.6
   VortexPullForce: 8.5

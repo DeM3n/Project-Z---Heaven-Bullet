@@ -93,12 +93,12 @@ public readonly struct PlayerHudSnapshot
                 if (ShieldCharges > 0)
                 {
                     string hitBadge = (ShieldLevel >= 4) ? $"({ShieldHitsRemaining}h)" : "";
-                    hpString += $"  <color=#00e5ff>[🛡️ x{ShieldCharges}{hitBadge}]</color>";
+                    hpString += $"  <color=#00e5ff>[SHIELD x{ShieldCharges}{hitBadge}]</color>";
                 }
                 else
                 {
                     int remainSec = Mathf.Max(1, Mathf.CeilToInt(ShieldRechargeRemainingSec));
-                    hpString += $"  <color=#80deea>[🛡️ {remainSec}s]</color>";
+                    hpString += $"  <color=#80deea>[SHIELD {remainSec}s]</color>";
                 }
             }
             return hpString;

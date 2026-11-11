@@ -180,14 +180,39 @@ public static class UIFactory
         fillRect.offsetMax = -pad;
 
         var fillImg = fillObj.AddComponent<Image>();
+        fillImg.sprite = WhiteSprite;
         fillImg.type = Image.Type.Filled;
         fillImg.fillMethod = Image.FillMethod.Horizontal;
+        fillImg.fillOrigin = (int)Image.OriginHorizontal.Left;
         fillImg.color = fillColor;
 
         // Text
         var txt = CreateText(barRoot.transform, "Text", "", fontSize, Color.white, FontStyle.Bold, TextAnchor.MiddleCenter, Color.black);
 
         return (barRoot, fillImg, txt);
+    }
+
+    private static Sprite _whiteSprite;
+    /// <summary>
+    /// Sprite đơn sắc trắng 4x4 dùng làm nền cho Image.Type.Filled để Unity UI hỗ trợ fillAmount chính xác.
+    /// (Lưu ý quan trọng: Unity UI mặc định sẽ bỏ qua fillAmount và vẽ 100% full quad nếu Image.sprite == null).
+    /// </summary>
+    public static Sprite WhiteSprite
+    {
+        get
+        {
+            if (_whiteSprite == null)
+            {
+                _whiteSprite = Sprite.Create(
+                    Texture2D.whiteTexture,
+                    new Rect(0f, 0f, 4f, 4f),
+                    new Vector2(0.5f, 0.5f),
+                    100f
+                );
+                _whiteSprite.name = "UI_WhitePixelSprite";
+            }
+            return _whiteSprite;
+        }
     }
 }
 

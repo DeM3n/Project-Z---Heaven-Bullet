@@ -25,7 +25,7 @@ public class LoadingView : MonoBehaviour
         gameObject.name = "[LoadingScreenCanvas]";
         _canvas = gameObject.AddComponent<Canvas>();
         _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        _canvas.sortingOrder = 999; // Hiển thị trên cùng tuyệt đối
+        _canvas.sortingOrder = 32000; // Đặt sorting order cao nhất tuyệt đối để che phủ hoàn toàn mọi HUD, UI và Settings
 
         var scaler = gameObject.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;

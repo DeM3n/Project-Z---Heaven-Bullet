@@ -131,9 +131,9 @@ public class PetalBurstVisualBridge : MonoBehaviour
             // Tiến độ bay (1.0 khi mới xuất chiêu -> 0.0 khi sắp dừng)
             float progress = Mathf.Clamp01(1f - (petalData.LifeTimer / Mathf.Max(0.01f, petalData.Duration)));
 
-            // Tỉ lệ scale hoa (nở dần khi vừa bay ra, co nhỏ nhẹ khi giảm tốc)
+            // Tỉ lệ scale hoa (nở dần khi vừa bay ra, co nhỏ nhẹ khi giảm tốc, tăng 8% theo yêu cầu: 0.55f * 1.08f = 0.594f)
             float scaleMul = Mathf.Lerp(0.65f, 1.0f, Mathf.Sin((1f - progress) * Mathf.PI));
-            item.Root.transform.localScale = Vector3.one * (0.55f * scaleMul);
+            item.Root.transform.localScale = Vector3.one * (0.594f * scaleMul);
 
             // Cấp 4 hoa phát sáng lấp lánh sắc hoa đào hoàng kim
             Color baseColor = (petalData.SkillLevel >= 4)

@@ -14,6 +14,12 @@ using UnityEngine.SceneManagement;
 public class GameSettingsBridge : MonoBehaviour
 {
     private static GameSettingsBridge _instance;
+    public static GameSettingsBridge Instance => _instance;
+
+    public void SetTopBarVisible(bool visible)
+    {
+        _topBarView?.SetVisible(visible);
+    }
 
     private Canvas _canvas;
     private TopBarSettingsButtonsView _topBarView;
@@ -65,7 +71,7 @@ public class GameSettingsBridge : MonoBehaviour
     {
         UpdateLanguageUI();
         bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene" && SceneManager.GetActiveScene().name != "LoadingScene";
-        _topBarView?.SetVisible(isGameplay);
+        _topBarView?.SetVisible(isGameplay && !LoadingController.IsLoading);
     }
 
     private float _devRefreshTimer = 0f;
@@ -424,7 +430,7 @@ public class GameSettingsBridge : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         bool isGameplay = scene.name != "MainMenuScene" && scene.name != "LoadingScene";
-        _topBarView?.SetVisible(isGameplay);
+        _topBarView?.SetVisible(isGameplay && !LoadingController.IsLoading);
 
         if (_countdownCoroutine != null)
         {

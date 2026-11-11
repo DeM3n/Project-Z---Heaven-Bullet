@@ -43,9 +43,9 @@ public class PetalBurstSkillConfigSO : ScriptableObject
     [Tooltip("Thời gian tồn tại tăng nhẹ giúp hoa trôi bồng bềnh lâu hơn: Lv1: 0.85s, Lv2: 0.95s, Lv3: 1.10s, Lv4: 1.25s")]
     public float[] Durations = new float[] { 0.85f, 0.95f, 1.10f, 1.25f };
 
-    [Header("5. Bán Kính Nổ AOE Từng Cấp (Explosion Radii in Meters)")]
-    [Tooltip("Lv1: 0.85m, Lv2: 0.95m, Lv3: 1.10m, Lv4: 1.35m")]
-    public float[] ExplosionRadii = new float[] { 0.85f, 0.95f, 1.10f, 1.35f };
+    [Header("5. Bán Kính Nổ AOE Từng Cấp (Explosion Radii in Meters, +8%)")]
+    [Tooltip("Lv1: 0.92m, Lv2: 1.03m, Lv3: 1.19m, Lv4: 1.46m")]
+    public float[] ExplosionRadii = new float[] { 0.92f, 1.03f, 1.19f, 1.46f };
 
     [Header("6. Thông Số Vận Tốc & Độ Phân Tán (Particle Burst Dynamics)")]
     [Tooltip("Vận tốc phóng trung bình ban đầu (~8.5 m/s)")]
@@ -63,12 +63,12 @@ public class PetalBurstSkillConfigSO : ScriptableObject
     [Tooltip("Độ lệch ngẫu nhiên góc phóng (+/- radian) mô phỏng Particle Burst")]
     public float AngleSpreadJitter = 0.65f;
 
-    [Tooltip("Bán kính va chạm trực tiếp với quái khi đang bay (~0.35m)")]
-    public float HitRadius = 0.35f;
+    [Tooltip("Bán kính va chạm trực tiếp với quái khi đang bay (~0.38m, +8%)")]
+    public float HitRadius = 0.38f;
 
-    [Header("7. Hiệu Ứng Cấp 4: Hoa Trận Hút Quái (Petal Implosion Vortex)")]
-    [Tooltip("Bán kính hút quái vào tâm nổ ở Cấp 4 (~2.4m)")]
-    public float VortexPullRadius = 2.4f;
+    [Header("7. Hiệu Ứng Cấp 4: Hoa Trận Hút Quái (Petal Implosion Vortex, +8%)")]
+    [Tooltip("Bán kính hút quái vào tâm nổ ở Cấp 4 (~2.6m)")]
+    public float VortexPullRadius = 2.6f;
 
     [Tooltip("Vận tốc kéo hút quái vật vào tâm nổ ở Cấp 4 (~8.5 m/s)")]
     public float VortexPullForce = 8.5f;
@@ -77,7 +77,7 @@ public class PetalBurstSkillConfigSO : ScriptableObject
     public float GetDamage(int level) => GetSafe(BaseDamages, level, 22f);
     public int GetCount(int level) => GetSafe(PetalCounts, level, 6);
     public float GetDuration(int level) => GetSafe(Durations, level, 0.42f);
-    public float GetExplosionRadius(int level) => GetSafe(ExplosionRadii, level, 0.85f);
+    public float GetExplosionRadius(int level) => GetSafe(ExplosionRadii, level, 0.92f);
 
     private static T GetSafe<T>(T[] array, int level, T fallback)
     {

@@ -10,7 +10,7 @@ public class PetalBurstSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
     [Header("Cấu hình mặc định (Nếu không có ScriptableObject)")]
     public float InitialFlySpeed = 8.5f;
     public float DragDeceleration = 7.0f;
-    public float HitRadius = 0.35f;
+    public float HitRadius = 0.38f;
 
     public void Bake(IBaker baker, Entity entity)
     {
@@ -25,10 +25,10 @@ public class PetalBurstSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
         float drag = cfg != null ? cfg.DragDeceleration : DragDeceleration;
         float angleJitter = cfg != null ? cfg.AngleSpreadJitter : 0.65f;
         float hitRad = cfg != null ? cfg.HitRadius : HitRadius;
-        float aoeRad1 = cfg != null ? cfg.GetExplosionRadius(1) : 0.85f;
+        float aoeRad1 = cfg != null ? cfg.GetExplosionRadius(1) : 0.92f;
         float dur1 = cfg != null ? cfg.GetDuration(1) : 0.85f;
         int count1 = cfg != null ? cfg.GetCount(1) : 6;
-        float vortexRad = cfg != null ? cfg.VortexPullRadius : 2.4f;
+        float vortexRad = cfg != null ? cfg.VortexPullRadius : 2.6f;
         float vortexForce = cfg != null ? cfg.VortexPullForce : 8.5f;
 
         baker.AddComponent(entity, new PetalBurstSkillData
@@ -69,10 +69,10 @@ public class PetalBurstSkillAuthoring : MonoBehaviour, ISkillEffectAuthoring
             DurationLv3 = cfg != null ? cfg.GetDuration(3) : 1.10f,
             DurationLv4 = cfg != null ? cfg.GetDuration(4) : 1.25f,
 
-            ExplosionRadiusLv1 = cfg != null ? cfg.GetExplosionRadius(1) : 0.85f,
-            ExplosionRadiusLv2 = cfg != null ? cfg.GetExplosionRadius(2) : 0.95f,
-            ExplosionRadiusLv3 = cfg != null ? cfg.GetExplosionRadius(3) : 1.10f,
-            ExplosionRadiusLv4 = cfg != null ? cfg.GetExplosionRadius(4) : 1.35f
+            ExplosionRadiusLv1 = cfg != null ? cfg.GetExplosionRadius(1) : 0.92f,
+            ExplosionRadiusLv2 = cfg != null ? cfg.GetExplosionRadius(2) : 1.03f,
+            ExplosionRadiusLv3 = cfg != null ? cfg.GetExplosionRadius(3) : 1.19f,
+            ExplosionRadiusLv4 = cfg != null ? cfg.GetExplosionRadius(4) : 1.46f
         });
     }
 }

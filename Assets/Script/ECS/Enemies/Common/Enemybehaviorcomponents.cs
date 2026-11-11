@@ -22,6 +22,9 @@ public struct BomberExplodeData : IComponentData
 {
     public float ExplodeRadius;
     public float ExplodeDamage;
+    public float FuseDelay;     // Thời gian ngòi nổ đếm ngược trước khi nổ (mặc định 0.25s)
+    public float FuseTimer;     // Bộ đếm ngược thời gian ngòi nổ
+    public bool IsPrimed;       // Trạng thái đã châm ngòi nổ (đang đếm ngược)
 }
 
 // Áp dụng cho MỌI enemy (Chaser/Tank/Shooter/Bomber) — va chạm trực tiếp với Player

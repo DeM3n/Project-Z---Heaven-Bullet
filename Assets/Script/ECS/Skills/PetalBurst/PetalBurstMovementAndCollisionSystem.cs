@@ -101,11 +101,12 @@ public partial struct PetalBurstMovementAndCollisionSystem : ISystem
                 Entity owner = petal.ValueRO.Owner;
                 float damage = petal.ValueRO.Damage;
 
-                // --- HIỆU ỨNG CẤP 4: HOA TRẬN HÚT QUÁI (PETAL IMPLOSION VORTEX) ---
+                // --- HIỆU ỨNG CẤP 4: HOA TRẬN HÚT QUÁI (PETAL IMPLOSION VORTEX - OPTION A: VACUUM SNAP) ---
+                float searchRadius = explosionRad;
                 if (skillLvl >= 4)
                 {
                     float vortexRad = petal.ValueRO.VortexPullRadius;
-                    float vortexPullSpeed = petal.ValueRO.VortexPullForce;
+                    searchRadius = math.max(searchRadius, vortexRad);
                     int cellRange = (int)math.ceil(vortexRad / cellSize);
                     int2 centerCell = SpatialGridUtility.ToCell(petalPos2D, cellSize);
 
@@ -123,10 +124,12 @@ public partial struct PetalBurstMovementAndCollisionSystem : ISystem
                                 float2 toCenter = petalPos2D - enemyPos;
                                 float dist = math.length(toCenter);
 
-                                // Quái vật trong bán kính hút sẽ bị giật nhẹ về tâm nổ
-                                if (dist > 0.08f && dist <= vortexRad)
+                                // Quái vật trong bán kính hút bị giật mạnh tức thì về tâm nổ (Vacuum Pop / Implosion Snap)
+                                if (dist > 0.15f && dist <= vortexRad)
                                 {
-                                    float2 pullStep = (toCenter / dist) * math.min(dist, vortexPullSpeed * dt);
+                                    // Giật mạnh 70% cự ly về tâm (tối thiểu 0.75m, tối đa 1.85m), gom toàn bộ quái vào tâm nổ
+                                    float pullDist = math.min(dist - 0.12f, math.max(0.75f, dist * 0.70f));
+                                    float2 pullStep = (toCenter / dist) * math.max(0f, pullDist);
                                     LocalTransform enemyTr = _transformLookup[enemy];
                                     enemyTr.Position.xy += pullStep;
                                     _transformLookup[enemy] = enemyTr;
@@ -136,8 +139,8 @@ public partial struct PetalBurstMovementAndCollisionSystem : ISystem
                     }
                 }
 
-                // Gây sát thương nổ AOE cho toàn bộ quái trong Bán kính nổ
-                int expCellRange = (int)math.ceil(explosionRad / cellSize);
+                // Gây sát thương nổ AOE cho toàn bộ quái trong Bán kính nổ (kể cả quái vừa bị hút vào)
+                int expCellRange = (int)math.ceil(searchRadius / cellSize);
                 int2 expCenterCell = SpatialGridUtility.ToCell(petalPos2D, cellSize);
 
                 for (int dx = -expCellRange; dx <= expCellRange; dx++)

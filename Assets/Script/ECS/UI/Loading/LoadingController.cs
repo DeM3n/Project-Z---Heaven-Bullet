@@ -16,16 +16,17 @@ public class LoadingController : MonoBehaviour
     public const string DefaultGameplaySceneName = "SampleScene";
 
     public static string TargetSceneName { get; private set; } = DefaultGameplaySceneName;
+    public static bool IsLoading { get; private set; }
 
     private static LoadingController _instance;
     private LoadingView _view;
-    private bool _isLoading;
 
     /// <summary>
     /// Phương thức công khai toàn cục để kích hoạt quá trình nạp cảnh mượt mà qua Loading Scene.
     /// </summary>
     public static void LoadScene(string targetSceneName = DefaultGameplaySceneName)
     {
+        IsLoading = true;
         TargetSceneName = string.IsNullOrEmpty(targetSceneName) ? DefaultGameplaySceneName : targetSceneName;
         SceneManager.LoadScene(LoadingSceneName);
     }
@@ -82,7 +83,7 @@ public class LoadingController : MonoBehaviour
 
     private void Start()
     {
-        if (SceneManager.GetActiveScene().name == LoadingSceneName && !_isLoading)
+        if (SceneManager.GetActiveScene().name == LoadingSceneName && !IsLoading)
         {
             BeginLoading();
         }
@@ -90,8 +91,7 @@ public class LoadingController : MonoBehaviour
 
     public void BeginLoading()
     {
-        if (_isLoading) return;
-        _isLoading = true;
+        IsLoading = true;
         StopAllCoroutines();
         StartCoroutine(LoadProcessRoutine());
     }
@@ -174,6 +174,10 @@ public class LoadingController : MonoBehaviour
         _view.SetProgress(1.0f, GetStatusText(1.0f));
         yield return new WaitForSecondsRealtime(0.2f);
 
+        // Kích hoạt HUD và thanh công cụ trận đấu dưới bức rèm Loading trước khi fade-out
+        GameHUDBridge.Instance?.SetHUDVisible(true);
+        GameSettingsBridge.Instance?.SetTopBarVisible(true);
+
         // 6. Fade Out Loading Screen để mở màn trận chiến mượt mà
         float fadeOutDuration = 0.35f;
         elapsed = 0f;
@@ -192,7 +196,7 @@ public class LoadingController : MonoBehaviour
         }
 
         _instance = null;
-        _isLoading = false;
+        IsLoading = false;
         Destroy(gameObject);
     }
 
