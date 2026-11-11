@@ -91,6 +91,15 @@ public static class SkillDefinitionRegistry
         },
         new SharedSkillDefinition
         {
+            SkillId = "PetalBurst",
+            NumericId = SkillIds.PetalBurst,
+            TitleGetter = () => GameLocalization.PetalBurstTitle,
+            MaxLevel = 4,
+            ThemeColor = new Color(1.0f, 0.42f, 0.72f),
+            IsFusion = false
+        },
+        new SharedSkillDefinition
+        {
             SkillId = "SwordFusion",
             NumericId = SkillIds.SwordFusion,
             TitleGetter = () => GameLocalization.SwordFusionTitle,

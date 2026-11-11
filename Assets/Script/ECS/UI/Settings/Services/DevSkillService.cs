@@ -142,6 +142,7 @@ public class DevSkillService
             "Shield" => em.CreateEntityQuery(ComponentType.ReadOnly<ShieldSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
             "Boomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
             "Electric" => em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "PetalBurst" => em.CreateEntityQuery(ComponentType.ReadOnly<PetalBurstSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
             "SwordFusion" => em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
             "ThunderBoomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
             _ => default

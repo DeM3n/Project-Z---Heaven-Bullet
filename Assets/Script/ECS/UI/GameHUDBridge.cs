@@ -96,7 +96,7 @@ public class GameHUDBridge : MonoBehaviour
     {
         InitECS();
         UpdateLanguageUI();
-        bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene";
+        bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene" && SceneManager.GetActiveScene().name != "LoadingScene";
         if (_canvas != null) _canvas.gameObject.SetActive(isGameplay);
     }
 
@@ -399,7 +399,7 @@ public class GameHUDBridge : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        bool isGameplay = scene.name != "MainMenuScene";
+        bool isGameplay = scene.name != "MainMenuScene" && scene.name != "LoadingScene";
         if (_canvas != null) _canvas.gameObject.SetActive(isGameplay);
 
         if (isGameplay)

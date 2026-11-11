@@ -41,6 +41,7 @@ public partial struct EnemyDamageResolutionSystem : ISystem
         }
 
         ComponentLookup<PlayerCloneTag> cloneLookup = SystemAPI.GetComponentLookup<PlayerCloneTag>(true);
+        ComponentLookup<EnemyHitReactionData> hitReactionLookup = SystemAPI.GetComponentLookup<EnemyHitReactionData>(false);
 
         foreach (var (damageBuffer, health, entity) in
                  SystemAPI.Query<DynamicBuffer<EnemyIncomingDamage>, RefRW<HealthData>>()
@@ -54,6 +55,7 @@ public partial struct EnemyDamageResolutionSystem : ISystem
             // Nếu quái đã chết trước đòn này (vd: Bomber tự hủy hoặc Cheat), bỏ qua không tính vào thống kê
             if (currentHP > 0f)
             {
+                float totalEffectiveDamage = 0f;
                 for (int i = 0; i < damageBuffer.Length; i++)
                 {
                     EnemyIncomingDamage packet = damageBuffer[i];
@@ -75,12 +77,23 @@ public partial struct EnemyDamageResolutionSystem : ISystem
                     // Sát thương hiệu dụng = max(0, min(Amount đã scale, HP trước đòn))
                     float effectiveDamage = math.max(0f, math.min(scaledAmount, currentHP));
                     currentHP -= scaledAmount; // Trừ máu thực tế theo Amount đã scale
+                    totalEffectiveDamage += effectiveDamage;
 
                     // Ghi nhận vào SkillDamageRecord của singleton
                     RecordSkillDamage(ref records, packet.SkillId, effectiveDamage);
                 }
 
                 health.ValueRW.CurrentHP = currentHP;
+
+                // Kích hoạt phản hồi thị giác trúng đòn (Minecraft-Style Hit Reaction) nếu quái còn sống và có nhận sát thương
+                if (currentHP > 0f && totalEffectiveDamage > 0f && hitReactionLookup.HasComponent(entity))
+                {
+                    var hit = hitReactionLookup[entity];
+                    hit.Timer = hit.Duration > 0f ? hit.Duration : 0.14f;
+                    hit.TiltDirection = -hit.TiltDirection; // Đổi hướng nghiêng luân phiên (+1/-1) cho mỗi hit
+                    hitReactionLookup[entity] = hit;
+                    hitReactionLookup.SetComponentEnabled(entity, true);
+                }
             }
 
             // Dọn sạch buffer sau khi giải quyết xong

@@ -143,6 +143,7 @@ public static class GameLocalization
     public static string ShieldTitle => Get("AEGIS SHIELD", "KHIÊN HỘ THỂ");
     public static string BoomerangTitle => Get("CELESTIAL BOOMERANG", "PHI TIÊU HỒI TOÀN");
     public static string ElectricTitle => Get("CHAIN LIGHTNING", "LÔI ĐIỆN LIÊN HOÀN");
+    public static string PetalBurstTitle => Get("FAIRY PETAL BURST", "TIÊN NỮ TÁN HOA");
     public static string HealTitle => Get("VITALITY ELIXIR", "TIÊN DƯỢC PHỤC HỒI");
     public static string HpRegenTitle => Get("REJUVENATION", "HỒI XUÂN THUẬT");
     public static string MaxHpTitle => Get("IRON WILL", "CƯƠNG THỂ QUYẾT");
@@ -333,6 +334,34 @@ public static class GameLocalization
             _ => Get(
                 "Strikes a target for 60 DMG and chains to 1 nearby enemy dealing 30% damage (18 DMG). (5.4s Cooldown).",
                 "Bắn ra 1 tia sét giáng vào mục tiêu gây 60 DMG và lan sang 1 quái kế cận gây 30% sát thương gốc (18 DMG). (Hồi chiêu 5.4s)."
+            )
+        };
+    }
+
+    public static string PetalBurstDesc(int level)
+    {
+        var cfg = PetalBurstSkillConfigSO.Instance;
+        int count = cfg != null ? cfg.GetCount(level) : (level == 1 ? 6 : (level == 2 ? 9 : (level == 3 ? 13 : 18)));
+        float dmg = cfg != null ? cfg.GetDamage(level) : (level == 1 ? 22f : (level == 2 ? 32f : (level == 3 ? 48f : 70f)));
+        float cd = cfg != null ? cfg.GetCooldown(level) : (level == 1 ? 3.5f : (level == 2 ? 3.0f : (level == 3 ? 2.6f : 2.2f)));
+
+        return level switch
+        {
+            2 => Get(
+                $"+3 Petals ({count} Total), +45% Damage ({dmg} DMG). Cooldown reduced to {cd:0.0}s. Petals scatter 360° and explode on impact or max range.",
+                $"+3 Bông hoa (Tổng {count} hoa), +45% Sát thương ({dmg} DMG). Hồi chiêu giảm còn {cd:0.0}s. Hoa bung 360° và nổ tung khi chạm quái hoặc hết tầm."
+            ),
+            3 => Get(
+                $"+4 Petals ({count} Total), +50% Damage ({dmg} DMG). Cooldown reduced to {cd:0.0}s. Expands explosion blast radius.",
+                $"+4 Bông hoa (Tổng {count} hoa), +50% Sát thương ({dmg} DMG). Hồi chiêu giảm còn {cd:0.0}s. Mở rộng bán kính nổ AOE."
+            ),
+            4 => Get(
+                $"★ PETAL IMPLOSION VORTEX ★ +5 Petals ({count} Total, {dmg} DMG, {cd:0.0}s CD). SPECIAL: Detonations generate mini vacuum vortexes that PULL all nearby foes into the blast center!",
+                $"★ HOA TRẬN HÚT QUÁI ★ +5 Bông hoa (Tổng {count} hoa, {dmg} DMG, {cd:0.0}s CD). ĐẶC BIỆT: Khi phát nổ, mỗi bông hoa kích hoạt Lực Hút Chân Không gom toàn bộ quái vật lân cận vào tâm nổ!"
+            ),
+            _ => Get(
+                $"Scatters {count} fairy petals in a 360° burst that rapidly decelerate and detonate upon enemy contact or flight expiration. ({cd:0.0}s cooldown, {dmg} DMG).",
+                $"Bung tỏa {count} bông tiên hoa xoay tròn 360° giảm tốc nhanh và phát nổ khi chạm quái hoặc hết thời gian bay. (Hồi chiêu {cd:0.0}s, {dmg} DMG)."
             )
         };
     }

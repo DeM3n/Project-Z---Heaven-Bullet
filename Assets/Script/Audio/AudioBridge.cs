@@ -65,6 +65,10 @@ public class AudioBridge : MonoBehaviour
         {
             AudioManager.Instance.PlayBGM(BGMTrack.MainMenu, 1.5f);
         }
+        else if (sceneName.Contains("Loading"))
+        {
+            // Trong LoadingScene: không phát ngay BGM chiến đấu dồn dập
+        }
         else
         {
             // Trong scene trận đấu

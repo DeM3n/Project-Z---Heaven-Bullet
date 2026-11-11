@@ -37,6 +37,21 @@ public class EnemyAuthoring : MonoBehaviour
             AddBuffer<EnemyIncomingDamage>(entity);
             AddComponent(entity, new EnemyStunData { StunTimer = 0f });
             SetComponentEnabled<EnemyStunData>(entity, false);
+
+            // Nạp cấu hình Hit Reaction (Red Flash, Tilt & Squash) nảy đòn khi nhận sát thương
+            var spriteRenderer = authoring.GetComponent<SpriteRenderer>();
+            Color32 origColor = spriteRenderer != null ? (Color32)spriteRenderer.color : new Color32(255, 255, 255, 255);
+            Unity.Mathematics.float3 origScale = new Unity.Mathematics.float3(authoring.transform.localScale);
+            AddComponent(entity, new EnemyHitReactionData
+            {
+                Timer = 0f,
+                Duration = 0.14f,
+                TiltDirection = 1f,
+                OriginalColor = origColor,
+                OriginalScale = origScale
+            });
+            SetComponentEnabled<EnemyHitReactionData>(entity, false);
+
             AddComponent(entity, new HealthData { CurrentHP = authoring.MaxHP, MaxHP = authoring.MaxHP });
             AddComponent(entity, new MovementData { MoveSpeed = authoring.MoveSpeed });
             AddComponent(entity, new EnemyDeathDropData

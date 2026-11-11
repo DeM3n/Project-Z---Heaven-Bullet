@@ -64,7 +64,7 @@ public class GameSettingsBridge : MonoBehaviour
     private void Start()
     {
         UpdateLanguageUI();
-        bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene";
+        bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene" && SceneManager.GetActiveScene().name != "LoadingScene";
         _topBarView?.SetVisible(isGameplay);
     }
 
@@ -213,7 +213,7 @@ public class GameSettingsBridge : MonoBehaviour
         _isCountingDown = false;
         _countdownView?.Hide();
         PauseService.ClearAll();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        LoadingController.LoadScene("SampleScene");
     }
 
     public void ReturnToMainMenu()
@@ -423,7 +423,7 @@ public class GameSettingsBridge : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        bool isGameplay = scene.name != "MainMenuScene";
+        bool isGameplay = scene.name != "MainMenuScene" && scene.name != "LoadingScene";
         _topBarView?.SetVisible(isGameplay);
 
         if (_countdownCoroutine != null)

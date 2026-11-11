@@ -428,6 +428,42 @@ public static class CodexDatabase
             TipsVi = "Ở Cấp 4, lùa 2 quái tinh anh hoặc quái cùng Boss lại gần nhau sẽ khiến sét nảy liên hoàn nghiền nát chúng."
         });
 
+        var pb = PetalBurstSkillConfigSO.Instance;
+        float pbDmg1 = pb != null ? pb.GetDamage(1) : 22f;
+        float pbDmg4 = pb != null ? pb.GetDamage(4) : 70f;
+        float pbCd1 = pb != null ? pb.GetCooldown(1) : 3.5f;
+        float pbCd4 = pb != null ? pb.GetCooldown(4) : 2.2f;
+        int pbCount1 = pb != null ? pb.GetCount(1) : 6;
+        int pbCount4 = pb != null ? pb.GetCount(4) : 18;
+        float pbExpRad1 = pb != null ? pb.GetExplosionRadius(1) : 0.85f;
+        float pbExpRad4 = pb != null ? pb.GetExplosionRadius(4) : 1.35f;
+
+        _allEntries.Add(new CodexEntry
+        {
+            Id = "skill_petalburst",
+            Category = EntryCategory.Skills,
+            TitleEn = "Fairy Petal Burst",
+            TitleVi = "Tiên Nữ Tán Hoa",
+            SubtitleEn = "360° Petal Scatter & Vacuum Implosion",
+            SubtitleVi = "Bung Tỏa 360° & Hoa Trận Hút Chân Không",
+            BadgeEn = "BURST • VACUUM AOE",
+            BadgeVi = "BUNG TỎA • HÚT QUÁI AOE",
+            IconCode = "FB",
+            ThemeColor = new Color(1.0f, 0.42f, 0.72f, 1f),
+            DescriptionEn = "Scatters celestial fairy petals in a 360° ring around the hero. Petals rapidly decelerate and detonate upon enemy contact or reaching maximum flight duration.",
+            DescriptionVi = "Bung tỏa các đóa tiên hoa xoay tròn 360 độ quanh nhân vật. Hoa bay chậm dần do lực cản và phát nổ khi chạm quái hoặc hết thời gian bay.",
+            ParamLabelsEn = new string[] { "EXPLOSION DMG", "COOLDOWN", "PETAL COUNT", "BLAST RADIUS" },
+            ParamValuesEn = new string[] { $"{pbDmg1:0} - {pbDmg4:0} DMG", $"{pbCd1:0.0}s - {pbCd4:0.0}s", $"{pbCount1} - {pbCount4} Petals", $"{pbExpRad1:0.0}m - {pbExpRad4:0.0}m" },
+            ParamLabelsVi = new string[] { "SÁT THƯƠNG NỔ", "HỒI CHIÊU", "SỐ LƯỢNG HOA", "BÁN KÍNH NỔ" },
+            ParamValuesVi = new string[] { $"{pbDmg1:0} - {pbDmg4:0} DMG", $"{pbCd1:0.0}s - {pbCd4:0.0}s", $"{pbCount1} - {pbCount4} Hoa", $"{pbExpRad1:0.0}m - {pbExpRad4:0.0}m" },
+            ProgressionSummaryEn = $"Lv1: {pbCount1} Petals • Lv2: 9 Petals (+45% DMG) • Lv3: 13 Petals (-15% CD) • Lv4: 18 Petals + MINI VACUUM VORTEX (Pulls all nearby enemies into blast center)",
+            ProgressionSummaryVi = $"Cấp 1: {pbCount1} Hoa • Cấp 2: 9 Hoa (+45% DMG) • Cấp 3: 13 Hoa (-15% CD) • Cấp 4: 18 Hoa + LỰC HÚT CHÂN KHÔNG (Gom toàn bộ quái vật vào tâm nổ)",
+            MechanicsEn = "Petals launch with high initial velocity then decelerate rapidly, creating a tight protective defensive perimeter around the player.",
+            MechanicsVi = "Hoa phóng ra với vận tốc ban đầu rất cao rồi giảm tốc nhanh chóng, tạo thành vành đai bảo hộ phòng thủ hoàn hảo quanh nhân vật.",
+            TipsEn = "At Level 4, dive slightly towards dense swarms to vacuum-cluster enemies for massive collateral damage.",
+            TipsVi = "Ở Cấp 4, hãy áp sát đám đông quái vật để lực hút chân không gom chúng lại một điểm dồn sát thương cực đại."
+        });
+
         _allEntries.Add(new CodexEntry
         {
             Id = "skill_giant_fusion",

@@ -1840,8 +1840,8 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnPlayClicked()
     {
-        // Tải Scene Gameplay
-        SceneManager.LoadScene("SampleScene");
+        // Tải Scene Gameplay qua Loading Scene mượt mà, chờ ECS SubScene sẵn sàng 100%
+        LoadingController.LoadScene("SampleScene");
     }
 
     private void RefreshAllUI()

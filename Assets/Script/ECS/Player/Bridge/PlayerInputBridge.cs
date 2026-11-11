@@ -43,7 +43,8 @@ public class PlayerInputBridge : MonoBehaviour
 
     void OnDestroy()
     {
-        if (_em.World != null && _em.World.IsCreated && _em.Exists(_inputEntity))
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null && world.IsCreated && _em.Exists(_inputEntity))
         {
             _em.DestroyEntity(_inputEntity);
         }
@@ -51,7 +52,8 @@ public class PlayerInputBridge : MonoBehaviour
 
     void Update()
     {
-        if (_em.World == null || !_em.World.IsCreated || !_em.Exists(_inputEntity)) return;
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated || !_em.Exists(_inputEntity)) return;
 
         var kb = Keyboard.current;
         if (kb == null) return;

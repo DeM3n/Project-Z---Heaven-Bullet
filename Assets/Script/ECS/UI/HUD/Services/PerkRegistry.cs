@@ -21,6 +21,7 @@ public static class PerkRegistry
             new ShieldPerk(em),
             new BoomerangPerk(em),
             new ElectricPerk(em),
+            new PetalBurstPerk(em),
             new HealPerk(),
             new HpRegenPerk(),
             new MaxHpPerk(),
@@ -438,6 +439,51 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.ElectricDesc(nextLvl),
                 HighlightColor = new Color(0f, 0.9f, 1f),
+                IsFusion = false
+            };
+        }
+
+        public void Apply(EntityManager em, Entity player)
+        {
+            if (!_query.IsEmpty)
+            {
+                Entity skillEntity = _query.GetSingletonEntity();
+                var runtime = em.GetComponentData<SkillRuntimeData>(skillEntity);
+                runtime.Level = Mathf.Min(4, runtime.Level + 1);
+                em.SetComponentData(skillEntity, runtime);
+            }
+        }
+    }
+
+    // 8. Fairy Petal Burst (Tiên Nữ Tán Hoa)
+    private class PetalBurstPerk : IPerkDefinition
+    {
+        private readonly EntityQuery _query;
+
+        public PetalBurstPerk(EntityManager em)
+        {
+            _query = em.CreateEntityQuery(ComponentType.ReadOnly<PetalBurstSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>());
+        }
+
+        public string PerkId => "PetalBurst";
+        public int Priority => 0;
+        public float Weight => 1f;
+
+        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 0;
+
+        public bool IsAvailable(EntityManager em, Entity player) => GetCurrentLevel() < 4;
+
+        public PerkOptionData GetOptionData(EntityManager em, Entity player)
+        {
+            int nextLvl = Mathf.Min(4, GetCurrentLevel() + 1);
+            return new PerkOptionData
+            {
+                PerkId = PerkId,
+                Level = nextLvl,
+                Title = GameLocalization.PetalBurstTitle,
+                LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
+                Description = GameLocalization.PetalBurstDesc(nextLvl),
+                HighlightColor = new Color(1.0f, 0.42f, 0.72f),
                 IsFusion = false
             };
         }

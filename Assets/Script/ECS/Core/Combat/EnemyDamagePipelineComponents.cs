@@ -21,6 +21,7 @@ public static class SkillIds
     public const ushort SwordFusion = 7;        // Hợp Thể Kiếm (Kiếm Khổng Lồ cắm đất chấn động)
     public const ushort Electric = 8;           // Lôi Điện / Sét (gồm tia sét cha và các tia sét lan)
     public const ushort ThunderBoomerang = 9;   // Hợp Thể Lôi Tiêu (Boomerang + Electric)
+    public const ushort PetalBurst = 10;        // Tiên Nữ Tán Hoa (Fairy Petal Burst)
 }
 
 /// <summary>

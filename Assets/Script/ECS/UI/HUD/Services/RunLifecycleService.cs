@@ -187,7 +187,7 @@ public class RunLifecycleService
     public void RestartCurrentScene()
     {
         PauseService.ClearAll();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        LoadingController.LoadScene("SampleScene");
     }
 
     public void ReturnToMainMenu()

@@ -11,7 +11,7 @@ using UnityEngine;
 /// 2. Loại bỏ hoàn toàn sự trùng lặp code sync cấu hình rải rác ở các VisualBridge (Boomerang, Electric, v.v.).
 /// 3. Hỗ trợ Live Tuning trong Editor: Khi Designer thay đổi thông số trên file .asset lúc Play Mode,
 ///    hệ thống tự động cập nhật xuống ECS World định kỳ mỗi 0.5s mà không cần recompile hay khởi động lại game.
-/// 4. Hỗ trợ cơ chế mở rộng (Open/Closed Principle) cho toàn bộ các kỹ năng trong game.
+/// 4. Hỗ trợ cơ chế mở rộng (Open/Closed Principle) cho toàn bộ các kỹ năng trong game (Boomerang, Electric, Fireball, SlashSword, FlyingSword, PetalBurst).
 /// </summary>
 [DefaultExecutionOrder(-50)]
 public class SkillConfigSyncBridge : MonoBehaviour
@@ -28,6 +28,7 @@ public class SkillConfigSyncBridge : MonoBehaviour
     private EntityQuery _fireballQuery;
     private EntityQuery _slashSwordQuery;
     private EntityQuery _flyingSwordQuery;
+    private EntityQuery _petalBurstQuery;
 
     private float _pollTimer = 0f;
     private const float EditorPollInterval = 0.5f;
@@ -98,6 +99,12 @@ public class SkillConfigSyncBridge : MonoBehaviour
             ComponentType.ReadWrite<FlyingSwordLevelBalanceData>()
         );
 
+        _petalBurstQuery = _entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<PetalBurstSkillTag>(),
+            ComponentType.ReadWrite<PetalBurstSkillData>(),
+            ComponentType.ReadWrite<PetalBurstLevelBalanceData>()
+        );
+
         _initialized = true;
         return true;
     }
@@ -135,6 +142,7 @@ public class SkillConfigSyncBridge : MonoBehaviour
         SyncFireball();
         SyncSlashSword();
         SyncFlyingSword();
+        SyncPetalBurst();
     }
 
     // =========================================================================
@@ -431,6 +439,66 @@ public class SkillConfigSyncBridge : MonoBehaviour
                 SwordCountLv2 = cfg.GetSwordCount(2),
                 SwordCountLv3 = cfg.GetSwordCount(3),
                 SwordCountLv4 = cfg.GetSwordCount(4)
+            };
+            _entityManager.SetComponentData(e, balance);
+        }
+    }
+
+    // =========================================================================
+    // 6. PETAL BURST (TIÊN NỮ TÁN HOA) CONFIG SYNC
+    // =========================================================================
+    private void SyncPetalBurst()
+    {
+        if (_petalBurstQuery == default || _petalBurstQuery.IsEmpty) return;
+        var cfg = PetalBurstSkillConfigSO.Instance;
+        if (cfg == null) return;
+
+        using var entities = _petalBurstQuery.ToEntityArray(Allocator.Temp);
+        for (int i = 0; i < entities.Length; i++)
+        {
+            Entity e = entities[i];
+
+            var skillData = _entityManager.GetComponentData<PetalBurstSkillData>(e);
+            skillData.BaseDamage = cfg.GetDamage(1);
+            skillData.FlySpeed = cfg.FlySpeed;
+            skillData.MinSpeedMultiplier = cfg.MinSpeedMultiplier;
+            skillData.MaxSpeedMultiplier = cfg.MaxSpeedMultiplier;
+            skillData.DragDeceleration = cfg.DragDeceleration;
+            skillData.AngleSpreadJitter = cfg.AngleSpreadJitter;
+            skillData.HitRadius = cfg.HitRadius;
+            skillData.ExplosionRadius = cfg.GetExplosionRadius(1);
+            skillData.Duration = cfg.GetDuration(1);
+            skillData.PetalCount = cfg.GetCount(1);
+            skillData.VortexPullRadius = cfg.VortexPullRadius;
+            skillData.VortexPullForce = cfg.VortexPullForce;
+            _entityManager.SetComponentData(e, skillData);
+
+            var balance = new PetalBurstLevelBalanceData
+            {
+                DamageLv1 = cfg.GetDamage(1),
+                DamageLv2 = cfg.GetDamage(2),
+                DamageLv3 = cfg.GetDamage(3),
+                DamageLv4 = cfg.GetDamage(4),
+
+                CooldownLv1 = cfg.GetCooldown(1),
+                CooldownLv2 = cfg.GetCooldown(2),
+                CooldownLv3 = cfg.GetCooldown(3),
+                CooldownLv4 = cfg.GetCooldown(4),
+
+                CountLv1 = cfg.GetCount(1),
+                CountLv2 = cfg.GetCount(2),
+                CountLv3 = cfg.GetCount(3),
+                CountLv4 = cfg.GetCount(4),
+
+                DurationLv1 = cfg.GetDuration(1),
+                DurationLv2 = cfg.GetDuration(2),
+                DurationLv3 = cfg.GetDuration(3),
+                DurationLv4 = cfg.GetDuration(4),
+
+                ExplosionRadiusLv1 = cfg.GetExplosionRadius(1),
+                ExplosionRadiusLv2 = cfg.GetExplosionRadius(2),
+                ExplosionRadiusLv3 = cfg.GetExplosionRadius(3),
+                ExplosionRadiusLv4 = cfg.GetExplosionRadius(4)
             };
             _entityManager.SetComponentData(e, balance);
         }

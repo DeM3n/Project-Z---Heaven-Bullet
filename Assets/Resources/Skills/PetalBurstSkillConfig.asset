@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6ccf49780d08d3499077393d4c59d3c, type: 3}
+  m_Name: PetalBurstSkillConfig
+  m_EditorClassIdentifier: Assembly-CSharp::PetalBurstSkillConfigSO
+  Cooldowns:
+  - 3.5
+  - 3
+  - 2.6
+  - 2.2
+  BaseDamages:
+  - 22
+  - 32
+  - 48
+  - 70
+  PetalCounts: 06000000090000000d00000012000000i
+  Durations:
+  - 0.85
+  - 0.95
+  - 1.1
+  - 1.25
+  ExplosionRadii:
+  - 0.85
+  - 0.95
+  - 1.1
+  - 1.35
+  FlySpeed: 8.5
+  MinSpeedMultiplier: 0.65
+  MaxSpeedMultiplier: 1.35
+  DragDeceleration: 7
+  AngleSpreadJitter: 0.65
+  HitRadius: 0.35
+  VortexPullRadius: 2.4
+  VortexPullForce: 8.5
