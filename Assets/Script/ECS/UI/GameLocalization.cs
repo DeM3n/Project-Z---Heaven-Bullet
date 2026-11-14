@@ -66,6 +66,11 @@ public static class GameLocalization
     // --- UI Header & Labels ---
     public static string LevelUpHeader => Get("✦ LEVEL UP ✦", "✦ CẤP ĐỘ TIẾP THEO ✦");
     public static string LevelUpSubtitle => Get("Choose an upgrade to enhance your power", "Chọn một nâng cấp sức mạnh để tiếp tục chiến đấu");
+    public static string StarterSkillHeader => Get("✦ CHOOSE STARTING WEAPON ✦", "✦ CHỌN VŨ KHÍ KHỞI ĐẦU ✦");
+    public static string StarterSkillSubtitle(int pickNumber, int totalPicks) => Get(
+        $"Select a weapon to unlock for your journey ({pickNumber}/{totalPicks})",
+        $"Chọn một vũ khí để mở khóa bắt đầu chiến đấu ({pickNumber}/{totalPicks})"
+    );
     public static string SelectButtonText => Get("SELECT", "CHỌN NÂNG CẤP");
     public static string LangButtonText => Get("🌐 EN", "🌐 VI");
     public static string LangHintText => Get("[L] Language", "[L] Ngôn ngữ");
@@ -149,12 +154,19 @@ public static class GameLocalization
     public static string MaxHpTitle => Get("IRON WILL", "CƯƠNG THỂ QUYẾT");
     public static string MoveSpeedTitle => Get("WIND STRIDE", "THẦN HÀNH BỘ");
     public static string PickupRangeTitle => Get("MAGNETIC AURA", "HÚT LINH THẠCH");
+    public static string ExpBonusTitle => Get("SPIRIT ESSENCE", "NGỌC TỦY TỤ KHÍ");
+    public static string ExpBonusDesc => Get(
+        "+10% EXP gained from all orbs permanently in this run.",
+        "Tăng vĩnh viễn +10% Giá trị EXP nhận được khi nhặt ngọc trong ván đấu này."
+    );
 
     // --- Perk Badges ---
     public static string LevelBadge(int level, bool isUltimate = false)
     {
         if (isUltimate)
             return Get($"LV.{level} [ULTIMATE]", $"CẤP {level} [ULTIMATE]");
+        if (level == 1)
+            return Get("✦ UNLOCK [LV.1] ✦", "✦ MỞ KHÓA [CẤP 1] ✦");
         return Get($"LEVEL {level}", $"CẤP {level}");
     }
 
@@ -425,6 +437,12 @@ public static class GameLocalization
     public static string RelicDiceDesc(int lvl) => Get(
         $"+2 Level-Up Rerolls added immediately (Level {lvl})!",
         $"Nhận thêm +2 Lượt đổi thẻ kỹ năng khi lên cấp (Cấp {lvl})!"
+    );
+
+    public static string RelicWisdomTomeTitle => Get("TOME OF WISDOM", "THIÊN THƯ BÍ PHÁP");
+    public static string RelicWisdomTomeDesc(int lvl) => Get(
+        $"+15% EXP gained from all orbs permanently (Level {lvl}).",
+        $"Tăng vĩnh viễn +15% Giá trị EXP nhận được khi nhặt ngọc (Cấp {lvl})."
     );
 
     public static string LegendaryBadge => Get("👑 LEGENDARY", "👑 CỰC PHẨM");

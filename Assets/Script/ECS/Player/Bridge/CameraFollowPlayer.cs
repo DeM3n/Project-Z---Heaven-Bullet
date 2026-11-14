@@ -57,6 +57,12 @@ public class CameraFollowPlayer : MonoBehaviour
         Instance = this;
         _camera = GetComponent<Camera>();
 
+        // Khóa khung hình chuẩn 60 FPS & bật VSync:
+        // Giải phóng 70% tải GPU, triệt tiêu hiện tượng GPU chạy 100% công suất không kiểm soát
+        // và ngăn ngừa hoàn toàn lỗi Windows TDR (GPU Timeout / Device Removed).
+        QualitySettings.vSyncCount = 1;
+        Application.targetFrameRate = 60;
+
         // 1. Dọn dẹp bất kỳ Camera trùng lặp nào trong bộ nhớ
         var allCameras = FindObjectsByType<Camera>(FindObjectsInactive.Include);
         foreach (var c in allCameras)

@@ -674,5 +674,31 @@ public static class CodexDatabase
             TipsEn = "Take at least 1 level early to guarantee finding your core weapon combinations.",
             TipsVi = "Nên lấy ít nhất 1 cấp ở đầu trận để dễ dàng tìm kiếm những mảnh ghép kỹ năng cần thiết."
         });
+
+        _allEntries.Add(new CodexEntry
+        {
+            Id = "relic_tome",
+            Category = EntryCategory.Relics,
+            TitleEn = "Tome of Wisdom",
+            TitleVi = "Thiên Thư Bí Pháp",
+            SubtitleEn = "Passive Relic: Cultivation & EXP",
+            SubtitleVi = "Cổ Vật: Tăng Tốc Tu Vi",
+            BadgeEn = "PASSIVE • WISDOM",
+            BadgeVi = "CỔ VẬT TRI THỨC",
+            IconCode = "TM",
+            ThemeColor = new Color(0.35f, 0.85f, 1f, 1f),
+            DescriptionEn = "An ancient scripture recording the essence of heavenly cultivation, allowing the reader to absorb spiritual energy faster.",
+            DescriptionVi = "Quyển cổ thư ghi chép chân kinh tu tiên, giúp nhân vật ngộ đạo và hấp thu linh khí từ ngọc kinh nghiệm nhanh chóng hơn.",
+            ParamLabelsEn = new string[] { "EXP / LEVEL", "MAX LEVEL", "MAX BONUS", "AFFECTS" },
+            ParamValuesEn = new string[] { "+15% EXP Gain", "Level 5", "+75% Total EXP", "All Experience Orbs" },
+            ParamLabelsVi = new string[] { "EXP / CẤP", "CẤP TỐI ĐA", "TỔNG CHỈ SỐ", "PHẠM VI TÁC DỤNG" },
+            ParamValuesVi = new string[] { "+15% EXP nhận", "Cấp 5", "+75% Tổng EXP", "Tất cả ngọc kinh nghiệm" },
+            ProgressionSummaryEn = "Lv1: +15% EXP • Lv2: +30% • Lv3: +45% • Lv4: +60% • Lv5: +75% Experience Value",
+            ProgressionSummaryVi = "Cấp 1: +15% EXP • Cấp 2: +30% • Cấp 3: +45% • Cấp 4: +60% • Cấp 5: +75% Giá trị ngọc",
+            MechanicsEn = "Directly multiplies the amount of EXP absorbed from every fallen enemy orb.",
+            MechanicsVi = "Nhân trực tiếp giá trị EXP nhận được khi hấp thu từng viên ngọc rơi từ quái vật.",
+            TipsEn = "Equip early to snowball your character level and rapidly unlock weapon evolutions.",
+            TipsVi = "Thu thập sớm giúp tạo hiệu ứng quả cầu tuyết về cấp độ và nhanh chóng mở khóa hợp thể vũ khí."
+        });
     }
 }

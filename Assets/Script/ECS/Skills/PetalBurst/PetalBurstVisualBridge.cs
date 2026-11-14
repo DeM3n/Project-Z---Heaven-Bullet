@@ -21,9 +21,7 @@ public class PetalBurstVisualBridge : MonoBehaviour
 
     // Sprite và Material dùng chung
     private static Sprite _petalSprite;
-    private static Sprite _ringSprite;
     private static Sprite _vortexSprite;
-    private static Material _sharedSpriteMat;
 
     // --- Cấu trúc dữ liệu Pool hiển thị bông hoa đang bay ---
     private class PetalVisualItem
@@ -66,6 +64,24 @@ public class PetalBurstVisualBridge : MonoBehaviour
     private void Awake()
     {
         EnsureSprites();
+        PrewarmPools();
+    }
+
+    private void PrewarmPools()
+    {
+        for (int i = 0; i < 20; i++)
+        {
+            var item = CreatePetalItem();
+            item.Root.SetActive(false);
+            _freePetalPool.Add(item);
+        }
+
+        for (int i = 0; i < 12; i++)
+        {
+            var effect = CreateExplosionEffect();
+            effect.Root.SetActive(false);
+            _freeExplosionPool.Add(effect);
+        }
     }
 
     private void Start()
@@ -261,6 +277,11 @@ public class PetalBurstVisualBridge : MonoBehaviour
             return item;
         }
 
+        return CreatePetalItem();
+    }
+
+    private PetalVisualItem CreatePetalItem()
+    {
         var root = new GameObject("PetalVisualItem");
         root.transform.SetParent(transform, false);
 
@@ -305,13 +326,18 @@ public class PetalBurstVisualBridge : MonoBehaviour
             return effect;
         }
 
+        return CreateExplosionEffect();
+    }
+
+    private BlossomExplosionEffect CreateExplosionEffect()
+    {
         var root = new GameObject("BlossomExplosion");
         root.transform.SetParent(transform, false);
 
         var ringGo = new GameObject("ShockwaveRing");
         ringGo.transform.SetParent(root.transform, false);
         var ringSr = ringGo.AddComponent<SpriteRenderer>();
-        ringSr.sprite = _ringSprite;
+        ringSr.sprite = SharedVisualAssets.RingSprite;
         ringSr.material = GetSpriteMaterial();
         ringSr.sortingOrder = 18;
 
@@ -354,19 +380,12 @@ public class PetalBurstVisualBridge : MonoBehaviour
     private static void EnsureSprites()
     {
         if (_petalSprite == null) _petalSprite = CreatePetalSprite();
-        if (_ringSprite == null) _ringSprite = CreateRingSprite();
         if (_vortexSprite == null) _vortexSprite = CreateVortexSprite();
     }
 
     private static Material GetSpriteMaterial()
     {
-        if (_sharedSpriteMat == null)
-        {
-            var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                         ?? Shader.Find("Sprites/Default");
-            _sharedSpriteMat = new Material(shader);
-        }
-        return _sharedSpriteMat;
+        return SharedVisualAssets.SpriteUnlitMaterial;
     }
 
     private static Sprite CreatePetalSprite()
@@ -394,37 +413,6 @@ public class PetalBurstVisualBridge : MonoBehaviour
                     float core = Mathf.Clamp01(1f - (dist / 0.45f));
                     Color col = Color.Lerp(new Color(1f, 0.4f, 0.75f, edge), Color.white, core * 0.85f);
                     tex.SetPixel(x, y, col);
-                }
-                else
-                {
-                    tex.SetPixel(x, y, Color.clear);
-                }
-            }
-        }
-        tex.Apply();
-        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-    }
-
-    private static Sprite CreateRingSprite()
-    {
-        const int size = 128;
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.filterMode = FilterMode.Bilinear;
-        float center = size * 0.5f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dx = (x - center) / center;
-                float dy = (y - center) / center;
-                float dist = Mathf.Sqrt(dx * dx + dy * dy);
-
-                // Vòng sóng xung kích (bán kính 0.75 đến 0.95)
-                if (dist >= 0.70f && dist <= 0.98f)
-                {
-                    float ringAlpha = Mathf.Sin(((dist - 0.70f) / 0.28f) * Mathf.PI);
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, ringAlpha));
                 }
                 else
                 {

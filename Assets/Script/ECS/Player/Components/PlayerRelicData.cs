@@ -12,5 +12,7 @@ public struct PlayerRelicData : IComponentData
     public int PowerLevel;       // Cổ Kiếm Bùa Chú (+15% Sát thương tổng thể mỗi cấp)
     public int FortuneDiceLevel; // Xúc Xắc Vận Mệnh (+2 Lượt Reroll mỗi cấp)
     public int MirrorLevel;      // Gương Ảo Ảnh (0: Chưa có, 1: Đã kích hoạt 2 Phân Thân)
+    public int TomeLevel;        // Thiên Thư Bí Pháp (+15% Giá trị EXP nhặt ngọc mỗi cấp)
     public float DamageMultiplier; // Hệ số nhân sát thương tổng thể (bắt đầu từ 1.0f)
+    public float ExpMultiplier;    // Hệ số nhân EXP nhặt ngọc tổng thể (bắt đầu từ 1.0f)
 }

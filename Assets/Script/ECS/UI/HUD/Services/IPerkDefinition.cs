@@ -12,6 +12,11 @@ public interface IPerkDefinition
     string PerkId { get; }
 
     /// <summary>
+    /// Đánh dấu Perk có phải là Vũ khí / Kỹ năng tấn công (true) hay Chỉ số người chơi (false).
+    /// </summary>
+    bool IsWeapon { get; }
+
+    /// <summary>
     /// Độ ưu tiên hiển thị (Priority > 0 được ưu tiên xếp đầu danh sách, vd SwordFusion = 100).
     /// </summary>
     int Priority { get; }

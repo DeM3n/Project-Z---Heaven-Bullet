@@ -118,7 +118,7 @@ public static class PauseMenuDataProvider
 
         // 10. Cổ Vật Bị Động (PlayerRelicData)
         float damageMultiplier = 1.0f;
-        int bootsLvl = 0, magnetLvl = 0, vitalityLvl = 0, powerLvl = 0, diceLvl = 0;
+        int bootsLvl = 0, magnetLvl = 0, vitalityLvl = 0, powerLvl = 0, diceLvl = 0, tomeLvl = 0;
         if (em.HasComponent<PlayerRelicData>(playerEntity))
         {
             var relic = em.GetComponentData<PlayerRelicData>(playerEntity);
@@ -128,6 +128,7 @@ public static class PauseMenuDataProvider
             vitalityLvl = relic.VitalityLevel;
             powerLvl = relic.PowerLevel;
             diceLvl = relic.FortuneDiceLevel;
+            tomeLvl = relic.TomeLevel;
         }
 
         // 11. Bán kính nhặt ngọc & đồ (PickupRangeData)
@@ -214,7 +215,8 @@ public static class PauseMenuDataProvider
             new RelicStatItem { Name = GameLocalization.RelicMagnetTitle, Level = magnetLvl, Description = GameLocalization.RelicMagnetDesc(magnetLvl) },
             new RelicStatItem { Name = GameLocalization.RelicVitalityTitle, Level = vitalityLvl, Description = GameLocalization.RelicVitalityDesc(vitalityLvl) },
             new RelicStatItem { Name = GameLocalization.RelicPowerTitle, Level = powerLvl, Description = GameLocalization.RelicPowerDesc(powerLvl) },
-            new RelicStatItem { Name = GameLocalization.RelicDiceTitle, Level = diceLvl, Description = GameLocalization.RelicDiceDesc(diceLvl) }
+            new RelicStatItem { Name = GameLocalization.RelicDiceTitle, Level = diceLvl, Description = GameLocalization.RelicDiceDesc(diceLvl) },
+            new RelicStatItem { Name = GameLocalization.RelicWisdomTomeTitle, Level = tomeLvl, Description = GameLocalization.RelicWisdomTomeDesc(tomeLvl) }
         };
 
         return new PauseMenuSnapshot

@@ -192,6 +192,40 @@ public class AudioManager : MonoBehaviour
         }
 
         ApplyBGMVolume();
+
+        // Pre-warm toàn bộ procedural audio clips ngay tại thời điểm khởi tạo,
+        // triệt tiêu hoàn toàn CPU Spike sinh âm thanh trong lúc chiến đấu.
+        PrewarmAllProceduralClips();
+    }
+
+    /// <summary>
+    /// Khởi tạo trước (Pre-warm) toàn bộ các Procedural AudioClip trong bộ nhớ cache
+    /// ngay khi tải game (Awake), triệt tiêu hoàn toàn độ trễ (Spike) sinh âm thanh trong trận đấu.
+    /// </summary>
+    public void PrewarmAllProceduralClips()
+    {
+        // Pre-warm BGM
+        GetBGMClip(BGMTrack.MainMenu);
+        GetBGMClip(BGMTrack.BattleNormal);
+        GetBGMClip(BGMTrack.MegaWave);
+        GetBGMClip(BGMTrack.GameOver);
+
+        // Pre-warm SFX
+        GetSFXClip(SFXType.ExpOrb);
+        GetSFXClip(SFXType.HealthPickup);
+        GetSFXClip(SFXType.MagnetPickup);
+        GetSFXClip(SFXType.ChestOpen);
+        GetSFXClip(SFXType.MegaWaveHorn);
+        GetSFXClip(SFXType.PlayerHurt);
+        GetSFXClip(SFXType.Heartbeat);
+        GetSFXClip(SFXType.Explosion);
+
+        // Pre-warm UI
+        GetUIClip(UIType.Click);
+        GetUIClip(UIType.Hover);
+        GetUIClip(UIType.LevelUp);
+        GetUIClip(UIType.PerkSelect);
+        GetUIClip(UIType.Reroll);
     }
 
     #region Volume API

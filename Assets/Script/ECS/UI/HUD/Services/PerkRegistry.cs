@@ -26,7 +26,8 @@ public static class PerkRegistry
             new HpRegenPerk(),
             new MaxHpPerk(),
             new MoveSpeedPerk(),
-            new PickupRangePerk()
+            new PickupRangePerk(),
+            new ExpBonusPerk()
         };
     }
 
@@ -47,6 +48,7 @@ public static class PerkRegistry
         }
 
         public string PerkId => "SwordFusion";
+        public bool IsWeapon => true;
         public int Priority => 100; // Ưu tiên hàng đầu khi đủ điều kiện
         public float Weight => 1f;
 
@@ -69,7 +71,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.SwordFusionBadge,
                 Description = GameLocalization.SwordFusionDesc,
                 HighlightColor = new Color(1f, 0.85f, 0.15f),
-                IsFusion = true
+                IsFusion = true,
+                IsWeapon = true
             };
         }
 
@@ -101,6 +104,7 @@ public static class PerkRegistry
         }
 
         public string PerkId => "ThunderBoomerang";
+        public bool IsWeapon => true;
         public int Priority => 100; // Ưu tiên hàng đầu khi đủ điều kiện
         public float Weight => 1f;
 
@@ -123,7 +127,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.SwordFusionBadge,
                 Description = GameLocalization.ThunderBoomerangDesc,
                 HighlightColor = new Color(0.2f, 0.95f, 1f),
-                IsFusion = true
+                IsFusion = true,
+                IsWeapon = true
             };
         }
 
@@ -151,16 +156,18 @@ public static class PerkRegistry
         }
 
         public string PerkId => "FlyingSword";
+        public bool IsWeapon => true;
         public int Priority => 0;
         public float Weight => 1f;
 
-        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 1;
+        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 0;
 
         public bool IsAvailable(EntityManager em, Entity player) => GetCurrentLevel() < 4;
 
         public PerkOptionData GetOptionData(EntityManager em, Entity player)
         {
-            int nextLvl = Mathf.Min(4, GetCurrentLevel() + 1);
+            int curLvl = GetCurrentLevel();
+            int nextLvl = Mathf.Min(4, curLvl + 1);
             return new PerkOptionData
             {
                 PerkId = PerkId,
@@ -169,7 +176,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.FlyingSwordDesc(nextLvl),
                 HighlightColor = new Color(0.2f, 0.9f, 1f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = true
             };
         }
 
@@ -180,6 +188,7 @@ public static class PerkRegistry
                 Entity skillEntity = _query.GetSingletonEntity();
                 var runtime = em.GetComponentData<SkillRuntimeData>(skillEntity);
                 runtime.Level = Mathf.Min(4, runtime.Level + 1);
+                runtime.Timer = 0.5f;
                 em.SetComponentData(skillEntity, runtime);
             }
         }
@@ -196,16 +205,18 @@ public static class PerkRegistry
         }
 
         public string PerkId => "SlashSword";
+        public bool IsWeapon => true;
         public int Priority => 0;
         public float Weight => 1f;
 
-        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 1;
+        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 0;
 
         public bool IsAvailable(EntityManager em, Entity player) => GetCurrentLevel() < 4;
 
         public PerkOptionData GetOptionData(EntityManager em, Entity player)
         {
-            int nextLvl = Mathf.Min(4, GetCurrentLevel() + 1);
+            int curLvl = GetCurrentLevel();
+            int nextLvl = Mathf.Min(4, curLvl + 1);
             return new PerkOptionData
             {
                 PerkId = PerkId,
@@ -214,7 +225,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.SlashSwordDesc(nextLvl),
                 HighlightColor = new Color(0.85f, 0.45f, 1f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = true
             };
         }
 
@@ -225,6 +237,7 @@ public static class PerkRegistry
                 Entity skillEntity = _query.GetSingletonEntity();
                 var runtime = em.GetComponentData<SkillRuntimeData>(skillEntity);
                 runtime.Level = Mathf.Min(4, runtime.Level + 1);
+                runtime.Timer = 0.5f;
                 em.SetComponentData(skillEntity, runtime);
             }
         }
@@ -241,16 +254,18 @@ public static class PerkRegistry
         }
 
         public string PerkId => "ProjectileSkill";
+        public bool IsWeapon => true;
         public int Priority => 0;
         public float Weight => 1f;
 
-        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 1;
+        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 0;
 
         public bool IsAvailable(EntityManager em, Entity player) => GetCurrentLevel() < 5;
 
         public PerkOptionData GetOptionData(EntityManager em, Entity player)
         {
-            int nextLvl = GetCurrentLevel() + 1;
+            int curLvl = GetCurrentLevel();
+            int nextLvl = curLvl + 1;
             return new PerkOptionData
             {
                 PerkId = PerkId,
@@ -259,7 +274,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl),
                 Description = GameLocalization.ProjectileSkillDesc(nextLvl),
                 HighlightColor = new Color(1f, 0.75f, 0.2f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = true
             };
         }
 
@@ -270,6 +286,7 @@ public static class PerkRegistry
                 Entity skillEntity = _query.GetSingletonEntity();
                 var runtime = em.GetComponentData<SkillRuntimeData>(skillEntity);
                 runtime.Level += 1;
+                runtime.Timer = 0.5f;
                 em.SetComponentData(skillEntity, runtime);
             }
         }
@@ -286,16 +303,18 @@ public static class PerkRegistry
         }
 
         public string PerkId => "Fireball";
+        public bool IsWeapon => true;
         public int Priority => 0;
         public float Weight => 1f;
 
-        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 1;
+        private int GetCurrentLevel() => !_query.IsEmpty ? _query.GetSingleton<SkillRuntimeData>().Level : 0;
 
         public bool IsAvailable(EntityManager em, Entity player) => GetCurrentLevel() < 4;
 
         public PerkOptionData GetOptionData(EntityManager em, Entity player)
         {
-            int nextLvl = Mathf.Min(4, GetCurrentLevel() + 1);
+            int curLvl = GetCurrentLevel();
+            int nextLvl = Mathf.Min(4, curLvl + 1);
             return new PerkOptionData
             {
                 PerkId = PerkId,
@@ -304,7 +323,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.FireballDesc(nextLvl),
                 HighlightColor = new Color(1f, 0.42f, 0.12f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = true
             };
         }
 
@@ -315,6 +335,7 @@ public static class PerkRegistry
                 Entity skillEntity = _query.GetSingletonEntity();
                 var runtime = em.GetComponentData<SkillRuntimeData>(skillEntity);
                 runtime.Level = Mathf.Min(4, runtime.Level + 1);
+                runtime.Timer = 0.5f;
                 em.SetComponentData(skillEntity, runtime);
             }
         }
@@ -331,6 +352,7 @@ public static class PerkRegistry
         }
 
         public string PerkId => "Shield";
+        public bool IsWeapon => true;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -349,7 +371,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.ShieldDesc(nextLvl),
                 HighlightColor = new Color(0f, 0.9f, 1f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = true
             };
         }
 
@@ -376,6 +399,7 @@ public static class PerkRegistry
         }
 
         public string PerkId => "Boomerang";
+        public bool IsWeapon => true;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -394,7 +418,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.BoomerangDesc(nextLvl),
                 HighlightColor = new Color(0.15f, 0.95f, 0.65f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = true
             };
         }
 
@@ -421,6 +446,7 @@ public static class PerkRegistry
         }
 
         public string PerkId => "Electric";
+        public bool IsWeapon => true;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -439,7 +465,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.ElectricDesc(nextLvl),
                 HighlightColor = new Color(0f, 0.9f, 1f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = true
             };
         }
 
@@ -466,6 +493,7 @@ public static class PerkRegistry
         }
 
         public string PerkId => "PetalBurst";
+        public bool IsWeapon => true;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -484,7 +512,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.LevelBadge(nextLvl, nextLvl == 4),
                 Description = GameLocalization.PetalBurstDesc(nextLvl),
                 HighlightColor = new Color(1.0f, 0.42f, 0.72f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = true
             };
         }
 
@@ -508,6 +537,7 @@ public static class PerkRegistry
     private class HealPerk : IPerkDefinition
     {
         public string PerkId => "Heal";
+        public bool IsWeapon => false;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -523,7 +553,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.RecoveryBadge,
                 Description = GameLocalization.HealDesc,
                 HighlightColor = new Color(0.3f, 1f, 0.4f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = false
             };
         }
 
@@ -542,6 +573,7 @@ public static class PerkRegistry
     private class MaxHpPerk : IPerkDefinition
     {
         public string PerkId => "MaxHp";
+        public bool IsWeapon => false;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -557,7 +589,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.UpgradeBadge,
                 Description = GameLocalization.MaxHpDesc,
                 HighlightColor = new Color(1f, 0.35f, 0.45f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = false
             };
         }
 
@@ -577,6 +610,7 @@ public static class PerkRegistry
     private class MoveSpeedPerk : IPerkDefinition
     {
         public string PerkId => "MoveSpeed";
+        public bool IsWeapon => false;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -592,7 +626,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.UpgradeBadge,
                 Description = GameLocalization.MoveSpeedDesc,
                 HighlightColor = new Color(0.9f, 0.5f, 1f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = false
             };
         }
 
@@ -611,6 +646,7 @@ public static class PerkRegistry
     private class PickupRangePerk : IPerkDefinition
     {
         public string PerkId => "PickupRange";
+        public bool IsWeapon => false;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -626,7 +662,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.UtilityBadge,
                 Description = GameLocalization.PickupRangeDesc,
                 HighlightColor = new Color(0.2f, 0.8f, 0.9f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = false
             };
         }
 
@@ -645,6 +682,7 @@ public static class PerkRegistry
     private class HpRegenPerk : IPerkDefinition
     {
         public string PerkId => "HpRegen";
+        public bool IsWeapon => false;
         public int Priority => 0;
         public float Weight => 1f;
 
@@ -660,7 +698,8 @@ public static class PerkRegistry
                 LevelBadge = GameLocalization.RecoveryBadge,
                 Description = GameLocalization.HpRegenDesc,
                 HighlightColor = new Color(0.2f, 0.95f, 0.4f),
-                IsFusion = false
+                IsFusion = false,
+                IsWeapon = false
             };
         }
 
@@ -679,6 +718,42 @@ public static class PerkRegistry
                     RegenPerSecond = 0.5f,
                     Timer = 0f
                 });
+            }
+        }
+    }
+
+    // 13. Exp Bonus (Ngọc Tủy Tụ Khí / Spirit Crystal Essence - +10% EXP)
+    private class ExpBonusPerk : IPerkDefinition
+    {
+        public string PerkId => "ExpBonus";
+        public bool IsWeapon => false;
+        public int Priority => 0;
+        public float Weight => 1f;
+
+        public bool IsAvailable(EntityManager em, Entity player) => true;
+
+        public PerkOptionData GetOptionData(EntityManager em, Entity player)
+        {
+            return new PerkOptionData
+            {
+                PerkId = PerkId,
+                Level = 1,
+                Title = GameLocalization.ExpBonusTitle,
+                LevelBadge = GameLocalization.UtilityBadge,
+                Description = GameLocalization.ExpBonusDesc,
+                HighlightColor = new Color(0.35f, 0.85f, 1f),
+                IsFusion = false,
+                IsWeapon = false
+            };
+        }
+
+        public void Apply(EntityManager em, Entity player)
+        {
+            if (em.HasComponent<PlayerRelicData>(player))
+            {
+                var relic = em.GetComponentData<PlayerRelicData>(player);
+                relic.ExpMultiplier *= 1.10f; // +10% EXP cho ván này
+                em.SetComponentData(player, relic);
             }
         }
     }

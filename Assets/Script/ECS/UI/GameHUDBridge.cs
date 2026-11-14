@@ -31,6 +31,8 @@ public class GameHUDBridge : MonoBehaviour
     private bool _ecsInitialized;
 
     // --- State & Progression ---
+    private const int TOTAL_STARTER_PICKS = 2;
+    private int _starterPicksRemaining = 0;
     private int _lastPlayerLevel = 1;
     private int _pendingLevelUps = 0;
     private int _rerollsRemaining = 3;
@@ -103,6 +105,10 @@ public class GameHUDBridge : MonoBehaviour
         InitECS();
         UpdateLanguageUI();
         bool isGameplay = SceneManager.GetActiveScene().name != "MainMenuScene" && SceneManager.GetActiveScene().name != "LoadingScene";
+        if (isGameplay)
+        {
+            _starterPicksRemaining = TOTAL_STARTER_PICKS;
+        }
         if (_canvas != null) _canvas.gameObject.SetActive(isGameplay && !LoadingController.IsLoading);
     }
 
@@ -122,6 +128,19 @@ public class GameHUDBridge : MonoBehaviour
         if (_playerQuery.IsEmpty) return;
 
         Entity playerEntity = _playerQuery.GetSingletonEntity();
+
+        // 4.1. Đảm bảo toàn bộ Entity kỹ năng tồn tại ở Level 0
+        SkillBootstrapHelper.EnsureSkillEntitiesExist(_entityManager, playerEntity);
+
+        // 4.2. Khởi tạo chọn Kỹ năng Khởi đầu (Chọn 2 kỹ năng lúc vào trận)
+        if (_starterPicksRemaining > 0)
+        {
+            if (_modalStateMachine.CurrentState == HUDModalState.None)
+            {
+                ShowStarterSkillReward(playerEntity);
+            }
+            return; // Dừng tiến trình game để người chơi chọn xong 2 kỹ năng
+        }
 
         // Cập nhật HUD Realtime từ Snapshot
         var snapshot = PlayerHudSnapshotReader.Read(_entityManager, playerEntity, _runLifecycleService.SurvivalTime);
@@ -207,7 +226,30 @@ public class GameHUDBridge : MonoBehaviour
         }
     }
 
-    #region --- Level-Up Flow ---
+    #region --- Level-Up & Starter Skill Flow ---
+
+    private void ShowStarterSkillReward(Entity playerEntity)
+    {
+        _modalStateMachine.TransitionTo(HUDModalState.LevelUp);
+
+        _lastExcludedPerkIds.Clear();
+        foreach (var p in _currentPerks) _lastExcludedPerkIds.Add(p.PerkId);
+
+        _currentPerks.Clear();
+        _currentPerks.AddRange(_perkSelector.SelectStarterWeapons(_entityManager, playerEntity, 3, _lastExcludedPerkIds));
+
+        var options = new List<PerkOptionData>();
+        foreach (var p in _currentPerks)
+        {
+            options.Add(p.GetOptionData(_entityManager, playerEntity));
+        }
+
+        int pickNumber = TOTAL_STARTER_PICKS - _starterPicksRemaining + 1;
+        string title = GameLocalization.StarterSkillHeader;
+        string subtitle = GameLocalization.StarterSkillSubtitle(pickNumber, TOTAL_STARTER_PICKS);
+
+        _levelUpView.Show(options, _rerollsRemaining, title, subtitle);
+    }
 
     private void ShowNextLevelUpReward(Entity playerEntity)
     {
@@ -243,6 +285,22 @@ public class GameHUDBridge : MonoBehaviour
         var perk = _currentPerks.Find(p => p.PerkId == perkData.PerkId);
         perk?.Apply(_entityManager, playerEntity);
 
+        if (_starterPicksRemaining > 0)
+        {
+            _starterPicksRemaining--;
+            if (_starterPicksRemaining > 0)
+            {
+                ShowStarterSkillReward(playerEntity);
+                return;
+            }
+            else
+            {
+                _levelUpView.Hide();
+                _modalStateMachine.CloseModal();
+                return;
+            }
+        }
+
         _pendingLevelUps = Mathf.Max(0, _pendingLevelUps - 1);
         ShowNextLevelUpReward(playerEntity);
     }
@@ -259,15 +317,27 @@ public class GameHUDBridge : MonoBehaviour
         foreach (var p in _currentPerks) _lastExcludedPerkIds.Add(p.PerkId);
 
         _currentPerks.Clear();
-        _currentPerks.AddRange(_perkSelector.SelectPerks(_entityManager, playerEntity, 3, _lastExcludedPerkIds));
-
-        var options = new List<PerkOptionData>();
-        foreach (var p in _currentPerks)
+        if (_starterPicksRemaining > 0)
         {
-            options.Add(p.GetOptionData(_entityManager, playerEntity));
+            _currentPerks.AddRange(_perkSelector.SelectStarterWeapons(_entityManager, playerEntity, 3, _lastExcludedPerkIds));
+            var options = new List<PerkOptionData>();
+            foreach (var p in _currentPerks)
+            {
+                options.Add(p.GetOptionData(_entityManager, playerEntity));
+            }
+            int pickNumber = TOTAL_STARTER_PICKS - _starterPicksRemaining + 1;
+            _levelUpView.Show(options, _rerollsRemaining, GameLocalization.StarterSkillHeader, GameLocalization.StarterSkillSubtitle(pickNumber, TOTAL_STARTER_PICKS));
         }
-
-        _levelUpView.Show(options, _rerollsRemaining);
+        else
+        {
+            _currentPerks.AddRange(_perkSelector.SelectPerks(_entityManager, playerEntity, 3, _lastExcludedPerkIds));
+            var options = new List<PerkOptionData>();
+            foreach (var p in _currentPerks)
+            {
+                options.Add(p.GetOptionData(_entityManager, playerEntity));
+            }
+            _levelUpView.Show(options, _rerollsRemaining);
+        }
     }
 
     #endregion
@@ -412,6 +482,7 @@ public class GameHUDBridge : MonoBehaviour
         {
             _lastPlayerLevel = 1;
             _pendingLevelUps = 0;
+            _starterPicksRemaining = TOTAL_STARTER_PICKS;
             _rerollsRemaining = 3 + (MetaProgressionService.Instance != null ? MetaProgressionService.Instance.GetBonusRerolls() : 0);
             _currentPerks.Clear();
             _lastExcludedPerkIds.Clear();
@@ -448,7 +519,16 @@ public class GameHUDBridge : MonoBehaviour
             {
                 options.Add(perk.GetOptionData(_entityManager, p));
             }
-            _levelUpView?.UpdateLanguage(options);
+
+            if (_starterPicksRemaining > 0)
+            {
+                int pickNumber = TOTAL_STARTER_PICKS - _starterPicksRemaining + 1;
+                _levelUpView?.UpdateLanguage(options, GameLocalization.StarterSkillHeader, GameLocalization.StarterSkillSubtitle(pickNumber, TOTAL_STARTER_PICKS));
+            }
+            else
+            {
+                _levelUpView?.UpdateLanguage(options);
+            }
         }
 
         if (_modalStateMachine != null && _modalStateMachine.CurrentState == HUDModalState.ChestReward && !_playerQuery.IsEmpty)

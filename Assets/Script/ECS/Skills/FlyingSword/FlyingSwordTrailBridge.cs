@@ -49,8 +49,6 @@ public class FlyingSwordTrailBridge : MonoBehaviour
     private readonly List<SwordVisualItem> _visualPool = new List<SwordVisualItem>();
     private readonly List<SwordShockwaveEffect> _shockwavePool = new List<SwordShockwaveEffect>();
 
-    private static Sprite _circleSprite;
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
     {
@@ -59,6 +57,33 @@ public class FlyingSwordTrailBridge : MonoBehaviour
             var go = new GameObject("[FlyingSwordTrailBridge]");
             go.AddComponent<FlyingSwordTrailBridge>();
             DontDestroyOnLoad(go);
+        }
+    }
+
+    private void Awake()
+    {
+        PrewarmPools();
+    }
+
+    private void PrewarmPools()
+    {
+        // 1. Pre-warm Phi Kiếm Trails (6 kiếm)
+        for (int i = 0; i < 6; i++)
+        {
+            var item = CreateNewSwordVisual();
+            item.Trail.Clear();
+            item.Root.SetActive(false);
+            _visualPool.Add(item);
+        }
+
+        // 2. Pre-warm Shockwave Effects (8 hiệu ứng nổ)
+        for (int i = 0; i < 8; i++)
+        {
+            var go = new GameObject($"SwordShockwave_{i}");
+            go.transform.SetParent(transform);
+            var shockwave = go.AddComponent<SwordShockwaveEffect>();
+            go.SetActive(false);
+            _shockwavePool.Add(shockwave);
         }
     }
 
@@ -307,18 +332,17 @@ public class FlyingSwordTrailBridge : MonoBehaviour
 
         ApplyTrailGradient(trail, normalColor, normalColor, startWidth, endWidth);
 
-        var defaultShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                           ?? Shader.Find("Sprites/Default");
-        if (defaultShader != null)
+        var mat = SharedVisualAssets.SpriteUnlitMaterial;
+        if (mat != null)
         {
-            trail.material = new Material(defaultShader);
+            trail.material = mat;
         }
 
         // 2. Aura GameObject (vòng hào quang xoay quanh chuôi kiếm khi Ultimate sẵn sàng)
         var auraObj = new GameObject("UltimateAura");
         auraObj.transform.SetParent(root.transform, false);
         var auraRenderer = auraObj.AddComponent<SpriteRenderer>();
-        auraRenderer.sprite = GetCircleSprite();
+        auraRenderer.sprite = SharedVisualAssets.CircleSprite;
         auraRenderer.sortingOrder = 2; // Hiển thị trên kiếm
         auraRenderer.color = new Color(1f, 0.85f, 0.2f, 0.8f);
         auraObj.transform.localScale = Vector3.one * 0.9f;
@@ -357,37 +381,6 @@ public class FlyingSwordTrailBridge : MonoBehaviour
         trail.colorGradient = gradient;
     }
 
-    public static Sprite GetCircleSprite()
-    {
-        if (_circleSprite != null) return _circleSprite;
-
-        int size = 64;
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.filterMode = FilterMode.Bilinear;
-        float center = size * 0.5f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(center, center)) / center;
-                if (dist > 1f)
-                {
-                    tex.SetPixel(x, y, Color.clear);
-                }
-                else
-                {
-                    // Vòng halo có lỗ ở tâm và viền sáng rõ
-                    float ring = Mathf.Sin(dist * Mathf.PI);
-                    float alpha = Mathf.Pow(ring, 1.5f);
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-                }
-            }
-        }
-        tex.Apply();
-        _circleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        return _circleSprite;
-    }
 }
 
 /// <summary>
@@ -404,9 +397,7 @@ public class SwordShockwaveEffect : MonoBehaviour
 
     private void Awake()
     {
-        var defaultShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                           ?? Shader.Find("Sprites/Default");
-        Material sharedMat = defaultShader != null ? new Material(defaultShader) : null;
+        Material sharedMat = SharedVisualAssets.SpriteUnlitMaterial;
 
         // 1. LineRenderer vẽ vòng tròn viền ngoài (Outer Shockwave Ring)
         _outerRing = gameObject.AddComponent<LineRenderer>();
@@ -420,7 +411,7 @@ public class SwordShockwaveEffect : MonoBehaviour
         var flashObj = new GameObject("InnerFlash");
         flashObj.transform.SetParent(transform, false);
         _innerFlash = flashObj.AddComponent<SpriteRenderer>();
-        _innerFlash.sprite = FlyingSwordTrailBridge.GetCircleSprite();
+        _innerFlash.sprite = SharedVisualAssets.CircleSprite;
         _innerFlash.sortingOrder = 4;
         if (sharedMat != null) _innerFlash.material = sharedMat;
     }

@@ -42,6 +42,7 @@ public class ChestRewardService
             new HeartCrystalRelic(),
             new PowerCharmRelic(this),
             new FortuneDiceRelic(),
+            new WisdomTomeRelic(),
             new MirrorOfIllusionRelic()
         };
     }
@@ -206,7 +207,7 @@ public class ChestRewardService
         {
             return em.GetComponentData<PlayerRelicData>(player);
         }
-        var data = new PlayerRelicData { DamageMultiplier = 1.0f };
+        var data = new PlayerRelicData { DamageMultiplier = 1.0f, ExpMultiplier = 1.0f };
         em.AddComponentData(player, data);
         return data;
     }
@@ -385,7 +386,36 @@ public class ChestRewardService
         }
     }
 
-    // 6. Gương Ảo Ảnh (Mirror of Illusion) - [LEGENDARY TIER]
+    // 6. Thiên Thư Bí Pháp (Tome of Wisdom) - +15% EXP/cấp
+    private class WisdomTomeRelic : IRelicDefinition
+    {
+        public RelicType Type => RelicType.WisdomTome;
+        public string RelicId => "WisdomTome";
+        public float Weight => 1f;
+
+        public RelicRewardData GetRewardData(EntityManager em, Entity player)
+        {
+            int lvl = em.HasComponent<PlayerRelicData>(player) ? em.GetComponentData<PlayerRelicData>(player).TomeLevel + 1 : 1;
+            return new RelicRewardData
+            {
+                Type = Type,
+                IconEmoji = "📜",
+                Title = GameLocalization.RelicWisdomTomeTitle,
+                LevelBadge = $"LV.{lvl}",
+                Description = GameLocalization.RelicWisdomTomeDesc(lvl)
+            };
+        }
+
+        public void Apply(EntityManager em, Entity player)
+        {
+            var relic = GetOrCreateRelicData(em, player);
+            relic.TomeLevel++;
+            relic.ExpMultiplier *= 1.15f; // +15% EXP mỗi cấp
+            em.SetComponentData(player, relic);
+        }
+    }
+
+    // 7. Gương Ảo Ảnh (Mirror of Illusion) - [LEGENDARY TIER]
     private class MirrorOfIllusionRelic : IRelicDefinition
     {
         public RelicType Type => RelicType.MirrorOfIllusion;

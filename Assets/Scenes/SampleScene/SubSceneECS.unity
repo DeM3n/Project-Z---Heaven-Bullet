@@ -225,7 +225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAuthoring
   MoveSpeed: 4.5
-  StartingExpToNextLevel: 25
+  StartingExpToNextLevel: 24
   PickupRange: 2
   MaxHP: 100
   InvulnerabilityDuration: 0.1
@@ -277,7 +277,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillAuthoring
   OwnerAuthoring: {fileID: 144040417}
   SkillId: auto_bolt
-  Level: 1
+  Level: 0
   Cooldown: 1.8
 --- !u!114 &764216967
 MonoBehaviour:
@@ -414,7 +414,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillAuthoring
   OwnerAuthoring: {fileID: 144040417}
   SkillId: flying_sword
-  Level: 1
+  Level: 0
   Cooldown: 1.98
 --- !u!114 &964216967
 MonoBehaviour:
@@ -489,7 +489,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillAuthoring
   OwnerAuthoring: {fileID: 144040417}
   SkillId: slash_sword
-  Level: 1
+  Level: 0
   Cooldown: 3.6
 --- !u!114 &1064216967
 MonoBehaviour:

@@ -14,7 +14,8 @@ public enum RelicType : byte
     HeartCrystal = 2,    // +30 Max HP & Full Heal
     PowerCharm = 3,      // +15% All Damage
     FortuneDice = 4,     // +2 Rerolls
-    MirrorOfIllusion = 5 // [LEGENDARY] 2 Mirror Clones mimicking movement and casting all skills (25% DMG, 150% CD)
+    MirrorOfIllusion = 5, // [LEGENDARY] 2 Mirror Clones mimicking movement and casting all skills (25% DMG, 150% CD)
+    WisdomTome = 6       // +15% EXP Gain per level
 }
 
 public struct PickupItemTag : IComponentData {}

@@ -12,6 +12,7 @@ public struct PerkOptionData
     public string Description;
     public Color HighlightColor;
     public bool IsFusion;
+    public bool IsWeapon;
 }
 
 /// <summary>

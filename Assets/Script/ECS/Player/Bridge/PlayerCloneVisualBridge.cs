@@ -110,9 +110,7 @@ public class PlayerCloneVisualBridge : MonoBehaviour
             line.startWidth = 0.05f;
             line.endWidth = 0.05f;
 
-            var mat = new Material(Shader.Find("Sprites/Default"));
-            mat.color = new Color(0.35f, 0.85f, 1f, 0.8f);
-            line.material = mat;
+            line.material = SharedVisualAssets.SpriteUnlitMaterial;
             line.startColor = new Color(0.35f, 0.85f, 1f, 0.8f);
             line.endColor = new Color(0.35f, 0.85f, 1f, 0.8f);
 

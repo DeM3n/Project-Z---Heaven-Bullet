@@ -128,10 +128,11 @@ public class AudioBridge : MonoBehaviour
         var audioFeedback = _entityManager.GetComponentData<PlayerAudioFeedbackData>(playerEntity);
         bool modified = false;
 
-        // 3. Phản hồi Nhặt Ngọc EXP (Pitch Escalation)
+        // 3. Phản hồi Nhặt Ngọc EXP (Pitch Escalation) - Giới hạn tối đa 3 lần/frame để tránh spike khi ăn Nam Châm
         if (audioFeedback.ExpOrbsAbsorbed > 0)
         {
-            for (int i = 0; i < audioFeedback.ExpOrbsAbsorbed; i++)
+            int playCount = Mathf.Min(audioFeedback.ExpOrbsAbsorbed, 3);
+            for (int i = 0; i < playCount; i++)
             {
                 AudioManager.Instance.PlayExpPickup();
             }

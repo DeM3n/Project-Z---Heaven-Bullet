@@ -189,6 +189,20 @@ public class MetaProgressionService
 
         AddNode(new TalentNodeInfo
         {
+            Id = "util_exp",
+            Branch = TalentBranch.Fortune,
+            Tier = 1,
+            NameEn = "Enlightened Mind",
+            NameVi = "Ngộ Đạo Tâm Kinh",
+            DescriptionEn = "+5% EXP Gain from all Orbs (Up to +25%)",
+            DescriptionVi = "+5% EXP nhận được từ mọi viên ngọc (Tối đa +25%)",
+            MaxLevel = 5,
+            Costs = new[] { 120, 250, 450, 700, 1000 },
+            PrerequisiteNodeId = null
+        });
+
+        AddNode(new TalentNodeInfo
+        {
             Id = "util_pickup",
             Branch = TalentBranch.Fortune,
             Tier = 2,
@@ -354,6 +368,7 @@ public class MetaProgressionService
     public float GetCritDamageMultiplier() => GetNodeLevel("atk_apex") > 0 ? 2.5f : 2.0f;
 
     public float GetMoveSpeedMultiplier() => 1f + (GetNodeLevel("util_speed") * 0.04f);
+    public float GetBonusExpMultiplier() => 1f + (GetNodeLevel("util_exp") * 0.05f);
     public float GetBonusPickupRange() => GetNodeLevel("util_pickup") * 0.20f;
     public float GetBonusDropRatePercent() => GetNodeLevel("util_drop") * 0.12f;
     public float GetGoldMultiplier() => 1f + (GetNodeLevel("util_gold") * 0.15f) + (GetNodeLevel("util_apex") > 0 ? 0.25f : 0f);

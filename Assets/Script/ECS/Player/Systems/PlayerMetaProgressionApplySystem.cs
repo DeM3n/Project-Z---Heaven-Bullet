@@ -68,6 +68,10 @@ public partial struct PlayerMetaProgressionApplySystem : ISystem
                 float atkMult = meta.GetGlobalATKMultiplier();
                 relic.ValueRW.DamageMultiplier *= atkMult;
 
+                // 3b. Buff Hệ số nhân EXP (Exp Multiplier từ Ngộ Đạo Tâm Kinh)
+                float expMult = meta.GetBonusExpMultiplier();
+                relic.ValueRW.ExpMultiplier *= expMult;
+
                 // 4. Buff Bán kính nhặt ngọc & đồ (Pickup Range)
                 float pickupBonus = meta.GetBonusPickupRange();
                 pickup.ValueRW.Range *= (1f + pickupBonus);

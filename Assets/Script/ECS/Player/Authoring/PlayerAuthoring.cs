@@ -4,7 +4,8 @@ using UnityEngine;
 public class PlayerAuthoring : MonoBehaviour
 {
     public float MoveSpeed = 5f;
-    public int StartingExpToNextLevel = 25;
+    [Tooltip("Lượng EXP ban đầu cần để đạt Cấp 2 (đã giảm ~5% từ 25 xuống 24 để cân bằng nhịp độ lên cấp)")]
+    public int StartingExpToNextLevel = 24;
     public float PickupRange = 2f;
     public float MaxHP = 100f;
     [Tooltip("Thời gian miễn nhiễm sát thương sau khi bị trúng đòn (i-frames tính bằng giây)")]
@@ -51,7 +52,9 @@ public class PlayerAuthoring : MonoBehaviour
                 PowerLevel = 0,
                 FortuneDiceLevel = 0,
                 MirrorLevel = 0,
-                DamageMultiplier = 1.0f
+                TomeLevel = 0,
+                DamageMultiplier = 1.0f,
+                ExpMultiplier = 1.0f
             });
             AddBuffer<IncomingDamage>(entity);
             AddComponent(entity, new PlayerAudioFeedbackData());

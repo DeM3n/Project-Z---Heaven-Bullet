@@ -15,7 +15,6 @@ public class GiantSwordVisualBridge : MonoBehaviour
     private bool _initialized;
 
     private readonly List<GiantShockwaveEffect> _shockwavePool = new List<GiantShockwaveEffect>();
-    private static Sprite _circleSprite;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
@@ -25,6 +24,18 @@ public class GiantSwordVisualBridge : MonoBehaviour
             var go = new GameObject("[GiantSwordVisualBridge]");
             go.AddComponent<GiantSwordVisualBridge>();
             DontDestroyOnLoad(go);
+        }
+    }
+
+    private void Awake()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            var go = new GameObject($"GiantShockwave_{i}");
+            go.transform.SetParent(transform);
+            var shockwave = go.AddComponent<GiantShockwaveEffect>();
+            go.SetActive(false);
+            _shockwavePool.Add(shockwave);
         }
     }
 
@@ -88,31 +99,6 @@ public class GiantSwordVisualBridge : MonoBehaviour
 
         shockwave.Setup(position, radius, 0.55f);
     }
-
-    public static Sprite GetCircleSprite()
-    {
-        if (_circleSprite != null) return _circleSprite;
-
-        int size = 64;
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.filterMode = FilterMode.Bilinear;
-        float center = size * 0.5f;
-        float radius = size * 0.48f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                float alpha = Mathf.Clamp01(1f - (dist / radius));
-                tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha * alpha));
-            }
-        }
-        tex.Apply();
-
-        _circleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 64);
-        return _circleSprite;
-    }
 }
 
 /// <summary>
@@ -129,9 +115,7 @@ public class GiantShockwaveEffect : MonoBehaviour
 
     private void Awake()
     {
-        var defaultShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                           ?? Shader.Find("Sprites/Default");
-        Material sharedMat = defaultShader != null ? new Material(defaultShader) : null;
+        Material sharedMat = SharedVisualAssets.SpriteUnlitMaterial;
 
         _outerRing = gameObject.AddComponent<LineRenderer>();
         _outerRing.useWorldSpace = false;
@@ -143,7 +127,7 @@ public class GiantShockwaveEffect : MonoBehaviour
         var flashObj = new GameObject("InnerFlash");
         flashObj.transform.SetParent(transform, false);
         _innerFlash = flashObj.AddComponent<SpriteRenderer>();
-        _innerFlash.sprite = GiantSwordVisualBridge.GetCircleSprite();
+        _innerFlash.sprite = SharedVisualAssets.CircleSprite;
         _innerFlash.sortingOrder = 5;
         if (sharedMat != null) _innerFlash.material = sharedMat;
     }

@@ -39,8 +39,6 @@ public class FireballVisualBridge : MonoBehaviour
     private int _subCounter;
     private int _zoneCounter;
 
-    private static Sprite _circleSprite;
-    private static Sprite _ringSprite;
     private static Sprite _lavaCrackSprite;
 
     private class FireballVisualItem
@@ -61,6 +59,53 @@ public class FireballVisualBridge : MonoBehaviour
             var go = new GameObject("[FireballVisualBridge]");
             go.AddComponent<FireballVisualBridge>();
             DontDestroyOnLoad(go);
+        }
+    }
+
+    private void Awake()
+    {
+        PrewarmPools();
+    }
+
+    private void PrewarmPools()
+    {
+        // 1. Ensure Sprites & Textures are generated upfront
+        GetLavaCrackSprite();
+
+        // 2. Pre-warm Main Fireballs (4 quả)
+        for (int i = 0; i < 4; i++)
+        {
+            var item = CreateProjectileVisual(true);
+            item.Root.SetActive(false);
+            _freeMainPool.Add(item);
+        }
+
+        // 3. Pre-warm Sub Fireballs (12 quả con)
+        for (int i = 0; i < 12; i++)
+        {
+            var item = CreateProjectileVisual(false);
+            item.Root.SetActive(false);
+            _freeSubPool.Add(item);
+        }
+
+        // 4. Pre-warm Fire Zones (6 vùng lửa)
+        for (int i = 0; i < 6; i++)
+        {
+            var go = new GameObject($"FireZoneVisual_{++_zoneCounter}");
+            go.transform.SetParent(transform, false);
+            var effect = go.AddComponent<FireZoneVisualEffect>();
+            go.SetActive(false);
+            _freeZonePool.Add(effect);
+        }
+
+        // 5. Pre-warm Explosions (8 hiệu ứng nổ)
+        for (int i = 0; i < 8; i++)
+        {
+            var go = new GameObject($"FireballExplosion_{_explosionPool.Count}");
+            go.transform.SetParent(transform, false);
+            var effect = go.AddComponent<FireballExplosionEffect>();
+            go.SetActive(false);
+            _explosionPool.Add(effect);
         }
     }
 
@@ -396,9 +441,7 @@ public class FireballVisualBridge : MonoBehaviour
         var root = new GameObject(isMain ? $"MainFireballVisual_{id}" : $"SubFireballVisual_{id}");
         root.transform.SetParent(transform);
 
-        var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                    ?? Shader.Find("Sprites/Default");
-        Material mat = shader != null ? new Material(shader) : null;
+        Material mat = SharedVisualAssets.SpriteUnlitMaterial;
 
         // 1. Trail Renderer (Đuôi lửa)
         var trail = root.AddComponent<TrailRenderer>();
@@ -429,7 +472,7 @@ public class FireballVisualBridge : MonoBehaviour
         var glowObj = new GameObject("Glow");
         glowObj.transform.SetParent(root.transform, false);
         var glowRend = glowObj.AddComponent<SpriteRenderer>();
-        glowRend.sprite = GetCircleSprite();
+        glowRend.sprite = SharedVisualAssets.CircleSprite;
         glowRend.color = isMain ? new Color(1f, 0.45f, 0.05f, 0.75f) : new Color(1f, 0.4f, 0.1f, 0.65f);
         glowRend.sortingOrder = 7;
         glowRend.transform.localScale = Vector3.one * (isMain ? 0.6f : 0.35f);
@@ -439,7 +482,7 @@ public class FireballVisualBridge : MonoBehaviour
         var coreObj = new GameObject("Core");
         coreObj.transform.SetParent(root.transform, false);
         var coreRend = coreObj.AddComponent<SpriteRenderer>();
-        coreRend.sprite = GetCircleSprite();
+        coreRend.sprite = SharedVisualAssets.CircleSprite;
         coreRend.color = new Color(1f, 0.95f, 0.7f, 1f);
         coreRend.sortingOrder = 8;
         coreRend.transform.localScale = Vector3.one * (isMain ? 0.32f : 0.18f);
@@ -449,7 +492,7 @@ public class FireballVisualBridge : MonoBehaviour
         var shadowObj = new GameObject(isMain ? $"MainFireballShadow_{id}" : $"SubFireballShadow_{id}");
         shadowObj.transform.SetParent(transform);
         var shadowRend = shadowObj.AddComponent<SpriteRenderer>();
-        shadowRend.sprite = GetCircleSprite();
+        shadowRend.sprite = SharedVisualAssets.CircleSprite;
         shadowRend.color = new Color(0f, 0f, 0f, 0.45f);
         shadowRend.sortingOrder = -4; // Nằm sát mặt đất dưới player và quái (order 0)
         if (mat != null) shadowRend.material = mat;
@@ -477,71 +520,6 @@ public class FireballVisualBridge : MonoBehaviour
         _activeZones.Clear();
         _freeZonePool.Clear();
         _explosionPool.Clear();
-    }
-
-    public static Sprite GetCircleSprite()
-    {
-        if (_circleSprite != null) return _circleSprite;
-
-        int size = 64;
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        float center = size * 0.5f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(center, center)) / center;
-                if (dist > 1f)
-                {
-                    tex.SetPixel(x, y, Color.clear);
-                }
-                else
-                {
-                    float ring = Mathf.Sin(dist * Mathf.PI);
-                    float alpha = Mathf.Pow(ring, 1.4f);
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-                }
-            }
-        }
-        tex.Apply();
-        _circleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        return _circleSprite;
-    }
-
-    public static Sprite GetRingSprite()
-    {
-        if (_ringSprite != null) return _ringSprite;
-
-        int size = 128;
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.wrapMode = TextureWrapMode.Clamp;
-        tex.filterMode = FilterMode.Bilinear;
-        float center = size * 0.5f;
-
-        // Vành đai tròn rỗng (Hollow Ring) với viền mịn màng Anti-Aliased
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(center, center)) / center;
-                if (dist > 1.0f || dist < 0.70f)
-                {
-                    tex.SetPixel(x, y, Color.clear);
-                }
-                else
-                {
-                    // Độ dày từ 0.70 đến 1.0, đỉnh cao nhất ở giữa (0.85)
-                    float normalized = (dist - 0.70f) / (1.0f - 0.70f); // 0 -> 1
-                    float bell = Mathf.Sin(normalized * Mathf.PI);
-                    float alpha = Mathf.Pow(bell, 1.2f);
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-                }
-            }
-        }
-        tex.Apply();
-        _ringSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        return _ringSprite;
     }
 
     public static Sprite GetLavaCrackSprite()
@@ -674,21 +652,19 @@ public class FireballExplosionEffect : MonoBehaviour
 
     private void Awake()
     {
-        var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                    ?? Shader.Find("Sprites/Default");
-        Material mat = shader != null ? new Material(shader) : null;
+        Material mat = SharedVisualAssets.SpriteUnlitMaterial;
 
         var blastObj = new GameObject("InnerBlast");
         blastObj.transform.SetParent(transform, false);
         _innerBlast = blastObj.AddComponent<SpriteRenderer>();
-        _innerBlast.sprite = FireballVisualBridge.GetCircleSprite();
+        _innerBlast.sprite = SharedVisualAssets.CircleSprite;
         _innerBlast.sortingOrder = 8;
         if (mat != null) _innerBlast.material = mat;
 
         var ringObj = new GameObject("OuterRing");
         ringObj.transform.SetParent(transform, false);
         _outerRing = ringObj.AddComponent<SpriteRenderer>();
-        _outerRing.sprite = FireballVisualBridge.GetRingSprite();
+        _outerRing.sprite = SharedVisualAssets.RingSprite;
         _outerRing.sortingOrder = 9;
         if (mat != null) _outerRing.material = mat;
     }
@@ -771,15 +747,13 @@ public class FireZoneVisualEffect : MonoBehaviour
 
     private void Awake()
     {
-        var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                    ?? Shader.Find("Sprites/Default");
-        Material mat = shader != null ? new Material(shader) : null;
+        Material mat = SharedVisualAssets.SpriteUnlitMaterial;
 
         // 1. Lớp đất sém đen khói (Charred Earth Decal) - Nằm sát mặt đất dưới Player và Quái (sortingOrder 0)
         var charObj = new GameObject("CharredGround");
         charObj.transform.SetParent(transform, false);
         _charredGround = charObj.AddComponent<SpriteRenderer>();
-        _charredGround.sprite = FireballVisualBridge.GetCircleSprite();
+        _charredGround.sprite = SharedVisualAssets.CircleSprite;
         _charredGround.sortingOrder = -10;
         if (mat != null) _charredGround.material = mat;
 
@@ -787,7 +761,7 @@ public class FireZoneVisualEffect : MonoBehaviour
         var groundObj = new GameObject("GroundFire");
         groundObj.transform.SetParent(transform, false);
         _groundFire = groundObj.AddComponent<SpriteRenderer>();
-        _groundFire.sprite = FireballVisualBridge.GetCircleSprite();
+        _groundFire.sprite = SharedVisualAssets.CircleSprite;
         _groundFire.sortingOrder = -9;
         if (mat != null) _groundFire.material = mat;
 
@@ -812,7 +786,7 @@ public class FireZoneVisualEffect : MonoBehaviour
         var emberObj = new GameObject("InnerEmber");
         emberObj.transform.SetParent(transform, false);
         _innerEmber = emberObj.AddComponent<SpriteRenderer>();
-        _innerEmber.sprite = FireballVisualBridge.GetCircleSprite();
+        _innerEmber.sprite = SharedVisualAssets.CircleSprite;
         _innerEmber.sortingOrder = -7;
         if (mat != null) _innerEmber.material = mat;
 
@@ -820,15 +794,15 @@ public class FireZoneVisualEffect : MonoBehaviour
         var borderObj = new GameObject("BorderAura");
         borderObj.transform.SetParent(transform, false);
         _borderAura = borderObj.AddComponent<SpriteRenderer>();
-        _borderAura.sprite = FireballVisualBridge.GetRingSprite();
+        _borderAura.sprite = SharedVisualAssets.RingSprite;
         _borderAura.sortingOrder = -6;
         if (mat != null) _borderAura.material = mat;
 
         // 7. Hệ hạt tàn lửa bay bổng lên trời (Rising Embers Particle System)
-        InitParticleSystem(shader);
+        InitParticleSystem(mat);
     }
 
-    private void InitParticleSystem(Shader shader)
+    private void InitParticleSystem(Material mat)
     {
         var psObj = new GameObject("EmberParticles");
         psObj.transform.SetParent(transform, false);
@@ -836,11 +810,9 @@ public class FireZoneVisualEffect : MonoBehaviour
         _emberParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var psr = psObj.GetComponent<ParticleSystemRenderer>();
 
-        if (shader != null)
+        if (mat != null)
         {
-            Material pMat = new Material(shader);
-            pMat.mainTexture = FireballVisualBridge.GetCircleSprite().texture;
-            psr.material = pMat;
+            psr.material = mat;
         }
         psr.sortingOrder = -5;
 

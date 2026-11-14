@@ -19,6 +19,12 @@ public partial struct XPPickupSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
 
         var playerLevel = SystemAPI.GetComponent<PlayerLevelData>(playerEntity);
+        float expMultiplier = 1.0f;
+        if (SystemAPI.HasComponent<PlayerRelicData>(playerEntity))
+        {
+            expMultiplier = math.max(0.1f, SystemAPI.GetComponent<PlayerRelicData>(playerEntity).ExpMultiplier);
+        }
+
         var ecb = new EntityCommandBuffer(Allocator.Temp);
         bool expChanged = false;
         int absorbedCount = 0;
@@ -55,7 +61,8 @@ public partial struct XPPickupSystem : ISystem
             // Kiểm tra va chạm hấp thụ: khi ngọc tiếp cận sát tâm người chơi (<= 0.4m) hoặc bước di chuyển frame này chạm tới Player
             if (dist <= 0.4f || dist <= step)
             {
-                playerLevel.CurrentExp += orb.ValueRO.ExpValue;
+                int gainedExp = (int)math.round(orb.ValueRO.ExpValue * expMultiplier);
+                playerLevel.CurrentExp += math.max(1, gainedExp);
                 expChanged = true;
                 absorbedCount++;
                 ecb.DestroyEntity(entity);

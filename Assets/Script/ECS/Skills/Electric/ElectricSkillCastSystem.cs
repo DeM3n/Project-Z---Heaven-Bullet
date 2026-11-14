@@ -62,7 +62,7 @@ public partial struct ElectricSkillCastSystem : ISystem
                 {
                     Cooldown = 5.4f,
                     Timer = 0.5f,
-                    Level = 1,
+                    Level = 0,
                     SkillId = default
                 });
 

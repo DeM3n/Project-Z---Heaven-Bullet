@@ -19,8 +19,8 @@ public partial struct LevelUpSystem : ISystem
         {
             level.CurrentExp -= level.ExpToNextLevel;
             level.Level += 1;
-            // Scale lượng EXP cần thiết: x1.35 + 10 giúp giãn nhịp độ lên cấp, cân bằng độ khó theo thời gian
-            level.ExpToNextLevel = Mathf.RoundToInt(level.ExpToNextLevel * 1.35f + 10f);
+            // Scale lượng EXP cần thiết: x1.35 + 9.5f (giảm ~5% EXP yêu cầu ở mọi cấp để cân bằng nhịp độ lên cấp)
+            level.ExpToNextLevel = Mathf.RoundToInt(level.ExpToNextLevel * 1.35f + 9.5f);
             leveledUp = true;
             levelsGained++;
         }

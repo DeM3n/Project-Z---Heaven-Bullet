@@ -24,8 +24,6 @@ public class BoomerangVisualBridge : MonoBehaviour
     private bool _initialized;
 
     private static Sprite _boomerangSprite;
-    private static Sprite _glowSprite;
-    private static Sprite _ringSprite;
     private static bool _isCustomSprite;
 
     private class BoomerangVisualItem
@@ -73,6 +71,24 @@ public class BoomerangVisualBridge : MonoBehaviour
     {
         _boomerangSprite = null; // Luôn làm mới để bắt kịp thay đổi từ Prefab hoặc Sprite folder
         EnsureSprites(CustomBoomerangSprite);
+        PrewarmPools();
+    }
+
+    private void PrewarmPools()
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            var item = CreateVisualItem();
+            item.Root.SetActive(false);
+            _freePool.Add(item);
+        }
+
+        for (int i = 0; i < 8; i++)
+        {
+            var ring = CreateRing();
+            ring.Root.SetActive(false);
+            _freeRingPool.Add(ring);
+        }
     }
 
     private bool InitECS()
@@ -284,6 +300,13 @@ public class BoomerangVisualBridge : MonoBehaviour
             return item;
         }
 
+        return CreateVisualItem();
+    }
+
+    private BoomerangVisualItem CreateVisualItem()
+    {
+        EnsureSprites(CustomBoomerangSprite);
+
         var root = new GameObject("Boomerang_Visual");
         root.transform.SetParent(transform);
 
@@ -298,7 +321,7 @@ public class BoomerangVisualBridge : MonoBehaviour
         var glowObj = new GameObject("Glow");
         glowObj.transform.SetParent(root.transform, false);
         var glowRend = glowObj.AddComponent<SpriteRenderer>();
-        glowRend.sprite = _glowSprite;
+        glowRend.sprite = SharedVisualAssets.RadialGlowSprite;
         glowRend.sortingOrder = 44;
         glowObj.transform.localScale = Vector3.one * 1.45f;
 
@@ -311,7 +334,7 @@ public class BoomerangVisualBridge : MonoBehaviour
         trail.endWidth = 0.02f;
         trail.sortingOrder = 43;
 
-        var mat = new Material(Shader.Find("Sprites/Default"));
+        var mat = SharedVisualAssets.SpriteUnlitMaterial;
         trail.material = mat;
 
         // 4. Line Renderer đường dẫn quỹ đạo bay về (Return Trajectory Aim Line)
@@ -323,7 +346,7 @@ public class BoomerangVisualBridge : MonoBehaviour
         line.startWidth = 0.16f;
         line.endWidth = 0.04f;
         line.sortingOrder = 41; // Nằm sau Trail và Core
-        line.material = new Material(Shader.Find("Sprites/Default"));
+        line.material = mat;
         line.enabled = false;
 
         var visual = new BoomerangVisualItem
@@ -395,12 +418,17 @@ public class BoomerangVisualBridge : MonoBehaviour
             return item;
         }
 
+        return CreateRing();
+    }
+
+    private CatchRingEffect CreateRing()
+    {
         EnsureSprites(CustomBoomerangSprite);
 
         var root = new GameObject("Boomerang_CatchRing");
         root.transform.SetParent(transform);
         var rend = root.AddComponent<SpriteRenderer>();
-        rend.sprite = _ringSprite;
+        rend.sprite = SharedVisualAssets.RingSprite;
         rend.sortingOrder = 55;
 
         return new CatchRingEffect
@@ -416,57 +444,6 @@ public class BoomerangVisualBridge : MonoBehaviour
         {
             _boomerangSprite = LoadBoomerangSprite(customSprite);
         }
-
-        if (_glowSprite != null && _ringSprite != null) return;
-
-        int size = 64;
-        float center = size * 0.5f;
-
-        // 1. Tạo Sprite Radial Glow (32x32)
-        int glowSize = 32;
-        var glowTex = new Texture2D(glowSize, glowSize, TextureFormat.RGBA32, false);
-        glowTex.filterMode = FilterMode.Bilinear;
-        float gCenter = glowSize * 0.5f;
-
-        for (int y = 0; y < glowSize; y++)
-        for (int x = 0; x < glowSize; x++)
-        {
-            float dx = (x - gCenter) / gCenter;
-            float dy = (y - gCenter) / gCenter;
-            float d = Mathf.Sqrt(dx * dx + dy * dy);
-            float alpha = Mathf.Clamp01(1f - d);
-            alpha = Mathf.Pow(alpha, 2f);
-            glowTex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-        }
-        glowTex.Apply();
-        _glowSprite = Sprite.Create(glowTex, new Rect(0, 0, glowSize, glowSize), new Vector2(0.5f, 0.5f), glowSize);
-
-        // 2. Tạo Sprite Ring (64x64) cho hiệu ứng sóng Shockwave
-        var ringTex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        ringTex.filterMode = FilterMode.Bilinear;
-        for (int y = 0; y < size; y++)
-        for (int x = 0; x < size; x++)
-        {
-            float dx = (x - center) / center;
-            float dy = (y - center) / center;
-            float d = Mathf.Sqrt(dx * dx + dy * dy);
-            float ringWidth = 0.12f;
-            float inner = 0.78f;
-            float outer = inner + ringWidth;
-
-            if (d >= inner && d <= outer)
-            {
-                float mid = (inner + outer) * 0.5f;
-                float edge = 1f - Mathf.Abs(d - mid) / (ringWidth * 0.5f);
-                ringTex.SetPixel(x, y, new Color(1f, 1f, 1f, edge));
-            }
-            else
-            {
-                ringTex.SetPixel(x, y, Color.clear);
-            }
-        }
-        ringTex.Apply();
-        _ringSprite = Sprite.Create(ringTex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
     }
 
     /// <summary>

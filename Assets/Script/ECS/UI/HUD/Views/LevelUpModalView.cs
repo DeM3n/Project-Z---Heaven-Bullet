@@ -115,11 +115,14 @@ public class LevelUpModalView
         _panelObj.SetActive(false);
     }
 
-    public void Show(List<PerkOptionData> options, int rerollsRemaining)
+    public void Show(List<PerkOptionData> options, int rerollsRemaining, string title = null, string subtitle = null)
     {
         _currentOptions.Clear();
         _currentOptions.AddRange(options);
         _rerollsRemaining = rerollsRemaining;
+
+        if (_titleText != null) _titleText.text = title ?? GameLocalization.LevelUpHeader;
+        if (_subText != null) _subText.text = subtitle ?? GameLocalization.LevelUpSubtitle;
 
         UpdateRerollButtonUI();
         RenderCards();
@@ -151,10 +154,10 @@ public class LevelUpModalView
         UpdateRerollButtonUI();
     }
 
-    public void UpdateLanguage(List<PerkOptionData> refreshedOptions)
+    public void UpdateLanguage(List<PerkOptionData> refreshedOptions, string title = null, string subtitle = null)
     {
-        if (_titleText != null) _titleText.text = GameLocalization.LevelUpHeader;
-        if (_subText != null) _subText.text = GameLocalization.LevelUpSubtitle;
+        if (_titleText != null) _titleText.text = title ?? GameLocalization.LevelUpHeader;
+        if (_subText != null) _subText.text = subtitle ?? GameLocalization.LevelUpSubtitle;
 
         UpdateRerollButtonUI();
 

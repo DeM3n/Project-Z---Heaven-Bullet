@@ -49,12 +49,12 @@ public partial struct PetalBurstSkillCastSystem : ISystem
                 state.EntityManager.AddComponent<PetalBurstSkillTag>(skillEntity);
                 state.EntityManager.AddComponentData(skillEntity, new SkillOwnerData { Owner = playerEntity });
 
-                // Mặc định khởi tạo Level 1 để test và sẵn sàng kích hoạt
+                // Mặc định khởi tạo Level 0 (chưa mở khóa)
                 state.EntityManager.AddComponentData(skillEntity, new SkillRuntimeData
                 {
                     Cooldown = 3.5f,
                     Timer = 0.5f,
-                    Level = 1,
+                    Level = 0,
                     SkillId = "PetalBurst"
                 });
 

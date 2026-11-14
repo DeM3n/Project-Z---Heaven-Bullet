@@ -449,40 +449,9 @@ public class ElectricVisualBridge : MonoBehaviour
 
     private static void EnsureMaterialsAndSprites()
     {
-        if (_coreMaterial != null && _glowMaterial != null && _flashSprite != null) return;
-
-        Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                        ?? Shader.Find("Sprites/Default")
-                        ?? Shader.Find("Unlit/Color");
-
-        _coreMaterial = new Material(shader) { name = "ElectricCore_Mat" };
-        _glowMaterial = new Material(shader) { name = "ElectricGlow_Mat" };
-
-        // Tạo Texture đĩa sáng phát quang tròn mịn cho Impact Flash
-        int size = 64;
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
-        {
-            filterMode = FilterMode.Bilinear,
-            wrapMode = TextureWrapMode.Clamp
-        };
-
-        float center = (size - 1) * 0.5f;
-        float radius = center;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                float t = Mathf.Clamp01(dist / radius);
-                // Radial decay mượt mà
-                float alpha = Mathf.Pow(1f - t, 2.2f);
-                tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-            }
-        }
-        tex.Apply();
-
-        _flashSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+        _coreMaterial = SharedVisualAssets.SpriteUnlitMaterial;
+        _glowMaterial = SharedVisualAssets.SpriteUnlitMaterial;
+        _flashSprite = SharedVisualAssets.CircleSprite;
     }
 
     private void SetupSparkParticleSystem()

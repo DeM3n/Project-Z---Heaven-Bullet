@@ -7,6 +7,28 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct SpawnSystem : ISystem
 {
+    /// <summary>
+    /// Hệ số điều chỉnh số lượng quái xuất hiện toàn game (mặc định giảm 10% = 0.90f theo yêu cầu cân bằng).
+    /// </summary>
+    public const float ENEMY_SPAWN_COUNT_MULTIPLIER = 0.90f;
+
+    /// <summary>
+    /// Giảm số lượng quái xuất hiện 10% (ENEMY_SPAWN_COUNT_MULTIPLIER = 0.90f).
+    /// Áp dụng thuật toán làm tròn ngẫu nhiên (Stochastic / Probabilistic Rounding):
+    /// Giữ nguyên kỳ vọng toán học (Mathematical Expectation) chính xác 100% (-10% số quái)
+    /// cho cả các số lượng nhỏ (1, 2, 3...) lẫn các đợt bão quái lớn.
+    /// </summary>
+    [BurstCompile]
+    public static int ScaleSpawnCount(int baseCount, ref Unity.Mathematics.Random rng, float multiplier = ENEMY_SPAWN_COUNT_MULTIPLIER)
+    {
+        if (baseCount <= 0) return 0;
+        float target = baseCount * multiplier;
+        int floor = (int)math.floor(target);
+        float frac = target - floor;
+        int result = floor + ((frac > 0f && rng.NextFloat() < frac) ? 1 : 0);
+        return math.max(0, result);
+    }
+
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<PlayerTag>();
@@ -264,6 +286,9 @@ public partial struct SpawnSystem : ISystem
                 countToSpawn = 16 + extra; // 16 đến 24 quái mỗi đợt 0.4s
             }
 
+            // Áp dụng giảm 10% số lượng quái xuất hiện theo thuật toán stochastic rounding
+            countToSpawn = ScaleSpawnCount(countToSpawn, ref spawner.ValueRW.Rng);
+
             spawner.ValueRW.Timer = spawnInterval;
             float hpMultiplier = (1.0f + timeMinutes * 0.30f) * (1.0f + math.max(0, playerLevel - 1) * 0.05f);
 
@@ -399,8 +424,8 @@ public partial struct SpawnSystem : ISystem
     {
         if (minute == 3)
         {
-            // Phút 3: 16 quái bao vây (10 Chasers + 6 Bombers) + 1 Elite Tank
-            int total = 16;
+            // Phút 3: 16 quái bao vây (10 Chasers + 6 Bombers) + 1 Elite Tank -> Giảm 10% còn ~14 quái
+            int total = ScaleSpawnCount(16, ref rng);
             for (int i = 0; i < total; i++)
             {
                 float angle = (i / (float)total) * math.PI * 2f + rng.NextFloat(-0.06f, 0.06f);
@@ -421,8 +446,8 @@ public partial struct SpawnSystem : ISystem
         }
         else if (minute == 6)
         {
-            // Phút 6: 14 Shooters bắn tỉa vòng ngoài + 10 Bombers áp sát vòng trong + 1 Elite Shooter
-            int shooterCount = 14;
+            // Phút 6: 14 Shooters bắn tỉa vòng ngoài + 10 Bombers áp sát vòng trong + 1 Elite Shooter -> Giảm 10%
+            int shooterCount = ScaleSpawnCount(14, ref rng);
             for (int i = 0; i < shooterCount; i++)
             {
                 float angle = (i / (float)shooterCount) * math.PI * 2f + rng.NextFloat(-0.05f, 0.05f);
@@ -431,7 +456,7 @@ public partial struct SpawnSystem : ISystem
                 SpawnMegaEnemy(ref ecb, shooterPrefab, pos, hpMultiplier, 100f);
             }
 
-            int innerCount = 10;
+            int innerCount = ScaleSpawnCount(10, ref rng);
             for (int i = 0; i < innerCount; i++)
             {
                 float angle = (i / (float)innerCount) * math.PI * 2f + rng.NextFloat(-0.08f, 0.08f);
@@ -450,8 +475,8 @@ public partial struct SpawnSystem : ISystem
         }
         else // minute == 9
         {
-            // Phút 9: 24 quái đủ mọi chủng loại + 2 Super Elite Bosses ở 2 hướng đối diện
-            int count = 24;
+            // Phút 9: 24 quái đủ mọi chủng loại + 2 Super Elite Bosses ở 2 hướng đối diện -> Giảm 10%
+            int count = ScaleSpawnCount(24, ref rng);
             for (int i = 0; i < count; i++)
             {
                 float angle = (i / (float)count) * math.PI * 2f + rng.NextFloat(-0.05f, 0.05f);
@@ -496,17 +521,17 @@ public partial struct SpawnSystem : ISystem
         float baseHp;
         if (minute == 3)
         {
-            countToSpawn = rng.NextInt(4, 7);
+            countToSpawn = ScaleSpawnCount(rng.NextInt(4, 7), ref rng);
             baseHp = 60f;
         }
         else if (minute == 6)
         {
-            countToSpawn = rng.NextInt(5, 8);
+            countToSpawn = ScaleSpawnCount(rng.NextInt(5, 8), ref rng);
             baseHp = 100f;
         }
         else
         {
-            countToSpawn = rng.NextInt(7, 11);
+            countToSpawn = ScaleSpawnCount(rng.NextInt(7, 11), ref rng);
             baseHp = 180f;
         }
 
@@ -571,8 +596,8 @@ public partial struct SpawnSystem : ISystem
         {
             if (surgeIndex == 1)
             {
-                // Giây 20: 10 Bombers & Chargers từ 2 hướng đối diện kẹp lại
-                int count = 10;
+                // Giây 20: 10 Bombers & Chargers từ 2 hướng đối diện kẹp lại -> Giảm 10%
+                int count = ScaleSpawnCount(10, ref rng);
                 float baseDir = rng.NextFloat(0f, math.PI);
                 for (int i = 0; i < count; i++)
                 {
@@ -589,8 +614,8 @@ public partial struct SpawnSystem : ISystem
             }
             else // surgeIndex == 2 (tại giây 40)
             {
-                // Giây 40: Vòng vây 12 Chasers + 1 Elite Tank
-                int count = 12;
+                // Giây 40: Vòng vây 12 Chasers + 1 Elite Tank -> Giảm 10%
+                int count = ScaleSpawnCount(12, ref rng);
                 for (int i = 0; i < count; i++)
                 {
                     float angle = (i / (float)count) * math.PI * 2f + rng.NextFloat(-0.06f, 0.06f);
@@ -609,8 +634,8 @@ public partial struct SpawnSystem : ISystem
         {
             if (surgeIndex == 1)
             {
-                // Giây 20: 12 Shooters bao vây bán nguyệt + 4 Chargers
-                int count = 12;
+                // Giây 20: 12 Shooters bao vây bán nguyệt + 4 Chargers -> Giảm 10%
+                int count = ScaleSpawnCount(12, ref rng);
                 float centerAngle = rng.NextFloat(0f, math.PI * 2f);
                 for (int i = 0; i < count; i++)
                 {
@@ -620,20 +645,21 @@ public partial struct SpawnSystem : ISystem
                     float3 pos = playerPos + new float3(math.cos(angle) * radius, math.sin(angle) * radius, 0);
                     SpawnMegaEnemy(ref ecb, shooterPrefab, pos, hpMultiplier, 100f);
                 }
-                for (int i = 0; i < 4; i++)
+                int chargerCount = ScaleSpawnCount(4, ref rng);
+                for (int i = 0; i < chargerCount; i++)
                 {
                     float angle = centerAngle + math.PI + rng.NextFloat(-0.4f, 0.4f);
                     float3 pos = playerPos + new float3(math.cos(angle) * 11.5f, math.sin(angle) * 11.5f, 0);
                     Entity p = (chargerPrefab != Entity.Null) ? chargerPrefab : bomberPrefab;
                     SpawnMegaEnemy(ref ecb, p, pos, hpMultiplier, 110f);
                 }
-                wave.MegaWaveRemainingEnemies += count + 4;
-                wave.MegaWaveTotalEnemies += count + 4;
+                wave.MegaWaveRemainingEnemies += count + chargerCount;
+                wave.MegaWaveTotalEnemies += count + chargerCount;
             }
             else // surgeIndex == 2 (tại giây 40)
             {
-                // Giây 40: 14 Bombers + 2 Elite Commanders (1 Tank, 1 Shooter)
-                int count = 14;
+                // Giây 40: 14 Bombers + 2 Elite Commanders (1 Tank, 1 Shooter) -> Giảm 10%
+                int count = ScaleSpawnCount(14, ref rng);
                 for (int i = 0; i < count; i++)
                 {
                     float angle = (i / (float)count) * math.PI * 2f + rng.NextFloat(-0.06f, 0.06f);
@@ -652,8 +678,8 @@ public partial struct SpawnSystem : ISystem
         {
             if (surgeIndex == 1)
             {
-                // Giây 20: 24 quái (Bombers + Chargers) lao nhanh từ mọi phía
-                int count = 24;
+                // Giây 20: 24 quái (Bombers + Chargers) lao nhanh từ mọi phía -> Giảm 10%
+                int count = ScaleSpawnCount(24, ref rng);
                 for (int i = 0; i < count; i++)
                 {
                     float angle = (i / (float)count) * math.PI * 2f + rng.NextFloat(-0.05f, 0.05f);
@@ -667,8 +693,8 @@ public partial struct SpawnSystem : ISystem
             }
             else // surgeIndex == 2 (tại giây 40)
             {
-                // Giây 40: 20 Shooters bao vây khép góc + 2 Super Elite Bosses (HP 2200, 1800)
-                int count = 20;
+                // Giây 40: 20 Shooters bao vây khép góc + 2 Super Elite Bosses (HP 2200, 1800) -> Giảm 10%
+                int count = ScaleSpawnCount(20, ref rng);
                 for (int i = 0; i < count; i++)
                 {
                     float angle = (i / (float)count) * math.PI * 2f + rng.NextFloat(-0.05f, 0.05f);

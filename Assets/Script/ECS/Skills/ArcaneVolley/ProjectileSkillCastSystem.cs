@@ -33,10 +33,12 @@ public partial struct ProjectileSkillCastSystem : ISystem
                      .WithAll<ProjectileSkillTag>()
                      .WithEntityAccess())
         {
+            if (runtime.ValueRO.Level <= 0) continue; // Chưa mở khóa kỹ năng
+
             runtime.ValueRW.Timer -= dt;
             if (runtime.ValueRO.Timer > 0f) continue;
 
-            int level = math.max(1, runtime.ValueRO.Level);
+            int level = runtime.ValueRO.Level;
             float scaledCooldown = runtime.ValueRO.Cooldown * math.pow(0.88f, level - 1);
             runtime.ValueRW.Timer = scaledCooldown;
 

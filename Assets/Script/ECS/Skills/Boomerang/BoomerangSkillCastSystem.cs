@@ -53,12 +53,12 @@ public partial struct BoomerangSkillCastSystem : ISystem
                 state.EntityManager.AddComponent<BoomerangSkillTag>(skillEntity);
                 state.EntityManager.AddComponentData(skillEntity, new SkillOwnerData { Owner = playerEntity });
                 
-                // Mặc định khởi tạo Level 1
+                // Mặc định khởi tạo Level 0 (chưa mở khóa)
                 state.EntityManager.AddComponentData(skillEntity, new SkillRuntimeData
                 {
                     Cooldown = 8.1f,
                     Timer = 0.5f,
-                    Level = 1,
+                    Level = 0,
                     SkillId = default
                 });
 

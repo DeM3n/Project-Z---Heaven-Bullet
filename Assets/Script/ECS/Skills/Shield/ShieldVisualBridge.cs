@@ -30,7 +30,6 @@ public class ShieldVisualBridge : MonoBehaviour
 
     private float _pulseTime;
     private float _blockFlashTimer = 0f;
-    private static Sprite _circleSprite;
 
     // Pool quản lý các vụ nổ vỡ khiên (Shatter Effects)
     private readonly List<ShieldShatterEffect> _shatterPool = new List<ShieldShatterEffect>();
@@ -50,6 +49,19 @@ public class ShieldVisualBridge : MonoBehaviour
     {
         InitECS();
         CreateBarrierHierarchy();
+        PrewarmPools();
+    }
+
+    private void PrewarmPools()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            var go = new GameObject($"ShieldShatter_{i}");
+            go.transform.SetParent(transform);
+            var effect = go.AddComponent<ShieldShatterEffect>();
+            go.SetActive(false);
+            _shatterPool.Add(effect);
+        }
     }
 
     private bool InitECS()
@@ -86,10 +98,9 @@ public class ShieldVisualBridge : MonoBehaviour
         _barrierRoot = new GameObject("AegisBarrierRoot");
         _barrierRoot.transform.SetParent(transform, false);
 
-        var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                     ?? Shader.Find("Sprites/Default");
-        Material lineMat = (shader != null) ? new Material(shader) : null;
-        Material spriteMat = (shader != null) ? new Material(shader) : null;
+        Material sharedMat = SharedVisualAssets.SpriteUnlitMaterial;
+        Material lineMat = sharedMat;
+        Material spriteMat = sharedMat;
 
         // 1. LineRenderer lục giác ngoài (Outer Hexagon)
         var outerObj = new GameObject("OuterHex");
@@ -119,7 +130,7 @@ public class ShieldVisualBridge : MonoBehaviour
         var discObj = new GameObject("GlowDisc");
         discObj.transform.SetParent(_barrierRoot.transform, false);
         _glowDisc = discObj.AddComponent<SpriteRenderer>();
-        _glowDisc.sprite = GetCircleSprite();
+        _glowDisc.sprite = SharedVisualAssets.CircleSprite;
         _glowDisc.sortingOrder = 6;
         _glowDisc.color = new Color(0.1f, 0.9f, 1f, 0.18f);
         if (spriteMat != null) _glowDisc.material = spriteMat;
@@ -139,7 +150,7 @@ public class ShieldVisualBridge : MonoBehaviour
         var nodeObj = new GameObject(name);
         nodeObj.transform.SetParent(_barrierRoot.transform, false);
         var sr = nodeObj.AddComponent<SpriteRenderer>();
-        sr.sprite = GetCircleSprite();
+        sr.sprite = SharedVisualAssets.CircleSprite;
         sr.sortingOrder = 9;
         sr.color = new Color(0.7f, 1f, 1f, 0.9f);
         nodeObj.transform.localScale = Vector3.one * 0.22f;
@@ -310,40 +321,6 @@ public class ShieldVisualBridge : MonoBehaviour
 
         effect.Setup(position, radius, isExplosion ? 0.50f : 0.30f, isExplosion);
     }
-
-    public static Sprite GetCircleSprite()
-    {
-        if (_circleSprite != null) return _circleSprite;
-
-        int size = 64;
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.filterMode = FilterMode.Bilinear;
-        tex.wrapMode = TextureWrapMode.Clamp;
-
-        float center = (size - 1) * 0.5f;
-        float radius = center;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                float norm = dist / radius;
-                if (norm > 1f)
-                {
-                    tex.SetPixel(x, y, Color.clear);
-                }
-                else
-                {
-                    float alpha = Mathf.SmoothStep(1f, 0f, norm);
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-                }
-            }
-        }
-        tex.Apply();
-        _circleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 64f);
-        return _circleSprite;
-    }
 }
 
 /// <summary>
@@ -365,9 +342,7 @@ public class ShieldShatterEffect : MonoBehaviour
 
     private void Awake()
     {
-        var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                     ?? Shader.Find("Sprites/Default");
-        Material sharedMat = (shader != null) ? new Material(shader) : null;
+        Material sharedMat = SharedVisualAssets.SpriteUnlitMaterial;
 
         // 1. LineRenderer sóng xung kích hình tròn quét rộng
         _outerRing = gameObject.AddComponent<LineRenderer>();
@@ -381,7 +356,7 @@ public class ShieldShatterEffect : MonoBehaviour
         var flashObj = new GameObject("ShatterFlash");
         flashObj.transform.SetParent(transform, false);
         _innerFlash = flashObj.AddComponent<SpriteRenderer>();
-        _innerFlash.sprite = ShieldVisualBridge.GetCircleSprite();
+        _innerFlash.sprite = SharedVisualAssets.CircleSprite;
         _innerFlash.sortingOrder = 9;
         if (sharedMat != null) _innerFlash.material = sharedMat;
 
@@ -391,7 +366,7 @@ public class ShieldShatterEffect : MonoBehaviour
             var shardObj = new GameObject($"Shard_{i}");
             shardObj.transform.SetParent(transform, false);
             var sr = shardObj.AddComponent<SpriteRenderer>();
-            sr.sprite = ShieldVisualBridge.GetCircleSprite();
+            sr.sprite = SharedVisualAssets.CircleSprite;
             sr.sortingOrder = 11;
             shardObj.transform.localScale = new Vector3(0.12f, 0.28f, 1f); // Dạng mảnh nhọn
             if (sharedMat != null) sr.material = sharedMat;

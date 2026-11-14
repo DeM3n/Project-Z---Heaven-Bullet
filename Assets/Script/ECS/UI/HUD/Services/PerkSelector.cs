@@ -75,5 +75,41 @@ public class PerkSelector
 
         return selected;
     }
+
+    /// <summary>
+    /// Lấy danh sách count vũ khí khởi đầu ngẫu nhiên chưa mở khóa (Level == 0) để người chơi lựa chọn.
+    /// </summary>
+    public List<IPerkDefinition> SelectStarterWeapons(EntityManager em, Entity player, int count, HashSet<string> excludedIds = null)
+    {
+        var starterPool = _definitions
+            .Where(p => p.IsWeapon && p.IsAvailable(em, player))
+            .Where(p =>
+            {
+                var opt = p.GetOptionData(em, player);
+                return !opt.IsFusion && opt.Level == 1; // opt.Level == 1 tức hiện tại đang Level 0 (chưa mở khóa)
+            })
+            .ToList();
+
+        if (excludedIds != null && excludedIds.Count > 0)
+        {
+            var filtered = starterPool.Where(p => !excludedIds.Contains(p.PerkId)).ToList();
+            if (filtered.Count >= count)
+            {
+                starterPool = filtered;
+            }
+        }
+
+        var selected = new List<IPerkDefinition>();
+        var poolCopy = new List<IPerkDefinition>(starterPool);
+
+        while (selected.Count < count && poolCopy.Count > 0)
+        {
+            int idx = UnityEngine.Random.Range(0, poolCopy.Count);
+            selected.Add(poolCopy[idx]);
+            poolCopy.RemoveAt(idx);
+        }
+
+        return selected;
+    }
 }
 

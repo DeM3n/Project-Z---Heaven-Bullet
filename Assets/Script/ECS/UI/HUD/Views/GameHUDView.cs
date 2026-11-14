@@ -32,7 +32,6 @@ public class GameHUDView
     private float _currentExpPercent = -1f;
     private int _lastObservedLevel = 1;
     private bool _isLevelingUpWrap = false;
-    private float _expFlashTimer = 0f;
 
     public GameHUDView(Transform canvasParent)
     {
@@ -72,7 +71,6 @@ public class GameHUDView
         _currentExpPercent = -1f;
         _lastObservedLevel = 1;
         _isLevelingUpWrap = false;
-        _expFlashTimer = 0f;
 
         if (_levelBadgeRect != null) _levelBadgeRect.localScale = Vector3.one;
     }
@@ -183,7 +181,6 @@ public class GameHUDView
                 float diff = targetExp - _currentExpPercent;
                 float speed = Mathf.Clamp(diff * 3.5f, 0.45f, 1.8f);
                 _currentExpPercent = Mathf.MoveTowards(_currentExpPercent, targetExp, dt * speed);
-                _expFlashTimer = 0.3f; // Giữ vệt sáng neon trong 0.3s
             }
             else
             {

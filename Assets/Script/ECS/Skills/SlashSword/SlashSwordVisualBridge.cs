@@ -69,6 +69,41 @@ public class SlashSwordVisualBridge : MonoBehaviour
         }
     }
 
+    private void Awake()
+    {
+        PrewarmPools();
+    }
+
+    private void PrewarmPools()
+    {
+        // 1. Pre-warm Trảm Kiếm Trails (4 kiếm)
+        for (int i = 0; i < 4; i++)
+        {
+            var vis = CreateSwordVisual();
+            vis.Trail.Clear();
+            vis.Root.SetActive(false);
+            _freeSwordPool.Add(vis);
+        }
+
+        // 2. Pre-warm Vệt Chém Bán Nguyệt Slash Arcs (12 vệt)
+        for (int i = 0; i < 12; i++)
+        {
+            var go = new GameObject($"SlashArc_{i}");
+            go.transform.SetParent(transform);
+            var effect = go.AddComponent<SlashArcEffect>();
+            go.SetActive(false);
+            _slashArcPool.Add(effect);
+        }
+
+        // 3. Pre-warm Kiếm Khí Sword Waves (8 sóng kiếm)
+        for (int i = 0; i < 8; i++)
+        {
+            var wave = CreateWaveVisual();
+            wave.Root.SetActive(false);
+            _waveVisualPool.Add(wave);
+        }
+    }
+
     private void Start()
     {
         InitECS();
@@ -460,11 +495,7 @@ public class SlashSwordVisualBridge : MonoBehaviour
 
     public static Material GetDefaultTrailMaterial()
     {
-        Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ??
-                        Shader.Find("Sprites/Default") ??
-                        Shader.Find("Unlit/Color");
-        var mat = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
-        return mat;
+        return SharedVisualAssets.SpriteUnlitMaterial;
     }
 }
 

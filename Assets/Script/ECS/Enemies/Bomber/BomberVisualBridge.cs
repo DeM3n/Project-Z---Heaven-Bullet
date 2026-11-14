@@ -22,9 +22,6 @@ public class BomberVisualBridge : MonoBehaviour
     private readonly List<BomberExplosionEffect> _explosionPool = new List<BomberExplosionEffect>();
     private const int INITIAL_POOL_SIZE = 12;
 
-    private static Sprite _circleSprite;
-    private static Sprite _ringSprite;
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
     {
@@ -133,75 +130,6 @@ public class BomberVisualBridge : MonoBehaviour
                 isSuicide ? 0.22f : 0.14f);
         }
     }
-
-    #region --- Procedural Sprites (GPU Texture Generation) ---
-
-    public static Sprite GetCircleSprite()
-    {
-        if (_circleSprite != null) return _circleSprite;
-
-        int size = 64;
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.wrapMode = TextureWrapMode.Clamp;
-        tex.filterMode = FilterMode.Bilinear;
-        float center = size * 0.5f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(center, center)) / center;
-                if (dist > 1.0f)
-                {
-                    tex.SetPixel(x, y, Color.clear);
-                }
-                else
-                {
-                    float ring = Mathf.Sin(dist * Mathf.PI);
-                    float alpha = Mathf.Pow(ring, 1.4f);
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-                }
-            }
-        }
-        tex.Apply();
-        _circleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        return _circleSprite;
-    }
-
-    public static Sprite GetRingSprite()
-    {
-        if (_ringSprite != null) return _ringSprite;
-
-        int size = 128;
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.wrapMode = TextureWrapMode.Clamp;
-        tex.filterMode = FilterMode.Bilinear;
-        float center = size * 0.5f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(center, center)) / center;
-                if (dist > 1.0f || dist < 0.68f)
-                {
-                    tex.SetPixel(x, y, Color.clear);
-                }
-                else
-                {
-                    float normalized = (dist - 0.68f) / (1.0f - 0.68f);
-                    float bell = Mathf.Sin(normalized * Mathf.PI);
-                    float alpha = Mathf.Pow(bell, 1.2f);
-                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-                }
-            }
-        }
-        tex.Apply();
-        _ringSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        return _ringSprite;
-    }
-
-    #endregion
 }
 
 /// <summary>
@@ -223,15 +151,13 @@ public class BomberExplosionEffect : MonoBehaviour
 
     private void Awake()
     {
-        var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                    ?? Shader.Find("Sprites/Default");
-        Material mat = shader != null ? new Material(shader) : null;
+        Material mat = SharedVisualAssets.SpriteUnlitMaterial;
 
         // 1. Vết cháy sém mặt đất (Charred Earth Decal)
         var charObj = new GameObject("CharredGround");
         charObj.transform.SetParent(transform, false);
         _charredGround = charObj.AddComponent<SpriteRenderer>();
-        _charredGround.sprite = BomberVisualBridge.GetCircleSprite();
+        _charredGround.sprite = SharedVisualAssets.CircleSprite;
         _charredGround.sortingOrder = -8;
         if (mat != null) _charredGround.material = mat;
 
@@ -239,7 +165,7 @@ public class BomberExplosionEffect : MonoBehaviour
         var blastObj = new GameObject("InnerBlast");
         blastObj.transform.SetParent(transform, false);
         _innerBlast = blastObj.AddComponent<SpriteRenderer>();
-        _innerBlast.sprite = BomberVisualBridge.GetCircleSprite();
+        _innerBlast.sprite = SharedVisualAssets.CircleSprite;
         _innerBlast.sortingOrder = 9;
         if (mat != null) _innerBlast.material = mat;
 
@@ -247,15 +173,15 @@ public class BomberExplosionEffect : MonoBehaviour
         var ringObj = new GameObject("OuterRing");
         ringObj.transform.SetParent(transform, false);
         _outerRing = ringObj.AddComponent<SpriteRenderer>();
-        _outerRing.sprite = BomberVisualBridge.GetRingSprite();
+        _outerRing.sprite = SharedVisualAssets.RingSprite;
         _outerRing.sortingOrder = 10;
         if (mat != null) _outerRing.material = mat;
 
         // 4. Hệ hạt tàn lửa & khói nổ (Sparks Particle System)
-        InitParticleSystem(shader);
+        InitParticleSystem(mat);
     }
 
-    private void InitParticleSystem(Shader shader)
+    private void InitParticleSystem(Material mat)
     {
         var psObj = new GameObject("SparksParticles");
         psObj.transform.SetParent(transform, false);
@@ -263,11 +189,9 @@ public class BomberExplosionEffect : MonoBehaviour
         _sparksParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var psr = psObj.GetComponent<ParticleSystemRenderer>();
 
-        if (shader != null)
+        if (mat != null)
         {
-            Material pMat = new Material(shader);
-            pMat.mainTexture = BomberVisualBridge.GetCircleSprite().texture;
-            psr.material = pMat;
+            psr.material = mat;
         }
         psr.sortingOrder = 11;
 

@@ -1077,7 +1077,43 @@ public class MainMenuUI : MonoBehaviour
 
         CreateDivider(colObj.transform, accentColor * 0.6f);
 
-        return colObj.transform;
+        // Scroll View chứa danh sách các thẻ Talent
+        var scrollObj = CreateUIObject("CardScroll", colObj.transform);
+        var scrollLe = scrollObj.AddComponent<LayoutElement>();
+        scrollLe.flexibleHeight = 1f;
+        scrollLe.flexibleWidth = 1f;
+
+        var scroll = scrollObj.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 28f;
+
+        var viewport = CreateUIObject("Viewport", scrollObj.transform);
+        SetFullStretch(viewport.GetComponent<RectTransform>());
+        viewport.AddComponent<RectMask2D>();
+        scroll.viewport = viewport.GetComponent<RectTransform>();
+
+        var content = CreateUIObject("Content", viewport.transform);
+        var cRt = content.GetComponent<RectTransform>();
+        cRt.anchorMin = new Vector2(0f, 1f);
+        cRt.anchorMax = new Vector2(1f, 1f);
+        cRt.pivot = new Vector2(0.5f, 1f);
+        cRt.sizeDelta = Vector2.zero;
+        scroll.content = cRt;
+
+        var cvLayout = content.AddComponent<VerticalLayoutGroup>();
+        cvLayout.spacing = 10f;
+        cvLayout.padding = new RectOffset(4, 4, 4, 12);
+        cvLayout.childControlWidth = true;
+        cvLayout.childControlHeight = true;
+        cvLayout.childForceExpandWidth = true;
+        cvLayout.childForceExpandHeight = false;
+
+        var csf = content.AddComponent<ContentSizeFitter>();
+        csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        return content.transform;
     }
 
     private void BuildTalentNodesUI()
@@ -1118,6 +1154,7 @@ public class MainMenuUI : MonoBehaviour
             "atk_apex" => "★",
             // Fortune
             "util_speed" => "SPD",
+            "util_exp" => "EXP",
             "util_pickup" => "MAG",
             "util_drop" => "LUK",
             "util_gold" => "GLD",
@@ -2467,6 +2504,16 @@ public class MainMenuUI : MonoBehaviour
                 else if (cur == 0) shortTag = isVi ? "Chưa mở (+4% Tốc độ/Cấp)" : "Inactive (+4% Speed/Lv)";
                 else if (node.IsMaxed) shortTag = isVi ? "★ TỐI ĐA: +20% Tốc độ chạy" : "★ MAXED: +20% Move Speed";
                 else shortTag = isVi ? $"✦ HIỆN TẠI: +{cur * 4}% Tốc độ chạy" : $"✦ ACTIVE: +{cur * 4}% Move Speed";
+                break;
+
+            case "util_exp":
+                currentBonus = isVi ? $"✦ Cấp {cur}: +{cur * 5}% EXP nhận từ mọi viên ngọc" : $"✦ Current Lv {cur}: +{cur * 5}% EXP Gained from all Orbs";
+                nextBonus = isVi ? $"➤ Cấp {next}: +{next * 5}% EXP (+5%)" : $"➤ Next Lv {next}: +{next * 5}% EXP (+5%)";
+                maxBonus = isVi ? "★ Cảnh giới: +25% Giá trị ngọc EXP" : "★ Max Potential: +25% EXP Value";
+                if (isLocked) shortTag = isVi ? "🔒 Khóa" : "🔒 Locked";
+                else if (cur == 0) shortTag = isVi ? "Chưa mở (+5% EXP/Cấp)" : "Inactive (+5% EXP/Lv)";
+                else if (node.IsMaxed) shortTag = isVi ? "★ TỐI ĐA: +25% EXP nhận" : "★ MAXED: +25% EXP Gained";
+                else shortTag = isVi ? $"✦ HIỆN TẠI: +{cur * 5}% EXP nhận" : $"✦ ACTIVE: +{cur * 5}% EXP Gained";
                 break;
 
             case "util_pickup":

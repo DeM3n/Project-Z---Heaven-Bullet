@@ -10,7 +10,7 @@ public class SkillAuthoring : MonoBehaviour
 
     [Header("Chỉ số chung mọi skill")]
     public string SkillId = "skill_new";
-    public int Level = 1;
+    public int Level = 0;
     public float Cooldown = 1f;
 
     class Baker : Baker<SkillAuthoring>

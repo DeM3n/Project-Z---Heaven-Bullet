@@ -84,6 +84,20 @@ public class PickupVisualBridge : MonoBehaviour
     private void Awake()
     {
         GenerateProceduralSprites();
+        PrewarmPool();
+    }
+
+    private void PrewarmPool()
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            var go = new GameObject("[PickupVisual]");
+            go.transform.SetParent(transform);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sortingOrder = 30;
+            go.SetActive(false);
+            _pool.Add(new VisualItem { Root = go, Renderer = sr });
+        }
     }
 
     private void Start()
