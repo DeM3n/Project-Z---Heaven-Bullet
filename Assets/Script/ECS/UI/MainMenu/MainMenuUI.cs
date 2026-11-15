@@ -57,6 +57,8 @@ public class MainMenuUI : MonoBehaviour
     private Text _settingsMuteBtnText;
     private Button _quitBtn;
     private Text _quitBtnText;
+    private Text _homeSubtitleText;
+    private Text _homeHintText;
 
     // --- Codex State & UI 2.0 ---
     private CodexDatabase.EntryCategory _codexCategory = CodexDatabase.EntryCategory.Enemies;
@@ -355,6 +357,8 @@ public class MainMenuUI : MonoBehaviour
         titleRt.pivot = new Vector2(0f, 0.5f);
         titleRt.anchoredPosition = new Vector2(30f, 0f);
         titleRt.sizeDelta = new Vector2(480f, 50f);
+        // Ở màn hình Home đã có Logo trung tâm lớn nên mặc định ẩn ở Home để tránh trùng lặp
+        _titleText.gameObject.SetActive(false);
 
         // Tiền Tệ Linh Thạch (Spirit Stones)
         var curObj = CreateUIObject("CurrencyDisplay", headerObj.transform);
@@ -397,54 +401,182 @@ public class MainMenuUI : MonoBehaviour
     }
 
     // =========================================================================
-    // HOME PANEL (CÁC NÚT ĐIỀU HƯỚNG CHÍNH)
+    // HOME PANEL (LAYOUT PHƯƠNG ÁN 1: COMPACT SLATE GRID & LOGO BANNER)
     // =========================================================================
     private void BuildHomePanel(Transform parent)
     {
         _homePanel = CreateUIObject("HomePanel", parent);
-        SetFullStretch(_homePanel.GetComponent<RectTransform>(), 0f, 90f);
+        SetFullStretch(_homePanel.GetComponent<RectTransform>(), 0f, 75f);
 
-        // Center Container
-        var menuContainer = CreateUIObject("MenuButtons", _homePanel.transform);
-        var containerRt = menuContainer.GetComponent<RectTransform>();
-        containerRt.anchorMin = new Vector2(0.5f, 0.5f);
-        containerRt.anchorMax = new Vector2(0.5f, 0.5f);
-        containerRt.sizeDelta = new Vector2(460f, 520f);
-        containerRt.anchoredPosition = new Vector2(0f, -20f);
+        // Center Wrapper bao trọn toàn bộ Logo + Floating Menu Card + Shortcut Hints
+        // Phóng to lên 720px để cân đối hoàn hảo với màn hình 16:9 (1920x1080), không bị dư space
+        var centerWrapper = CreateUIObject("CenterWrapper", _homePanel.transform);
+        var wrapperRt = centerWrapper.GetComponent<RectTransform>();
+        wrapperRt.anchorMin = new Vector2(0.5f, 0.5f);
+        wrapperRt.anchorMax = new Vector2(0.5f, 0.5f);
+        wrapperRt.pivot = new Vector2(0.5f, 0.5f);
+        wrapperRt.anchoredPosition = new Vector2(0f, -5f);
+        wrapperRt.sizeDelta = new Vector2(720f, 420f);
 
-        var layout = menuContainer.AddComponent<VerticalLayoutGroup>();
-        layout.spacing = 18f;
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlWidth = true;
-        layout.childControlHeight = false;
+        var wrapperLayout = centerWrapper.AddComponent<VerticalLayoutGroup>();
+        wrapperLayout.spacing = 18f;
+        wrapperLayout.childAlignment = TextAnchor.UpperCenter;
+        wrapperLayout.childControlWidth = true;
+        wrapperLayout.childControlHeight = true;
+        wrapperLayout.childForceExpandWidth = true;
+        wrapperLayout.childForceExpandHeight = false;
 
-        // 1. Play Button
-        _playBtn = CreateMenuButton("PlayBtn", menuContainer.transform, "⚔️  VÀO TRẬN (PLAY)", new Color(0.95f, 0.35f, 0.2f, 1f), 65f, OnPlayClicked);
+        // 1. Logo & Subtitle Banner (Chiều cao 96px, font chữ to bản uy lực)
+        var titleBanner = CreateUIObject("TitleBanner", centerWrapper.transform);
+        var tbLe = titleBanner.AddComponent<LayoutElement>();
+        tbLe.preferredHeight = 96f;
+        tbLe.minHeight = 96f;
+        tbLe.flexibleWidth = 1f;
+        tbLe.flexibleHeight = 0f;
+
+        var tbLayout = titleBanner.AddComponent<VerticalLayoutGroup>();
+        tbLayout.spacing = 6f;
+        tbLayout.childAlignment = TextAnchor.MiddleCenter;
+        tbLayout.childControlWidth = true;
+        tbLayout.childControlHeight = true;
+        tbLayout.childForceExpandWidth = true;
+        tbLayout.childForceExpandHeight = false;
+
+        var mainTitleText = CreateLabel("MainTitle", titleBanner.transform, "HEAVEN BULLET", 52, FontStyle.Bold, new Color(1f, 0.88f, 0.42f, 1f));
+        mainTitleText.alignment = TextAnchor.MiddleCenter;
+        mainTitleText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        mainTitleText.verticalOverflow = VerticalWrapMode.Overflow;
+        var mtLe = mainTitleText.gameObject.AddComponent<LayoutElement>();
+        mtLe.preferredHeight = 60f;
+        mtLe.minHeight = 60f;
+        mtLe.flexibleWidth = 1f;
+        mtLe.flexibleHeight = 0f;
+
+        var mtOutline = mainTitleText.gameObject.AddComponent<Outline>();
+        mtOutline.effectColor = new Color(0.55f, 0.22f, 0.05f, 0.95f);
+        mtOutline.effectDistance = new Vector2(2.5f, -2.5f);
+        var mtShadow = mainTitleText.gameObject.AddComponent<Shadow>();
+        mtShadow.effectColor = new Color(0f, 0f, 0f, 0.95f);
+        mtShadow.effectDistance = new Vector2(3.5f, -3.5f);
+
+        _homeSubtitleText = CreateLabel("SubTitle", titleBanner.transform, "PROJECT Z  •  TIÊN HIỆP BẮN ĐẠN SINH TỒN", 16, FontStyle.Bold, new Color(0.48f, 0.82f, 1f, 0.92f));
+        _homeSubtitleText.alignment = TextAnchor.MiddleCenter;
+        _homeSubtitleText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        _homeSubtitleText.verticalOverflow = VerticalWrapMode.Overflow;
+        var subLe = _homeSubtitleText.gameObject.AddComponent<LayoutElement>();
+        subLe.preferredHeight = 28f;
+        subLe.minHeight = 28f;
+        subLe.flexibleWidth = 1f;
+        subLe.flexibleHeight = 0f;
+
+        var subOutline = _homeSubtitleText.gameObject.AddComponent<Outline>();
+        subOutline.effectColor = new Color(0.06f, 0.15f, 0.3f, 0.85f);
+        subOutline.effectDistance = new Vector2(1.5f, -1.5f);
+
+        // 2. Floating Menu Card (Khung Menu Kính Mờ Bo Góc Rộng 720px - Chiều cao 214px)
+        var menuCard = CreateUIObject("MenuCard", centerWrapper.transform);
+        var mcLe = menuCard.AddComponent<LayoutElement>();
+        mcLe.preferredHeight = 214f;
+        mcLe.minHeight = 214f;
+        mcLe.flexibleWidth = 1f;
+        mcLe.flexibleHeight = 0f;
+
+        var cardImg = menuCard.AddComponent<Image>();
+        cardImg.sprite = _cardBgSprite;
+        cardImg.type = Image.Type.Sliced;
+        cardImg.color = new Color(0.08f, 0.11f, 0.17f, 0.94f);
+
+        var cardOutline = menuCard.AddComponent<Outline>();
+        cardOutline.effectColor = new Color(0.24f, 0.38f, 0.62f, 0.7f);
+        cardOutline.effectDistance = new Vector2(1.8f, -1.8f);
+
+        var cardShadow = menuCard.AddComponent<Shadow>();
+        cardShadow.effectColor = new Color(0f, 0f, 0f, 0.65f);
+        cardShadow.effectDistance = new Vector2(0f, -8f);
+
+        var cardLayout = menuCard.AddComponent<VerticalLayoutGroup>();
+        cardLayout.padding = new RectOffset(20, 20, 16, 16);
+        cardLayout.spacing = 10f;
+        cardLayout.childAlignment = TextAnchor.UpperCenter;
+        cardLayout.childControlWidth = true;
+        cardLayout.childControlHeight = true;
+        cardLayout.childForceExpandWidth = true;
+        cardLayout.childForceExpandHeight = false;
+
+        // Hàng 1: Nút lớn VÀO TRẬN (PLAY) - To bản, cao 62px, font 24
+        _playBtn = CreatePlayButton("PlayBtn", menuCard.transform, "⚔️  VÀO TRẬN (PLAY)", OnPlayClicked);
         _playBtnText = _playBtn.GetComponentInChildren<Text>();
-        _playBtnText.fontSize = 24;
 
-        // 2. Codex Button
-        _codexBtn = CreateMenuButton("CodexBtn", menuContainer.transform, "📖  BÁCH KHOA TOÀN THƯ (CODEX)", new Color(0.2f, 0.55f, 0.85f, 1f), 56f, () => SwitchState(MenuState.Codex));
-        _codexBtnText = _codexBtn.GetComponentInChildren<Text>();
+        // Hàng 2: Grid 2 nút (Thiên Phú & Bách Khoa) - Cao 52px, font 17
+        var row1 = CreateUIObject("Row1_Progression", menuCard.transform);
+        var r1Le = row1.AddComponent<LayoutElement>();
+        r1Le.preferredHeight = 52f;
+        r1Le.minHeight = 52f;
+        r1Le.flexibleWidth = 1f;
+        r1Le.flexibleHeight = 0f;
 
-        // 3. Talent Tree Button
-        _talentsBtn = CreateMenuButton("TalentsBtn", menuContainer.transform, "⚡  CÂY THIÊN PHÚ (TALENTS)", new Color(0.85f, 0.65f, 0.2f, 1f), 56f, () => SwitchState(MenuState.Talents));
+        var r1Layout = row1.AddComponent<HorizontalLayoutGroup>();
+        r1Layout.spacing = 12f;
+        r1Layout.childAlignment = TextAnchor.MiddleCenter;
+        r1Layout.childControlWidth = true;
+        r1Layout.childControlHeight = true;
+        r1Layout.childForceExpandWidth = true;
+        r1Layout.childForceExpandHeight = true;
+
+        _talentsBtn = CreateGridMenuButton("TalentsBtn", row1.transform, "⚡  CÂY THIÊN PHÚ", 
+            new Color(0.13f, 0.18f, 0.28f, 0.95f), new Color(0.85f, 0.70f, 0.25f, 0.65f), 17, 52f, 
+            () => SwitchState(MenuState.Talents));
         _talentsBtnText = _talentsBtn.GetComponentInChildren<Text>();
 
-        // 4. Settings Button
-        _settingsBtn = CreateMenuButton("SettingsBtn", menuContainer.transform, "⚙️  CÀI ĐẶT (SETTINGS)", new Color(0.35f, 0.45f, 0.6f, 1f), 52f, () => SwitchState(MenuState.Settings));
+        _codexBtn = CreateGridMenuButton("CodexBtn", row1.transform, "📖  BÁCH KHOA TOÀN THƯ", 
+            new Color(0.13f, 0.18f, 0.28f, 0.95f), new Color(0.35f, 0.60f, 0.90f, 0.65f), 17, 52f, 
+            () => SwitchState(MenuState.Codex));
+        _codexBtnText = _codexBtn.GetComponentInChildren<Text>();
+
+        // Hàng 3: Grid 2 nút (Cài Đặt & Thoát) - Cao 46px, font 16
+        var row2 = CreateUIObject("Row2_System", menuCard.transform);
+        var r2Le = row2.AddComponent<LayoutElement>();
+        r2Le.preferredHeight = 46f;
+        r2Le.minHeight = 46f;
+        r2Le.flexibleWidth = 1f;
+        r2Le.flexibleHeight = 0f;
+
+        var r2Layout = row2.AddComponent<HorizontalLayoutGroup>();
+        r2Layout.spacing = 12f;
+        r2Layout.childAlignment = TextAnchor.MiddleCenter;
+        r2Layout.childControlWidth = true;
+        r2Layout.childControlHeight = true;
+        r2Layout.childForceExpandWidth = true;
+        r2Layout.childForceExpandHeight = true;
+
+        _settingsBtn = CreateGridMenuButton("SettingsBtn", row2.transform, "⚙️  CÀI ĐẶT", 
+            new Color(0.11f, 0.15f, 0.22f, 0.92f), new Color(0.35f, 0.45f, 0.60f, 0.5f), 16, 46f, 
+            () => SwitchState(MenuState.Settings));
         _settingsBtnText = _settingsBtn.GetComponentInChildren<Text>();
 
-        // 5. Quit Button
-        _quitBtn = CreateMenuButton("QuitBtn", menuContainer.transform, "🚪  THOÁT (QUIT)", new Color(0.25f, 0.3f, 0.4f, 1f), 48f, () =>
-        {
+        _quitBtn = CreateGridMenuButton("QuitBtn", row2.transform, "🚪  THOÁT TRÒ CHƠI", 
+            new Color(0.14f, 0.12f, 0.16f, 0.92f), new Color(0.55f, 0.25f, 0.30f, 0.5f), 16, 46f, 
+            () =>
+            {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+                UnityEditor.EditorApplication.isPlaying = false;
 #else
-            Application.Quit();
+                Application.Quit();
 #endif
-        });
+            });
         _quitBtnText = _quitBtn.GetComponentInChildren<Text>();
+
+        // 3. Shortcut Hints Footer (Chiều cao 26px bên dưới Menu Card)
+        _homeHintText = CreateLabel("ShortcutHints", centerWrapper.transform, 
+            "Phím tắt: [SPACE] Vào trận  •  [L] Đổi ngôn ngữ  •  [ESC] Quay lại", 14, FontStyle.Bold, new Color(0.65f, 0.75f, 0.88f, 0.7f));
+        _homeHintText.alignment = TextAnchor.MiddleCenter;
+        _homeHintText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        _homeHintText.verticalOverflow = VerticalWrapMode.Overflow;
+        var hintLe = _homeHintText.gameObject.AddComponent<LayoutElement>();
+        hintLe.preferredHeight = 26f;
+        hintLe.minHeight = 26f;
+        hintLe.flexibleWidth = 1f;
+        hintLe.flexibleHeight = 0f;
     }
 
     // =========================================================================
@@ -1863,6 +1995,12 @@ public class MainMenuUI : MonoBehaviour
         _talentsPanel.SetActive(_currentState == MenuState.Talents);
         _settingsPanel.SetActive(_currentState == MenuState.Settings);
 
+        // Ở màn hình Home thì ẩn tiêu đề góc trái trên Header để tránh trùng với Logo trung tâm
+        if (_titleText != null)
+        {
+            _titleText.gameObject.SetActive(_currentState != MenuState.Home);
+        }
+
         HideTalentTooltip();
 
         if (_currentState == MenuState.Codex)
@@ -1902,11 +2040,20 @@ public class MainMenuUI : MonoBehaviour
     {
         bool isVi = GameLocalization.CurrentLanguage == GameLanguage.Vietnamese;
 
-        _playBtnText.text = isVi ? "⚔️  VÀO TRẬN (PLAY)" : "⚔️  START EXPEDITION (PLAY)";
-        _codexBtnText.text = isVi ? "📖  BÁCH KHOA TOÀN THƯ (CODEX)" : "📖  ANCIENT CODEX (LORE & STATS)";
-        _talentsBtnText.text = isVi ? "⚡  CÂY THIÊN PHÚ (TALENTS)" : "⚡  TALENT TREE (UPGRADES)";
-        _settingsBtnText.text = isVi ? "⚙️  CÀI ĐẶT (SETTINGS)" : "⚙️  SETTINGS";
-        _quitBtnText.text = isVi ? "🚪  THOÁT (QUIT)" : "🚪  QUIT GAME";
+        _playBtnText.text = isVi ? "⚔️  VÀO TRẬN (PLAY)" : "⚔️  ENTER BATTLE (PLAY)";
+        _codexBtnText.text = isVi ? "📖  BÁCH KHOA" : "📖  CODEX";
+        _talentsBtnText.text = isVi ? "⚡  CÂY THIÊN PHÚ" : "⚡  TALENT TREE";
+        _settingsBtnText.text = isVi ? "⚙️  CÀI ĐẶT" : "⚙️  SETTINGS";
+        _quitBtnText.text = isVi ? "🚪  THOÁT" : "🚪  QUIT";
+
+        if (_homeSubtitleText != null)
+        {
+            _homeSubtitleText.text = isVi ? "PROJECT Z  •  TIÊN HIỆP BẮN ĐẠN SINH TỒN" : "PROJECT Z  •  BULLET HEAVEN ROGUELITE";
+        }
+        if (_homeHintText != null)
+        {
+            _homeHintText.text = isVi ? "Phím tắt: [SPACE] Vào trận  •  [L] Đổi ngôn ngữ  •  [ESC] Quay lại" : "Shortcuts: [SPACE] Enter Battle  •  [L] Toggle Language  •  [ESC] Back";
+        }
 
         _tabEnemiesBtn.GetComponentInChildren<Text>().text = isVi ? "QUÁI VẬT (BESTIARY)" : "DEMONIC BEASTS";
         _tabSkillsBtn.GetComponentInChildren<Text>().text = isVi ? "VŨ KHÍ & ĐẠN (WEAPONS)" : "WEAPONS & SKILLS";
@@ -1987,6 +2134,44 @@ public class MainMenuUI : MonoBehaviour
         txt.color = Color.white;
         txt.alignment = TextAnchor.MiddleCenter;
         txt.text = label;
+
+        return btn;
+    }
+
+    private Button CreatePlayButton(string name, Transform parent, string label, Action onClick)
+    {
+        var btn = CreateSimpleButton(name, parent, label, 24, Vector2.zero, onClick);
+        btn.image.color = new Color(0.72f, 0.16f, 0.15f, 0.98f);
+
+        var le = btn.gameObject.AddComponent<LayoutElement>();
+        le.preferredHeight = 62f;
+        le.minHeight = 62f;
+        le.flexibleWidth = 1f;
+
+        var outline = btn.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(1f, 0.82f, 0.30f, 0.85f);
+        outline.effectDistance = new Vector2(1.8f, -1.8f);
+
+        var shadow = btn.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.75f);
+        shadow.effectDistance = new Vector2(2.5f, -2.5f);
+
+        return btn;
+    }
+
+    private Button CreateGridMenuButton(string name, Transform parent, string label, Color baseColor, Color outlineColor, int fontSize, float height, Action onClick)
+    {
+        var btn = CreateSimpleButton(name, parent, label, fontSize, Vector2.zero, onClick);
+        btn.image.color = baseColor;
+
+        var le = btn.gameObject.AddComponent<LayoutElement>();
+        le.preferredHeight = height;
+        le.minHeight = height;
+        le.flexibleWidth = 1f;
+
+        var outline = btn.gameObject.AddComponent<Outline>();
+        outline.effectColor = outlineColor;
+        outline.effectDistance = new Vector2(1.2f, -1.2f);
 
         return btn;
     }
