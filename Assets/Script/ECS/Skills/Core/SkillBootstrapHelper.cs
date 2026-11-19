@@ -466,5 +466,4 @@ public static class SkillBootstrapHelper
             entities.Dispose();
         }
     }
-    }
 }
