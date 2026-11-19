@@ -163,7 +163,7 @@ public class MainMenuUI : MonoBehaviour
     {
         if (SceneManager.GetActiveScene().name == "MainMenuScene")
         {
-            // Dọn sạch các thực thể gameplay (quái, đạn, ngọc, vật phẩm) còn sót lại từ trận đấu trước nếu có
+            // Dọn sạch các thực thể gameplay (quái, đạn, ngọc, vật phẩm, phân thân) còn sót lại từ trận đấu trước nếu có
             if (Unity.Entities.World.DefaultGameObjectInjectionWorld != null &&
                 Unity.Entities.World.DefaultGameObjectInjectionWorld.IsCreated)
             {
@@ -174,15 +174,34 @@ public class MainMenuUI : MonoBehaviour
                     {
                         Unity.Entities.ComponentType.ReadOnly<EnemyTag>(),
                         Unity.Entities.ComponentType.ReadOnly<ProjectileTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<EnemyProjectileTag>(),
                         Unity.Entities.ComponentType.ReadOnly<ExpOrbTag>(),
                         Unity.Entities.ComponentType.ReadOnly<PickupItemTag>(),
                         Unity.Entities.ComponentType.ReadOnly<FlyingSwordTag>(),
-                        Unity.Entities.ComponentType.ReadOnly<SlashSwordTag>()
+                        Unity.Entities.ComponentType.ReadOnly<SlashSwordTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<SwordWaveTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<GiantSwordTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<FireballTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<SubFireballTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<FireZoneTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<BoomerangTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<BoomerangCatchEvent>(),
+                        Unity.Entities.ComponentType.ReadOnly<ElectricArcEvent>(),
+                        Unity.Entities.ComponentType.ReadOnly<ChestOpenEvent>(),
+                        Unity.Entities.ComponentType.ReadOnly<PetalProjectileTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<PetalDetonationEvent>(),
+                        Unity.Entities.ComponentType.ReadOnly<FlyingSwordAoeBlastEvent>(),
+                        Unity.Entities.ComponentType.ReadOnly<GiantSwordImpactEvent>(),
+                        Unity.Entities.ComponentType.ReadOnly<PlayerCloneTag>(),
+                        Unity.Entities.ComponentType.ReadOnly<CloneSkillTag>()
                     }
                 }))
                 {
                     em.DestroyEntity(query);
                 }
+
+                // Đưa toàn bộ 10 kỹ năng về Level 0 khi ở Main Menu
+                SkillBootstrapHelper.ResetAllSkillsToZero(em, Unity.Entities.Entity.Null);
             }
 
             if (FindAnyObjectByType<MainMenuUI>() == null)
@@ -263,11 +282,17 @@ public class MainMenuUI : MonoBehaviour
 
     private void LoadResources()
     {
-        try
+        // 1. Ưu tiên nạp font nhúng hỗ trợ tiếng Việt đầy đủ (chạy hoàn hảo trên WebGL và mọi nền tảng)
+        _defaultFont = Resources.Load<Font>("Fonts/GameFont");
+
+        if (_defaultFont == null)
         {
-            _defaultFont = Font.CreateDynamicFontFromOSFont(new[] { "Segoe UI", "Arial", "Tahoma" }, 36);
+            try
+            {
+                _defaultFont = Font.CreateDynamicFontFromOSFont(new[] { "Segoe UI", "Arial", "Tahoma" }, 36);
+            }
+            catch { }
         }
-        catch { }
 
         if (_defaultFont == null)
         {

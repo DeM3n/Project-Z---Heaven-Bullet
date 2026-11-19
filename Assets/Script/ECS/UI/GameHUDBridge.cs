@@ -137,6 +137,12 @@ public class GameHUDBridge : MonoBehaviour
         {
             if (_modalStateMachine.CurrentState == HUDModalState.None)
             {
+                // Bảo đảm toàn bộ kỹ năng ở Level 0 trước khi hiển thị bảng chọn vũ khí khởi đầu
+                if (_starterPicksRemaining == TOTAL_STARTER_PICKS)
+                {
+                    SkillBootstrapHelper.ResetAllSkillsToZero(_entityManager, playerEntity);
+                    _runLifecycleService?.CleanupOldRunEntities();
+                }
                 ShowStarterSkillReward(playerEntity);
             }
             return; // Dừng tiến trình game để người chơi chọn xong 2 kỹ năng

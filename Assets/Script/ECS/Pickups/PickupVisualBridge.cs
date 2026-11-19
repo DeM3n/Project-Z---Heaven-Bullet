@@ -283,7 +283,7 @@ public class PickupVisualBridge : MonoBehaviour
     private void GenerateProceduralSprites()
     {
         _heartSprite = LoadOrGenerateHeartSprite();
-        _magnetSprite = CreateMagnetSprite();
+        _magnetSprite = LoadOrGenerateMagnetSprite();
         LoadOrGenerateChestSprites();
     }
 
@@ -294,23 +294,44 @@ public class PickupVisualBridge : MonoBehaviour
     {
         if (ChestClosedSprite != null && ChestOpenFrame1 != null && ChestOpenFrame2 != null && ChestOpenFrame3 != null) return;
 
-#if UNITY_EDITOR
-        var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Sprite/RPG Chests.png");
-        if (assets != null)
+        // 1. Tải từ Resources (chuẩn runtime trên WebGL và mọi nền tảng build)
+        var sprites = Resources.LoadAll<Sprite>("Sprites/RPG Chests");
+        if (sprites != null && sprites.Length > 0)
         {
-            foreach (var a in assets)
+            foreach (var s in sprites)
             {
-                if (a is Sprite s)
+                string nameClean = s.name.Trim();
+                if (nameClean == "RPG Chests_2" || nameClean == "RPGChests_2")
+                    ChestClosedSprite = s;
+                else if (nameClean == "RPG Chests_11" || nameClean == "RPGChests_11")
+                    ChestOpenFrame1 = s;
+                else if (nameClean == "RPG Chests_20" || nameClean == "RPGChests_20")
+                    ChestOpenFrame2 = s;
+                else if (nameClean == "RPG Chests_29" || nameClean == "RPGChests_29")
+                    ChestOpenFrame3 = s;
+            }
+        }
+
+#if UNITY_EDITOR
+        if (ChestClosedSprite == null)
+        {
+            var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Sprite/RPG Chests.png");
+            if (assets != null)
+            {
+                foreach (var a in assets)
                 {
-                    string nameClean = s.name.Trim();
-                    if (nameClean == "RPG Chests_2" || nameClean == "RPGChests_2")
-                        ChestClosedSprite = s;
-                    else if (nameClean == "RPG Chests_11" || nameClean == "RPGChests_11")
-                        ChestOpenFrame1 = s;
-                    else if (nameClean == "RPG Chests_20" || nameClean == "RPGChests_20")
-                        ChestOpenFrame2 = s;
-                    else if (nameClean == "RPG Chests_29" || nameClean == "RPGChests_29")
-                        ChestOpenFrame3 = s;
+                    if (a is Sprite s)
+                    {
+                        string nameClean = s.name.Trim();
+                        if (nameClean == "RPG Chests_2" || nameClean == "RPGChests_2")
+                            ChestClosedSprite = s;
+                        else if (nameClean == "RPG Chests_11" || nameClean == "RPGChests_11")
+                            ChestOpenFrame1 = s;
+                        else if (nameClean == "RPG Chests_20" || nameClean == "RPGChests_20")
+                            ChestOpenFrame2 = s;
+                        else if (nameClean == "RPG Chests_29" || nameClean == "RPGChests_29")
+                            ChestOpenFrame3 = s;
+                    }
                 }
             }
         }
@@ -497,7 +518,16 @@ public class PickupVisualBridge : MonoBehaviour
         // 1. Kiểm tra Sprite tùy chỉnh gán trong Inspector (nếu có)
         if (CustomHeartSprite != null) return CustomHeartSprite;
 
-        // 2. Nạp file ảnh Sprite do người dùng import tại Assets/Sprite/Heart.png
+        // 2. Nạp từ Resources (chuẩn runtime trên WebGL và mọi nền tảng build)
+        var fromResources = Resources.Load<Sprite>("Sprites/Heart");
+        if (fromResources != null) return fromResources;
+
+        var allFromResources = Resources.LoadAll<Sprite>("Sprites/Heart");
+        if (allFromResources != null && allFromResources.Length > 0) return allFromResources[0];
+
+        fromResources = Resources.Load<Sprite>("Heart");
+        if (fromResources != null) return fromResources;
+
 #if UNITY_EDITOR
         var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Sprite/Heart.png");
         if (assets != null)
@@ -512,15 +542,34 @@ public class PickupVisualBridge : MonoBehaviour
         }
 #endif
 
-        // 3. Nạp từ Resources nếu có
-        var fromResources = Resources.Load<Sprite>("Heart");
-        if (fromResources != null) return fromResources;
-
-        var allFromResources = Resources.LoadAll<Sprite>("Heart");
-        if (allFromResources != null && allFromResources.Length > 0) return allFromResources[0];
-
-        // 4. Fallback: Tự động vẽ procedural nếu không tìm thấy file ảnh
+        // 3. Fallback: Tự động vẽ procedural nếu không tìm thấy file ảnh
         return CreateHeartSprite();
+    }
+
+    private Sprite LoadOrGenerateMagnetSprite()
+    {
+        // 1. Nạp từ Resources (chuẩn runtime WebGL)
+        var fromRes = Resources.Load<Sprite>("Sprites/magnet");
+        if (fromRes != null) return fromRes;
+
+        fromRes = Resources.Load<Sprite>("magnet");
+        if (fromRes != null) return fromRes;
+
+#if UNITY_EDITOR
+        var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Sprite/magnet.png");
+        if (assets != null)
+        {
+            foreach (var a in assets)
+            {
+                if (a is Sprite s)
+                {
+                    return s;
+                }
+            }
+        }
+#endif
+
+        return CreateMagnetSprite();
     }
 
     private Sprite CreateHeartSprite()

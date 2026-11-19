@@ -21,7 +21,7 @@ MonoBehaviour:
   - 9.45
   - 11.34
   - 13.23
-  - 15.12
+  - 15.5
   SwordCounts: 01000000020000000300000004000000i
   ReturnSpeed: 11
   OrbitRadius: 2.2
@@ -29,7 +29,7 @@ MonoBehaviour:
   AttackInterval: 0.45
   HitRadius: 0.5
   DetectRange: 6.5
-  MaxLeashRange: 7.5
+  MaxLeashRange: 8
   UltimateCooldown: 5.4
   AoeRadius: 3.5
   AoeDamage: 85

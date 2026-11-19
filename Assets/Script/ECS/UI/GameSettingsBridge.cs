@@ -237,6 +237,8 @@ public class GameSettingsBridge : MonoBehaviour
         _devView?.Hide();
         _isDevPanelOpen = false;
 #endif
+        RunLifecycleService.Instance?.ResetRunState();
+        RunLifecycleService.Instance?.CleanupOldRunEntities();
         SceneManager.LoadScene("MainMenuScene");
     }
 

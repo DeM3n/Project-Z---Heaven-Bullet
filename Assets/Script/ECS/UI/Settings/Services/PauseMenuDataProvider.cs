@@ -259,15 +259,16 @@ public static class PauseMenuDataProvider
     {
         EntityQuery query = skillId switch
         {
-            "FlyingSword" => em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
-            "SlashSword" => em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
-            "ProjectileSkill" => em.CreateEntityQuery(ComponentType.ReadOnly<ProjectileSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
-            "Fireball" => em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
-            "Shield" => em.CreateEntityQuery(ComponentType.ReadOnly<ShieldSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
-            "Boomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
-            "Electric" => em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
-            "SwordFusion" => em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
-            "ThunderBoomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadOnly<SkillRuntimeData>()),
+            "FlyingSword" => em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "SlashSword" => em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "ProjectileSkill" => em.CreateEntityQuery(ComponentType.ReadOnly<ProjectileSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "Fireball" => em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "Shield" => em.CreateEntityQuery(ComponentType.ReadOnly<ShieldSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "Boomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "Electric" => em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "PetalBurst" => em.CreateEntityQuery(ComponentType.ReadOnly<PetalBurstSkillTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "SwordFusion" => em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
+            "ThunderBoomerang" => em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadOnly<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()),
             _ => default
         };
 

@@ -461,8 +461,20 @@ public class BoomerangVisualBridge : MonoBehaviour
             return customSprite;
         }
 
+        // 1. Nạp từ Resources (chuẩn runtime trên WebGL và mọi nền tảng build)
+        var fromRes = Resources.Load<Sprite>("Sprites/Boomerang");
+        if (fromRes == null)
+        {
+            fromRes = Resources.Load<Sprite>("Boomerang");
+        }
+        if (fromRes != null)
+        {
+            _isCustomSprite = true;
+            return fromRes;
+        }
+
 #if UNITY_EDITOR
-        // 1. Kiểm tra SpriteRenderer trong Boomerang.prefab
+        // 2. Kiểm tra SpriteRenderer trong Boomerang.prefab
         var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Skills/Boomerang.prefab");
         if (prefab != null)
         {
@@ -474,7 +486,7 @@ public class BoomerangVisualBridge : MonoBehaviour
             }
         }
 
-        // 2. Kiểm tra trực tiếp file ảnh tại Assets/Sprite/Boomerang.png
+        // 3. Kiểm tra trực tiếp file ảnh tại Assets/Sprite/Boomerang.png
         var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/Sprite/Boomerang.png");
         if (assets != null && assets.Length > 0)
         {
@@ -488,14 +500,6 @@ public class BoomerangVisualBridge : MonoBehaviour
             }
         }
 #endif
-
-        // 3. Nạp từ Resources (cho bản build runtime độc lập nếu có)
-        var fromRes = Resources.Load<Sprite>("Boomerang");
-        if (fromRes != null)
-        {
-            _isCustomSprite = true;
-            return fromRes;
-        }
 
         // 4. Fallback: Sinh Procedural Sprite 4 cánh khí động học
         _isCustomSprite = false;

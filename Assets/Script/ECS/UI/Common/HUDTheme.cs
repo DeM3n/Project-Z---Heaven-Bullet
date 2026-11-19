@@ -13,7 +13,20 @@ public static class HUDTheme
         {
             if (_cachedPixelFont == null)
             {
-                _cachedPixelFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                // 1. Ưu tiên nạp font nhúng hỗ trợ tiếng Việt đầy đủ (chạy hoàn hảo trên WebGL và mọi nền tảng)
+                _cachedPixelFont = Resources.Load<Font>("Fonts/GameFont");
+
+                // 2. Dự phòng nạp OS font nếu chạy desktop
+                if (_cachedPixelFont == null)
+                {
+                    try { _cachedPixelFont = Font.CreateDynamicFontFromOSFont(new[] { "Segoe UI", "Arial", "Tahoma" }, 32); } catch { }
+                }
+
+                // 3. Fallback cuối cùng
+                if (_cachedPixelFont == null)
+                {
+                    _cachedPixelFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                }
             }
             return _cachedPixelFont;
         }

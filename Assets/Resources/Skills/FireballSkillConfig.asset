@@ -28,7 +28,7 @@ MonoBehaviour:
   - 2.1
   - 2.4
   - 3
-  FireballSpeed: 9.5
+  FireballSpeed: 10
   SubFireballSpeed: 11
   SubFireballLifetime: 0.45
   SubExplosionRadius: 1.2

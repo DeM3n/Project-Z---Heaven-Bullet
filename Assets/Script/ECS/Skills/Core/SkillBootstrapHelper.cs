@@ -71,6 +71,10 @@ public static class SkillBootstrapHelper
                     CountLv4 = cfg != null ? cfg.GetCount(4) : 2
                 });
             }
+            else
+            {
+                UpdateOwnerIfChanged(em, q, player);
+            }
         }
 
         // 2. Electric (Lấy chuẩn từ ElectricSkillConfigSO)
@@ -127,6 +131,10 @@ public static class SkillBootstrapHelper
                     ChainCountLv3 = cfg != null ? cfg.GetChainCount(3) : 2,
                     ChainCountLv4 = cfg != null ? cfg.GetChainCount(4) : 4
                 });
+            }
+            else
+            {
+                UpdateOwnerIfChanged(em, q, player);
             }
         }
 
@@ -189,6 +197,10 @@ public static class SkillBootstrapHelper
                     RadiusLv3 = cfg != null ? cfg.GetExplosionRadius(3) : 2.4f,
                     RadiusLv4 = cfg != null ? cfg.GetExplosionRadius(4) : 2.8f
                 });
+            }
+            else
+            {
+                UpdateOwnerIfChanged(em, q, player);
             }
         }
 
@@ -256,6 +268,10 @@ public static class SkillBootstrapHelper
                     ExplosionRadiusLv4 = cfg != null ? cfg.GetExplosionRadius(4) : 1.46f
                 });
             }
+            else
+            {
+                UpdateOwnerIfChanged(em, q, player);
+            }
         }
 
         // 5. Shield
@@ -284,6 +300,10 @@ public static class SkillBootstrapHelper
                     ExplosionDamage = 100f,
                     KnockbackForce = 2.5f
                 });
+            }
+            else
+            {
+                UpdateOwnerIfChanged(em, q, player);
             }
         }
 
@@ -331,6 +351,28 @@ public static class SkillBootstrapHelper
                     StunDuration = 0.5f
                 });
             }
+            else
+            {
+                UpdateOwnerIfChanged(em, q, player);
+            }
+        }
+
+        // 7. Đồng bộ Owner cho các kỹ năng SubScene (FlyingSword, SlashSword, Projectile, SwordFusion)
+        using (var q = em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.Exclude<CloneSkillTag>()))
+        {
+            UpdateOwnerIfChanged(em, q, player);
+        }
+        using (var q = em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.Exclude<CloneSkillTag>()))
+        {
+            UpdateOwnerIfChanged(em, q, player);
+        }
+        using (var q = em.CreateEntityQuery(ComponentType.ReadOnly<ProjectileSkillTag>(), ComponentType.Exclude<CloneSkillTag>()))
+        {
+            UpdateOwnerIfChanged(em, q, player);
+        }
+        using (var q = em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.Exclude<CloneSkillTag>()))
+        {
+            UpdateOwnerIfChanged(em, q, player);
         }
 
         // Tự động kích hoạt đồng bộ toàn bộ SO SSOT qua SkillConfigSyncBridge nếu vừa tạo mới Entity
@@ -338,5 +380,91 @@ public static class SkillBootstrapHelper
         {
             SkillConfigSyncBridge.Instance.SyncAllConfigs();
         }
+    }
+
+    /// <summary>
+    /// Đưa toàn bộ 10 kỹ năng (8 kỹ năng tấn công/phòng thủ + 2 fusions) về Level 0 một cách triệt để,
+    /// đồng thời cập nhật SkillOwnerData.Owner trỏ chính xác vào playerEntity của run hiện tại.
+    /// Xóa bỏ hoàn toàn tàn dư cấp độ hoặc trạng thái Ultimate từ các ván chơi trước.
+    /// </summary>
+    public static void ResetAllSkillsToZero(EntityManager em, Entity player)
+    {
+        if (em == default) return;
+
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<FlyingSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<SlashSwordSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<ProjectileSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<FireballSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<ShieldSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<BoomerangSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<ElectricSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<PetalBurstSkillTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<SwordFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+        ResetSkillQuery(em, em.CreateEntityQuery(ComponentType.ReadOnly<ThunderBoomerangFusionTag>(), ComponentType.ReadWrite<SkillRuntimeData>(), ComponentType.Exclude<CloneSkillTag>()), player);
+
+        // Reset PlayerShieldData trên player
+        if (player != Entity.Null && em.Exists(player) && em.HasComponent<PlayerShieldData>(player))
+        {
+            var shield = em.GetComponentData<PlayerShieldData>(player);
+            shield.SkillLevel = 0;
+            shield.CurrentCharges = 0;
+            shield.HitsRemainingInCurrentShield = 0;
+            shield.RechargeTimer = 0f;
+            em.SetComponentData(player, shield);
+        }
+
+        if (SkillConfigSyncBridge.Instance != null)
+        {
+            SkillConfigSyncBridge.Instance.SyncAllConfigs();
+        }
+    }
+
+    private static void UpdateOwnerIfChanged(EntityManager em, EntityQuery query, Entity player)
+    {
+        if (query.IsEmpty || player == Entity.Null || !em.Exists(player)) return;
+
+        using var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
+        for (int i = 0; i < entities.Length; i++)
+        {
+            Entity e = entities[i];
+            if (em.HasComponent<SkillOwnerData>(e))
+            {
+                var owner = em.GetComponentData<SkillOwnerData>(e);
+                if (owner.Owner != player)
+                {
+                    owner.Owner = player;
+                    em.SetComponentData(e, owner);
+                }
+            }
+        }
+    }
+
+    private static void ResetSkillQuery(EntityManager em, EntityQuery query, Entity player)
+    {
+        using (query)
+        {
+            if (query.IsEmpty) return;
+            var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
+            for (int i = 0; i < entities.Length; i++)
+            {
+                Entity e = entities[i];
+                if (em.HasComponent<SkillRuntimeData>(e))
+                {
+                    var runtime = em.GetComponentData<SkillRuntimeData>(e);
+                    runtime.Level = 0;
+                    runtime.Timer = 0.5f;
+                    em.SetComponentData(e, runtime);
+                }
+
+                if (player != Entity.Null && em.Exists(player) && em.HasComponent<SkillOwnerData>(e))
+                {
+                    var owner = em.GetComponentData<SkillOwnerData>(e);
+                    owner.Owner = player;
+                    em.SetComponentData(e, owner);
+                }
+            }
+            entities.Dispose();
+        }
+    }
     }
 }

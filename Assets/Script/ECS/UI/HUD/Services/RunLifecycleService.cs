@@ -38,6 +38,30 @@ public class RunLifecycleService
         _survivalTime = 0f;
         _stonesEarnedThisRun = 0;
 
+        // Reset toàn bộ 10 kỹ năng về Level 0 và gắn lại Owner chuẩn
+        Entity playerEntity = Entity.Null;
+        using (var pQuery = _entityManager.CreateEntityQuery(ComponentType.ReadOnly<PlayerTag>()))
+        {
+            if (!pQuery.IsEmpty) playerEntity = pQuery.GetSingletonEntity();
+        }
+        SkillBootstrapHelper.ResetAllSkillsToZero(_entityManager, playerEntity);
+
+        // Reset PlayerRelicData trên Player
+        if (playerEntity != Entity.Null && _entityManager.Exists(playerEntity) && _entityManager.HasComponent<PlayerRelicData>(playerEntity))
+        {
+            var relic = _entityManager.GetComponentData<PlayerRelicData>(playerEntity);
+            relic.BootsLevel = 0;
+            relic.MagnetLevel = 0;
+            relic.VitalityLevel = 0;
+            relic.PowerLevel = 0;
+            relic.FortuneDiceLevel = 0;
+            relic.MirrorLevel = 0;
+            relic.TomeLevel = 0;
+            relic.DamageMultiplier = 1.0f;
+            relic.ExpMultiplier = 1.0f;
+            _entityManager.SetComponentData(playerEntity, relic);
+        }
+
         // Reset PlayerRunStats
         var query = _entityManager.CreateEntityQuery(ComponentType.ReadWrite<PlayerRunStats>());
         if (!query.IsEmpty)
@@ -162,10 +186,17 @@ public class RunLifecycleService
                 ComponentType.ReadOnly<GiantSwordTag>(),
                 ComponentType.ReadOnly<FireballTag>(),
                 ComponentType.ReadOnly<SubFireballTag>(),
+                ComponentType.ReadOnly<FireZoneTag>(),
                 ComponentType.ReadOnly<BoomerangTag>(),
                 ComponentType.ReadOnly<BoomerangCatchEvent>(),
                 ComponentType.ReadOnly<ElectricArcEvent>(),
-                ComponentType.ReadOnly<ChestOpenEvent>()
+                ComponentType.ReadOnly<ChestOpenEvent>(),
+                ComponentType.ReadOnly<PetalProjectileTag>(),
+                ComponentType.ReadOnly<PetalDetonationEvent>(),
+                ComponentType.ReadOnly<FlyingSwordAoeBlastEvent>(),
+                ComponentType.ReadOnly<GiantSwordImpactEvent>(),
+                ComponentType.ReadOnly<PlayerCloneTag>(),
+                ComponentType.ReadOnly<CloneSkillTag>()
             }
         }))
         {
@@ -187,12 +218,16 @@ public class RunLifecycleService
     public void RestartCurrentScene()
     {
         PauseService.ClearAll();
+        ResetRunState();
+        CleanupOldRunEntities();
         LoadingController.LoadScene("SampleScene");
     }
 
     public void ReturnToMainMenu()
     {
         PauseService.ClearAll();
+        ResetRunState();
+        CleanupOldRunEntities();
         SceneManager.LoadScene("MainMenuScene");
     }
 }
